@@ -20,14 +20,18 @@ export interface HouseTier {
   readonly cost: number;
 }
 
+/**
+ * Moore's law: chips roughly doubled in capacity every couple of years, so every
+ * era here doubles production (1x, 2x, 4x ... 64x).
+ */
 export const HOUSE_TIERS: readonly HouseTier[] = [
   { id: "vacuumTube", slots: 1, multiplier: 1, storageHours: 1, cost: 400 },
-  { id: "transistor", slots: 2, multiplier: 1.6, storageHours: 2, cost: 2_500 },
-  { id: "integratedCircuit", slots: 3, multiplier: 2.5, storageHours: 3, cost: 12_000 },
-  { id: "microprocessor", slots: 3, multiplier: 4, storageHours: 4, cost: 45_000 },
-  { id: "internet", slots: 4, multiplier: 6.5, storageHours: 6, cost: 160_000 },
-  { id: "cloud", slots: 5, multiplier: 10, storageHours: 8, cost: 550_000 },
-  { id: "ai", slots: 6, multiplier: 16, storageHours: 12, cost: 2_000_000 },
+  { id: "transistor", slots: 2, multiplier: 2, storageHours: 2, cost: 2_500 },
+  { id: "integratedCircuit", slots: 3, multiplier: 4, storageHours: 3, cost: 12_000 },
+  { id: "microprocessor", slots: 3, multiplier: 8, storageHours: 4, cost: 45_000 },
+  { id: "internet", slots: 4, multiplier: 16, storageHours: 6, cost: 160_000 },
+  { id: "cloud", slots: 5, multiplier: 32, storageHours: 8, cost: 550_000 },
+  { id: "ai", slots: 6, multiplier: 64, storageHours: 12, cost: 2_000_000 },
 ];
 
 export interface HouseLot {
@@ -86,9 +90,14 @@ export function nextCost(state: PersistentState, lot: number): number | null {
   return tier ? tier.cost * def.costFactor : null;
 }
 
+/** Highest era reached in any house, or -1 with no house: what the museum shows. */
+export function highestEra(state: PersistentState): number {
+  return state.houses.reduce((max, h) => Math.max(max, h.tier), -1);
+}
+
 /** Coins per minute one bug produces in a tier. Level matters most; good IVs add up to 20%. */
 export function bugCoinRate(bug: BugInstance, tier: HouseTier): number {
-  return (5 + bug.level * 1.2) * tier.multiplier * (1 + ivGrade(bug) * 0.05);
+  return (3 + bug.level * 0.6) * tier.multiplier * (1 + ivGrade(bug) * 0.05);
 }
 
 function residents(state: PersistentState, house: House): BugInstance[] {

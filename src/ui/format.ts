@@ -61,6 +61,15 @@ export function describeEvent(event: GameEvent, state: GameState): { text: strin
       return { text: event.outcome === "timeout" ? "O tempo acabou. Tente o chefe de novo." : "O chefe venceu desta vez.", tone: "bad" };
     case "teamWiped":
       return { text: "Sua equipe caiu. Reiniciando...", tone: "bad" };
+    case "debugAnswered":
+      return event.correct
+        ? { text: `Bug encontrado no código de ${speciesName(event.speciesId)}! Captura em dobro neste encontro.`, tone: "rare" }
+        : { text: `Não era essa linha. Veja a correção na Bugdex de ${speciesName(event.speciesId)}.`, tone: "bad" };
+    case "debugOffered":
+    case "debugExpired":
+      return null;
+    case "raidDone":
+      return event.firstClear ? { text: `Guilda: missão concluída pela primeira vez! +${event.coins} moedas`, tone: "rare" } : null;
     case "revived":
       return { text: `${bugName(state, event.uid)} voltou com o Reviver!`, tone: "good" };
     case "recovered":

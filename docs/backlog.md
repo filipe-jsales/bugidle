@@ -60,7 +60,25 @@ Status: `[x]` done, `[ ]` to do. Keep this file current when a task is finished 
 - [x] Two-frame idle ("breathing") animation for every bug, staggered per bug on the map; knockback on hits
 - [ ] Better art at scale needs an external tool (see "Art pipeline" in instructions.md)
 
+## v0.6 - learning computing while playing
+
+Principle: learning is optional, short and rewarded; it never blocks progress.
+
+- [x] Lessons: one short buggy snippet + fix + explanation for each of the 38 bugs (`game/data/lessons.ts`, `i18n/learning.ptBR.ts`)
+- [x] 1. Automation rules in blocks: IF conditions (AND, NOT) THEN action, first match wins, shown as code (`game/rules.ts`, `RulesModal`)
+- [x] 2. Debug to capture: shiny, rare or new bugs pause up to 12 s for an optional "which line has the bug?"; right answer doubles the capture chance (`answerDebug`, `DebugPanel`)
+- [x] 3. Bugdex "Como corrigir": buggy code, fix and explanation after the capture
+- [x] 4. Region curriculum on the map, and an optional boss code review (+20% prize per right answer)
+- [x] 5. Daily challenge (3 questions, coins, egg for 3/3) with spaced repetition in 5 Leitner boxes (`game/learning.ts`, `StudyModal`)
+- [x] 6. Houses museum (timeline of eras) and Moore's law (each era doubles production)
+- [x] 7. Guild of Algorithms: 9 champions (sorting and searching), 9 raids; raid time = real operation count, so Big-O, best/worst case and memory decide (`game/guild.ts`, `GuildModal`)
+- [x] 8. Optional terminal (F2 or the menu): help, ls, cd, pwd, status, man, dex, catch, trap, buy, use, lead, rules, raid, egg, collect, history, Tab completion (`ui/terminal.ts`, `TerminalModal`)
+
 ## Next (core polish)
+
+- [ ] More lessons per bug (today one each) so reviews do not repeat
+- [ ] Terminal: pipes and grep (`ls box | grep shiny`) as a later lesson
+- [ ] Guild: search/sort visualizer (bars moving) while a raid runs
 
 - [ ] Early game is slow (first region about 3 h in the simulation; a level-2 win gives +1 xp)
 - [ ] Simulation policy does not refine or hatch eggs yet
@@ -83,5 +101,4 @@ Status: `[x]` done, `[ ]` to do. Keep this file current when a task is finished 
 
 ## Later: other mechanics (not started on purpose)
 
-- [ ] **Guild of Algorithms** (guild mechanic): champions are algorithms and data structures that fight on their own; guild members share buffs and raids.
 - [ ] Online: accounts, cloud save sync, chat, trading, PvP, rankings

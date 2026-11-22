@@ -4,6 +4,9 @@ import type { ItemId } from "./data/items";
 import type { Trainer } from "./experience";
 import type { House } from "./housing";
 import type { StoneWallet } from "./stones";
+import { defaultRules, type Rule } from "./rules";
+import type { KnowledgeCard } from "./learning";
+import { createGuild, type GuildState } from "./guild";
 
 export const SAVE_VERSION = 1;
 export const MAX_TEAM_SIZE = 6;
@@ -36,6 +39,10 @@ export interface Settings {
   autoRevive: boolean;
   /** After a team wipe or a reboot, go straight back to hunting. */
   returnToHunt: boolean;
+  /** Use the player's IF/THEN rules instead of the simple switches above. */
+  useRules: boolean;
+  /** Offer "debug to capture" challenges on special encounters. */
+  debugChallenges: boolean;
 }
 
 /** Everything that is saved. */
@@ -60,6 +67,16 @@ export interface PersistentState {
   stones: StoneWallet;
   /** Play time (ms) when the egg in each hatchery slot started, or null. */
   hatchery: (number | null)[];
+  /** Player-written automation rules (used when settings.useRules is on). */
+  rules: Rule[];
+  /** Spaced-repetition card per species the player has studied. */
+  knowledge: Record<string, KnowledgeCard>;
+  /** Day number of the last daily challenge done. */
+  dailyDay: number | null;
+  /** Best boss code review score (0-3), paid out when that boss is beaten. */
+  bossReview: Record<string, number>;
+  /** Guild of Algorithms: owned champions, the running raid and clears. */
+  guild: GuildState;
   nextUid: number;
 }
 
@@ -74,6 +91,12 @@ export interface RuntimeState {
   captureAttemptsThisBattle: number;
   /** The team waits at the Reboot Center until the player sends it back. */
   atCenter: boolean;
+  /** A "debug to capture" challenge waiting for the player; the fight pauses meanwhile. */
+  debug: { speciesId: string; remainingMs: number } | null;
+  /** Extra capture chance earned in this encounter (0.5 = +50%). */
+  captureBonus: number;
+  /** Play time when each species last offered a debug challenge. */
+  debugOfferedAt: Record<string, number>;
 }
 
 export interface GameState extends PersistentState {
@@ -83,7 +106,7 @@ export interface GameState extends PersistentState {
 export const STARTER_IDS = ["typobit", "leaklet", "pixelmite"] as const;
 
 export function createRuntime(): RuntimeState {
-  return { battle: null, spawnTimerMs: 0, recoveryMs: 0, potionCooldownMs: 0, captureAttemptsThisBattle: 0, atCenter: false };
+  return { battle: null, spawnTimerMs: 0, recoveryMs: 0, potionCooldownMs: 0, captureAttemptsThisBattle: 0, atCenter: false, debug: null, captureBonus: 0, debugOfferedAt: {} };
 }
 
 export function defaultSettings(): Settings {
@@ -97,6 +120,8 @@ export function defaultSettings(): Settings {
     throwUntilCaught: false,
     autoRevive: true,
     returnToHunt: true,
+    useRules: false,
+    debugChallenges: true,
   };
 }
 
@@ -118,6 +143,11 @@ export function createInitialState(trainerName = "Hunter"): GameState {
     houses: [],
     stones: {},
     hatchery: [null, null],
+    rules: defaultRules(),
+    knowledge: {},
+    dailyDay: null,
+    bossReview: {},
+    guild: createGuild(),
     nextUid: 1,
     runtime: createRuntime(),
   };

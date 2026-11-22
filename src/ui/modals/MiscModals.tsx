@@ -7,13 +7,15 @@ import { STARTER_IDS } from "../../game/state";
 import { getSpecies } from "../../game/data/species";
 import { BADGE_NAMES, BOSS_TITLES, REGION_NAMES, SPECIES_DESCRIPTIONS, UI, ERROR_TEXT } from "../../i18n/ptBR";
 import { useApp } from "../appContext";
+import { LEARN_UI } from "../../i18n/learning.ptBR";
+import { REVIEW_BONUS_PER_CORRECT } from "../../game/learning";
 import { formatClock, formatDuration, formatNumber } from "../format";
 import { BugSprite, Button, Icon, Modal, Tag, TypeTag } from "../components/primitives";
 import { store, useGame } from "../store";
 
 export function BossesModal() {
   const state = useGame();
-  const { close, report } = useApp();
+  const { close, report, open } = useApp();
   const fighting = state.activity.kind === "boss" ? state.activity.bossId : null;
   return (
     <Modal title={UI.nav.bosses.toUpperCase()} onClose={close} wide>
@@ -53,6 +55,14 @@ export function BossesModal() {
                 <span>
                   {UI.bosses.cap}: {boss.levelCap}
                 </span>
+              </div>
+              <div className="boss-review">
+                <button type="button" className="btn btn-dark btn-small" onClick={() => open({ kind: "review", bossId: boss.id })}>
+                  {LEARN_UI.study.reviewButton}
+                </button>
+                {(state.bossReview[boss.id] ?? 0) > 0 && (
+                  <small className="ok-text">{LEARN_UI.study.reviewStored(Math.round((state.bossReview[boss.id] ?? 0) * REVIEW_BONUS_PER_CORRECT * 100))}</small>
+                )}
               </div>
               {fighting === boss.id ? (
                 <Tag tone="pink">{UI.bosses.fighting}</Tag>

@@ -18,6 +18,7 @@ import { createWorld, stepWorld, type Vec, type WorldModel } from "../world/worl
 import { worldFor } from "../world/worldRegistry";
 import { usePanZoom } from "../world/usePanZoom";
 import { AttackLayer } from "./AttackLayer";
+import { DebugPanel } from "./DebugPanel";
 import { Bar, BugSprite, Button, Icon, ItemIcon, Tag } from "./primitives";
 
 /** Map size in screen pixels; the terrain is generated at half and scaled 2x. */
@@ -295,6 +296,8 @@ export function BattleView() {
             </Button>
           )}
         </div>
+
+        <DebugPanel />
 
         {rt.atCenter && rt.recoveryMs <= 0 && (
           <div className="scene-overlay" onPointerDown={(e) => e.stopPropagation()}>

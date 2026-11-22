@@ -6,11 +6,17 @@ import { activeEnemy, activePlayerBug, createBattle, stepBattle, type BattleEven
 import { computeStats, createBug, healFully, isFainted, maxHp, type BugInstance } from "./bug";
 import { registerCaught, registerDefeated, registerSeen } from "./bugdex";
 import { captureChance, MAX_THROWS_PER_ENCOUNTER, pickTrap, shouldAttemptCapture } from "./capture";
+import { firstMatch } from "./rules";
+import { claimReviewBonus, dayNumber, recordAnswer } from "./learning";
+import { isCaught } from "./bugdex";
+import { lessonFor } from "./data/lessons";
+import type { TrapItem } from "./data/items";
 import { addBug } from "./collection";
 import { ITEMS, itemsOfCategory, type ItemId, type PotionItem } from "./data/items";
 import { getBoss, getRoute, type RouteDef } from "./data/world";
 import { evolve } from "./evolution";
 import { tickHatchery } from "./hatchery";
+import { tickGuild } from "./guild";
 import { addStones, canEvolveNow, evolutionStoneCost, rollStoneDrops, spendStones } from "./stones";
 import { getSpecies } from "./data/species";
 import { gainTrainerXp, gainXp, xpReward } from "./experience";
@@ -27,6 +33,12 @@ export const SPAWN_DELAY_MS = 2200;
 export const RECOVERY_MS = 3000;
 export const POTION_COOLDOWN_MS = 1200;
 export const STARTER_LEVEL = 5;
+/** How long a "debug to capture" challenge waits for the player. */
+export const DEBUG_TIME_MS = 12_000;
+/** Solving the challenge adds this to the capture chance (+100% = double). */
+export const DEBUG_CAPTURE_BONUS = 1;
+/** A species offers a new challenge at most this often (play time). */
+export const DEBUG_COOLDOWN_MS = 5 * 60_000;
 /** Share of a defeat's XP that benched (non-fighting, healthy) team members receive. */
 export const BENCH_XP_SHARE = 0.15;
 /** Largest simulated chunk; longer ticks are split so nothing is skipped. */
@@ -72,6 +84,10 @@ export type GameEvent =
   | { type: "teamWiped" }
   | { type: "recovered" }
   | { type: "revived"; uid: string }
+  | { type: "debugOffered"; speciesId: string }
+  | { type: "debugAnswered"; speciesId: string; correct: boolean }
+  | { type: "debugExpired"; speciesId: string }
+  | { type: "raidDone"; raidId: string; championId: string; coins: number; firstClear: boolean }
   | { type: "trainerLevelUp"; level: number };
 
 // ---------------------------------------------------------------- commands
@@ -153,8 +169,22 @@ export function reduceLevel(state: GameState, uid: string): ActionResult {
   return OK;
 }
 
+/** Answers a "debug to capture" challenge by picking the line with the bug. */
+export function answerDebug(state: GameState, line: number | null, today = dayNumber(new Date())): GameEvent[] {
+  const debug = state.runtime.debug;
+  if (!debug) return [];
+  state.runtime.debug = null;
+  if (line === null) return [];
+  const correct = lessonFor(debug.speciesId)?.badLine === line;
+  if (correct) state.runtime.captureBonus = DEBUG_CAPTURE_BONUS;
+  recordAnswer(state, debug.speciesId, correct, today);
+  return [{ type: "debugAnswered", speciesId: debug.speciesId, correct }];
+}
+
 function endBattle(state: GameState): void {
   state.runtime.battle = null;
+  state.runtime.debug = null;
+  state.runtime.captureBonus = 0;
   state.runtime.spawnTimerMs = SPAWN_DELAY_MS;
   state.runtime.captureAttemptsThisBattle = 0;
 }
@@ -176,6 +206,8 @@ function stepOnce(state: GameState, dtMs: number, rng: Rng, events: GameEvent[])
   state.totals.playTimeMs += dtMs;
   tickHousing(state, dtMs);
   for (const bug of tickHatchery(state, rng)) events.push({ type: "hatched", uid: bug.uid, speciesId: bug.speciesId, shiny: bug.shiny });
+  const raid = tickGuild(state);
+  if (raid) events.push({ type: "raidDone", ...raid });
   const team = teamBugs(state);
   if (team.length === 0) return;
   const rt = state.runtime;
@@ -194,6 +226,15 @@ function stepOnce(state: GameState, dtMs: number, rng: Rng, events: GameEvent[])
   if (!rt.battle) {
     rt.spawnTimerMs -= dtMs;
     if (rt.spawnTimerMs <= 0) startBattle(state, rng, events);
+    return;
+  }
+
+  if (rt.debug) {
+    rt.debug.remainingMs -= dtMs;
+    if (rt.debug.remainingMs <= 0) {
+      events.push({ type: "debugExpired", speciesId: rt.debug.speciesId });
+      rt.debug = null;
+    }
     return;
   }
 
@@ -234,6 +275,12 @@ function startBattle(state: GameState, rng: Rng, events: GameEvent[]): void {
   registerSeen(state, wild.speciesId);
   rt.battle = createBattle("wild", [wild]);
   events.push({ type: "encounter", speciesId: wild.speciesId, level: wild.level, shiny: wild.shiny });
+  if (offersDebug(state, wild)) {
+    rt.debug = { speciesId: wild.speciesId, remainingMs: DEBUG_TIME_MS };
+    rt.debugOfferedAt[wild.speciesId] = state.totals.playTimeMs;
+    events.push({ type: "debugOffered", speciesId: wild.speciesId });
+    return;
+  }
   // Throw before the first hit too, so strong teams can still catch.
   tryCapture(state, rng, events);
 }
@@ -252,15 +299,31 @@ function tryRevive(state: GameState, uid: string, events: GameEvent[]): void {
   events.push({ type: "revived", uid });
 }
 
+/** Special encounters (shiny, rare or not yet caught) pause for an optional debug challenge. */
+function offersDebug(state: GameState, wild: BugInstance): boolean {
+  if (!state.settings.debugChallenges || !lessonFor(wild.speciesId)) return false;
+  const special = wild.shiny || ["rare", "legendary"].includes(getSpecies(wild.speciesId).rarity) || !isCaught(state, wild.speciesId);
+  const last = state.runtime.debugOfferedAt[wild.speciesId];
+  return special && (last === undefined || state.totals.playTimeMs - last >= DEBUG_COOLDOWN_MS);
+}
+
 /** RF05: automatic, filter-driven trap throws. */
 function tryCapture(state: GameState, rng: Rng, events: GameEvent[]): void {
   const battle = state.runtime.battle;
   if (!battle || battle.kind !== "wild" || battle.outcome) return;
   const wild = activeEnemy(battle);
-  if (!wild || isFainted(wild) || !shouldAttemptCapture(state.settings, wild, state)) return;
+  if (!wild || isFainted(wild)) return;
   const limit = state.settings.throwUntilCaught ? Infinity : MAX_THROWS_PER_ENCOUNTER;
   if (state.runtime.captureAttemptsThisBattle >= limit) return;
-  const trap = pickTrap(state.inventory, state.settings.preferredTrap);
+  let trap: TrapItem | null;
+  if (state.settings.useRules) {
+    const rule = firstMatch(state.rules, "capture", { state, wild, active: activePlayerBug(teamBugs(state)) });
+    if (!rule || rule.then.kind !== "throw") return;
+    trap = ITEMS[rule.then.trap] as TrapItem;
+  } else {
+    if (!shouldAttemptCapture(state.settings, wild, state)) return;
+    trap = pickTrap(state.inventory, state.settings.preferredTrap);
+  }
   if (!trap) {
     if (state.runtime.captureAttemptsThisBattle === 0) events.push({ type: "outOfTraps" });
     state.runtime.captureAttemptsThisBattle = MAX_THROWS_PER_ENCOUNTER;
@@ -268,7 +331,7 @@ function tryCapture(state: GameState, rng: Rng, events: GameEvent[]): void {
   }
   consumeItem(state, trap.id);
   state.runtime.captureAttemptsThisBattle += 1;
-  const success = chance(rng, captureChance(wild, trap.captureMultiplier));
+  const success = chance(rng, Math.min(1, captureChance(wild, trap.captureMultiplier) * (1 + state.runtime.captureBonus)));
   events.push({ type: "captureAttempt", itemId: trap.id, speciesId: wild.speciesId, success });
   if (!success) return;
 
@@ -347,7 +410,7 @@ function finishBattle(state: GameState, outcome: BattleOutcome, events: GameEven
     const returnRouteId = state.activity.returnRouteId;
     if (outcome === "won") {
       const firstClear = !state.badges.includes(boss.badgeId);
-      const coins = firstClear ? boss.rewardCoins : Math.floor(boss.rewardCoins / 5);
+      const coins = (firstClear ? boss.rewardCoins : Math.floor(boss.rewardCoins / 5)) + claimReviewBonus(state, boss.id, boss.rewardCoins);
       state.coins += coins;
       const unlocked = awardBadge(state, boss.badgeId);
       events.push({ type: "badge", badgeId: boss.badgeId, coins });
@@ -368,11 +431,15 @@ function finishBattle(state: GameState, outcome: BattleOutcome, events: GameEven
 /** Automation: drink the smallest potion that is useful when the active bug is low. */
 function maybeUsePotion(state: GameState, team: BugInstance[], events: GameEvent[]): void {
   const { settings, runtime } = state;
-  if (!settings.autoPotion || runtime.potionCooldownMs > 0) return;
+  if (runtime.potionCooldownMs > 0) return;
   const active = activePlayerBug(team);
   if (!active) return;
   const max = maxHp(active);
-  if (active.currentHp / max >= settings.potionThreshold) return;
+  if (settings.useRules) {
+    if (!firstMatch(state.rules, "heal", { state, active }) || active.currentHp >= max) return;
+  } else if (!settings.autoPotion || active.currentHp / max >= settings.potionThreshold) {
+    return;
+  }
   const missing = max - active.currentHp;
   const potions = itemsOfCategory("potion").filter((p) => itemCount(state, p.id) > 0);
   if (potions.length === 0) return;

@@ -9,6 +9,7 @@ import { BugSprite, Button, Icon, Modal, Tag } from "../components/primitives";
 import { terrainUrl } from "../render/terrain";
 import { store, useGame } from "../store";
 import { useElementSize } from "../useElementSize";
+import { LEARN_UI, REGION_TOPICS } from "../../i18n/learning.ptBR";
 import { usePanZoom } from "../world/usePanZoom";
 
 const MAP_CONTENT = { width: 960, height: 560 };
@@ -63,6 +64,9 @@ export function MapModal() {
           );
         })}
       </div>
+      <p className="region-topics small">
+        <strong>{LEARN_UI.regionTeaches(REGION_TOPICS[regionId]?.title ?? "")}</strong> · {REGION_TOPICS[regionId]?.topics.join(", ")}
+      </p>
       <div className="map-toolbar">
         <span className="muted">{regionOpen ? "" : UI.map.badgeHint(BADGE_NAMES[region.requiredBadge ?? ""] ?? "")}</span>
         <div className="segmented small">

@@ -12,6 +12,10 @@ import { BugDetailModal } from "./modals/BugDetailModal";
 import { BugdexModal } from "./modals/BugdexModal";
 import { CompareModal } from "./modals/CompareModal";
 import { HatcheryModal } from "./modals/HatcheryModal";
+import { RulesModal } from "./modals/RulesModal";
+import { GuildModal } from "./modals/GuildModal";
+import { TerminalModal } from "./modals/TerminalModal";
+import { BossReviewModal, StudyModal } from "./modals/StudyModals";
 import { HousesModal } from "./modals/HousesModal";
 import { ProximityPanel } from "./components/ProximityPanel";
 import { MapModal } from "./modals/MapModal";
@@ -48,6 +52,16 @@ function ModalHost({ modal }: { modal: ModalState | null }) {
       return <HousesModal />;
     case "hatchery":
       return <HatcheryModal />;
+    case "rules":
+      return <RulesModal />;
+    case "study":
+      return <StudyModal />;
+    case "guild":
+      return <GuildModal />;
+    case "terminal":
+      return <TerminalModal />;
+    case "review":
+      return <BossReviewModal bossId={modal.bossId} />;
     case "compare":
       return <CompareModal a={modal.a} b={modal.b} />;
   }
@@ -61,6 +75,18 @@ export function App() {
   const compareSlots = useRef<{ A?: string; B?: string }>({});
 
   useEffect(() => store.start(), []);
+
+  // F2 (or ` on keyboards where it is not a dead key) opens the terminal from anywhere except text fields.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const target = e.target instanceof Element ? e.target : null;
+      if ((e.key !== "`" && e.key !== "F2") || target?.closest("input, textarea, select")) return;
+      e.preventDefault();
+      setStack((s) => (s[s.length - 1]?.kind === "terminal" ? s.slice(0, -1) : [...s, { kind: "terminal" }]));
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
   useAudio(state);
 
   const toast = useCallback((message: string) => {
@@ -72,7 +98,7 @@ export function App() {
   const actions = useMemo<AppActions>(
     () => ({
       // Opening a bug or a species sheet from another window keeps it underneath; closing returns to it.
-      open: (modal) => setStack((s) => (modal.kind === "bug" || modal.kind === "compare" || (modal.kind === "bugdex" && modal.speciesId) ? [...s, modal] : [modal])),
+      open: (modal) => setStack((s) => (modal.kind === "bug" || modal.kind === "compare" || modal.kind === "review" || (modal.kind === "bugdex" && modal.speciesId) ? [...s, modal] : [modal])),
       close: () => setStack((s) => s.slice(0, -1)),
       report: (result: ActionResult) => {
         if (!result.ok) toast(ERROR_TEXT[result.reason]);

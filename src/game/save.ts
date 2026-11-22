@@ -3,6 +3,8 @@ import { isItemId } from "./data/items";
 import { HATCHERY_SLOTS } from "./hatchery";
 import { HOUSE_LOTS, HOUSE_TIERS, type House } from "./housing";
 import { isBugType } from "./types";
+import { sanitizeRules } from "./rules";
+import { CHAMPIONS, createGuild, RAIDS } from "./guild";
 import { hasSpecies } from "./data/species";
 import { BOSSES, ROUTES } from "./data/world";
 import { createInitialState, createRuntime, defaultSettings, SAVE_VERSION, type CaptureMode, type GameState, type PersistentState } from "./state";
@@ -114,6 +116,8 @@ export function importSave(text: string): GameState {
     throwUntilCaught: typeof settingsRaw.throwUntilCaught === "boolean" ? settingsRaw.throwUntilCaught : defaults.throwUntilCaught,
     autoRevive: typeof settingsRaw.autoRevive === "boolean" ? settingsRaw.autoRevive : defaults.autoRevive,
     returnToHunt: typeof settingsRaw.returnToHunt === "boolean" ? settingsRaw.returnToHunt : defaults.returnToHunt,
+    useRules: typeof settingsRaw.useRules === "boolean" ? settingsRaw.useRules : defaults.useRules,
+    debugChallenges: typeof settingsRaw.debugChallenges === "boolean" ? settingsRaw.debugChallenges : defaults.debugChallenges,
   };
 
   const unlockedRoutes = isStringArray(raw.unlockedRoutes) ? raw.unlockedRoutes.filter(validRoute) : base.unlockedRoutes;
@@ -183,6 +187,26 @@ export function importSave(text: string): GameState {
       playTimeMs: isNumber(totalsRaw.playTimeMs) ? totalsRaw.playTimeMs : 0,
     },
     houses,
+    rules: sanitizeRules(raw.rules),
+    guild: (() => {
+      const g = isObject(raw.guild) ? raw.guild : {};
+      const base = createGuild();
+      const owned = isStringArray(g.owned) ? [...new Set([...base.owned, ...g.owned.filter((id) => CHAMPIONS.some((c) => c.id === id))])] : base.owned;
+      const r = isObject(g.raid) ? g.raid : null;
+      const raid =
+        r && typeof r.raidId === "string" && RAIDS.some((x) => x.id === r.raidId) && typeof r.championId === "string" && owned.includes(r.championId) && isNumber(r.startedAt) && isNumber(r.durationMs)
+          ? { raidId: r.raidId, championId: r.championId, startedAt: r.startedAt, durationMs: r.durationMs }
+          : null;
+      const clears = Object.fromEntries(Object.entries(isObject(g.clears) ? g.clears : {}).filter(([id, n]) => RAIDS.some((x) => x.id === id) && isNumber(n)));
+      return { owned, raid, clears: clears as Record<string, number>, autoRepeat: typeof g.autoRepeat === "boolean" ? g.autoRepeat : base.autoRepeat };
+    })(),
+    knowledge: Object.fromEntries(
+      Object.entries(isObject(raw.knowledge) ? raw.knowledge : {})
+        .filter(([id, card]) => hasSpecies(id) && isObject(card) && isNumber(card.box) && isNumber(card.due))
+        .map(([id, card]) => [id, { box: Math.max(1, Math.min(5, Math.floor((card as Json).box as number))), due: (card as Json).due as number }]),
+    ),
+    dailyDay: isNumber(raw.dailyDay) ? raw.dailyDay : null,
+    bossReview: Object.fromEntries(Object.entries(isObject(raw.bossReview) ? raw.bossReview : {}).filter(([id, n]) => validBoss(id) && isNumber(n)).map(([id, n]) => [id, Math.max(0, Math.min(3, n as number))])),
     stones: Object.fromEntries(Object.entries(isObject(raw.stones) ? raw.stones : {}).filter(([k, v]) => isBugType(k) && isNumber(v) && v > 0).map(([k, v]) => [k, Math.floor(v as number)])),
     hatchery: Array.from({ length: HATCHERY_SLOTS }, (_, i) => {
       const slot = Array.isArray(raw.hatchery) ? raw.hatchery[i] : null;

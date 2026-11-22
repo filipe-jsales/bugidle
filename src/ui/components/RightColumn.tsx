@@ -3,7 +3,9 @@ import { itemCount } from "../../game/inventory";
 import type { CaptureMode } from "../../game/state";
 import { CAPTURE_MODE_NAMES, ITEM_TEXT, UI } from "../../i18n/ptBR";
 import { store, useGame } from "../store";
-import { ItemIcon, Panel, Toggle } from "./primitives";
+import { Button, ItemIcon, Panel, Toggle } from "./primitives";
+import { LEARN_UI } from "../../i18n/learning.ptBR";
+import { useApp } from "../appContext";
 
 const MODES: CaptureMode[] = ["uncaught", "all", "shiny", "off"];
 
@@ -13,9 +15,19 @@ export function AutomationPanel() {
   const set = (patch: Partial<typeof settings>) => store.update((s) => Object.assign(s.settings, patch));
   const traps = itemsOfCategory("trap");
   const potions = itemsOfCategory("potion");
+  const { open } = useApp();
 
   return (
-    <Panel title={UI.automations} className="automation-panel">
+    <Panel
+      title={UI.automations}
+      className="automation-panel"
+      actions={
+        <Button small variant={settings.useRules ? "gold" : "dark"} onClick={() => open({ kind: "rules" })}>
+          {LEARN_UI.rules.navLabel}
+        </Button>
+      }
+    >
+      {settings.useRules && <p className="small rules-on">{LEARN_UI.rules.useRulesHint}</p>}
       <div className="field">
         <span className="field-label">{UI.captureFilter}</span>
         <div className="segmented">
@@ -73,6 +85,7 @@ export function AutomationPanel() {
       <Toggle checked={settings.autoEvolve} onChange={(v) => set({ autoEvolve: v })} label={UI.autoEvolve} />
       <Toggle checked={settings.throwUntilCaught} onChange={(v) => set({ throwUntilCaught: v })} label={UI.throwUntilCaught} hint={UI.throwUntilCaughtHint} />
       <Toggle checked={settings.autoRevive} onChange={(v) => set({ autoRevive: v })} label={`${UI.autoRevive} (${itemCount(state, "revive")})`} />
+      <Toggle checked={settings.debugChallenges} onChange={(v) => set({ debugChallenges: v })} label={LEARN_UI.debug.setting} hint={LEARN_UI.debug.settingHint} />
       <Toggle checked={settings.returnToHunt} onChange={(v) => set({ returnToHunt: v })} label={UI.returnToHunt} hint={UI.returnToHuntHint} />
     </Panel>
   );

@@ -204,6 +204,11 @@ export const ERROR_TEXT: Record<ActionError, string> = {
   hatcheryFull: "A chocadeira está cheia.",
   minLevel: "Este bug já está no nível 1.",
   notFainted: "O Reviver só funciona em bugs fora de combate.",
+  alreadyOwned: "Este campeão já está na guilda.",
+  notOwned: "Recrute este campeão primeiro.",
+  raidRunning: "Já há uma missão em andamento.",
+  raidLocked: "Complete a missão anterior primeiro.",
+  cannotRun: "Este algoritmo não consegue fazer esta missão.",
 };
 
 export const UI = {

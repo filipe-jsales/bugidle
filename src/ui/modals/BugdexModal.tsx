@@ -8,6 +8,9 @@ import { ITEM_TEXT, RARITY_NAMES, ROUTE_NAMES, SPECIES_DESCRIPTIONS, STAT_NAMES,
 import { useApp } from "../appContext";
 import { BugSprite, Modal, Tag, TypeTag } from "../components/primitives";
 import { useGame } from "../store";
+import { lessonFor } from "../../game/data/lessons";
+import { LEARN_UI, LESSON_WHY } from "../../i18n/learning.ptBR";
+import { CodeBlock } from "../components/CodeBlock";
 
 function DexEntryView({ speciesId }: { speciesId: string }) {
   const state = useGame();
@@ -70,6 +73,17 @@ function DexEntryView({ speciesId }: { speciesId: string }) {
           {entry?.seen ?? 0} / {entry?.defeated ?? 0} / {entry?.caught ?? 0}
         </dd>
       </dl>
+      <section className="dex-fix">
+        <h4>{LEARN_UI.howToFix}</h4>
+        {caught && lessonFor(speciesId) ? (
+          <>
+            <CodeBlock lesson={lessonFor(speciesId)!} reveal />
+            <p className="small">{LESSON_WHY[speciesId]}</p>
+          </>
+        ) : (
+          <p className="muted small">{LEARN_UI.lockedFix}</p>
+        )}
+      </section>
     </div>
   );
 }

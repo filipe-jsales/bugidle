@@ -13,6 +13,11 @@ export type ModalState =
   | { kind: "sound" }
   | { kind: "houses" }
   | { kind: "hatchery" }
+  | { kind: "rules" }
+  | { kind: "study" }
+  | { kind: "guild" }
+  | { kind: "terminal" }
+  | { kind: "review"; bossId: string }
   | { kind: "compare"; a: string; b: string };
 
 export interface AppActions {

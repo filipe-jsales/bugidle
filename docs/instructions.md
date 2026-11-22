@@ -40,6 +40,10 @@ src/
     stones.ts           type stones: drops, evolution cost, refine
     hatchery.ts         mystery eggs: incubation and hatching
     simulation.ts       headless playthrough with a simple player policy, for balancing
+    rules.ts            player IF/THEN automation rules (capture and heal decisions)
+    learning.ts         spaced repetition, daily challenge, boss code review
+    guild.ts            Guild of Algorithms: champions, raids, Big-O based durations
+    data/lessons.ts     one buggy snippet + fix per species (the base of every learning feature)
     state.ts            GameState = PersistentState + RuntimeState
     engine.ts           the idle loop `tick()` and player commands
   sprites/bugSprite.ts  procedural, mirror-symmetric 24x24 bug sprites
@@ -52,6 +56,7 @@ src/
     format.ts           turns engine events into log lines
     render/             canvas helpers: sprites, icons, item art, region backgrounds, era art, attack effects data
     world/worldModel.ts pure model of the explorable map: trainer walk, follower, roaming bugs, camera
+    terminal.ts         the optional shell: parses a line and calls the same commands as the buttons
     components/         layout pieces (sidebar, top nav, battle view, automations, log)
     modals/             windows (bug details, map, Bugdex, box, shop, bag, bosses, save, starter)
 ```
@@ -91,6 +96,14 @@ The game engine decides *when* an encounter happens and resolves it; `worldModel
 ### Balancing
 
 Run `npm run simulate` (optionally with seeds: `npm run simulate -- 1 2 3`). It plays the whole game headless in about a second per seed and prints, per region, when the boss was beaten, boss tries, timeouts, wipes, team levels and coins. After changing any number above, run it and keep the pacing inside the bounds of `simulation.test.ts` (20-45 h total, first region 45 min-5 h, every region slower than the last). Change those bounds only on purpose.
+
+## Learning features
+
+Rule: learning is optional, short and rewarded. It never blocks progress, and a wrong answer only loses a bonus. Tests run the idle loop with `debugChallenges` off (see `testUtils.ts`) and the balance simulation does too.
+
+- Every learning feature reads `data/lessons.ts`. To add a bug, add its lesson and its `LESSON_WHY` text; `lessons.test.ts` fails otherwise.
+- Player text for these features lives in `i18n/learning.ptBR.ts`, `i18n/guild.ptBR.ts` and `i18n/terminal.ptBR.ts`. Terminal commands stay in English, like a real shell.
+- The terminal lives in `src/ui` because it produces text; it only calls game commands.
 
 ## Art pipeline
 
@@ -135,6 +148,11 @@ To go further:
 | - | Explorable map, trainer and follower | `world/worldModel.ts`, `BattleView.tsx` | `worldModel.test.ts`, `trainerSprite.test.ts` |
 | - | Item pixel art | `render/itemArt.ts` | `itemArt.test.ts` |
 | - | Potency, score, stones, refine, hatchery, reduce level | `bug.ts`, `stones.ts`, `hatchery.ts`, `engine.ts` | `stones.test.ts` |
+| - | Lessons, debug to capture, Bugdex fix | `data/lessons.ts`, `engine.ts`, `DebugPanel.tsx` | `lessons.test.ts`, `rules.test.ts` |
+| - | Automation rules | `rules.ts`, `RulesModal.tsx` | `rules.test.ts` |
+| - | Daily challenge, Leitner boxes, boss review | `learning.ts`, `StudyModals.tsx` | `learning.test.ts` |
+| - | Guild of Algorithms | `guild.ts`, `GuildModal.tsx` | `guild.test.ts` |
+| - | Terminal | `ui/terminal.ts`, `TerminalModal.tsx` | `terminal.test.ts` |
 | - | Map pan and zoom | `world/viewport.ts`, `world/usePanZoom.ts` | `viewport.test.ts` |
 | - | Automations (throw until caught, auto revive, return to hunt) | `engine.ts` | `automation.test.ts` |
 | - | Hand-drawn sprites and idle frames | `sprites/handDrawn.ts`, `sprites/bugSprite.ts` | `bugSprite.test.ts` |

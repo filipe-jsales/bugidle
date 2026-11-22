@@ -31,7 +31,12 @@ export type ActionError =
   | "notEnoughStones"
   | "hatcheryFull"
   | "minLevel"
-  | "notFainted";
+  | "notFainted"
+  | "alreadyOwned"
+  | "notOwned"
+  | "raidRunning"
+  | "raidLocked"
+  | "cannotRun";
 
 export const OK: ActionResult = { ok: true };
 export const fail = (reason: ActionError): ActionResult => ({ ok: false, reason });

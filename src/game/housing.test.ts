@@ -7,6 +7,7 @@ import {
   collectAll,
   collectHouse,
   getHouse,
+  highestEra,
   HOUSE_LOTS,
   HOUSE_TIERS,
   houseCoinRate,
@@ -44,6 +45,19 @@ describe("house eras", () => {
       expect(tier.slots).toBeGreaterThanOrEqual(prev.slots);
       expect(tier.storageHours).toBeGreaterThanOrEqual(prev.storageHours);
     }
+  });
+
+  it("follow Moore's law: every era doubles production", () => {
+    for (let i = 1; i < HOUSE_TIERS.length; i++) expect(HOUSE_TIERS[i]!.multiplier).toBe(HOUSE_TIERS[i - 1]!.multiplier * 2);
+  });
+
+  it("the museum shows the highest era reached", () => {
+    const state = stateWith(["leaklet", 10]);
+    expect(highestEra(state)).toBe(-1);
+    state.coins = 10_000_000;
+    buildHouse(state, 0);
+    upgradeHouse(state, 0);
+    expect(highestEra(state)).toBe(1);
   });
 
   it("later lots cost more", () => {

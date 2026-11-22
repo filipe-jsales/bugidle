@@ -111,6 +111,7 @@ export function simulatePlaythrough(options: SimulationOptions = {}): Simulation
   const rng = createSeededRng(options.seed ?? 1);
   const maxMinutes = options.maxMinutes ?? 60 * 40;
   const state = createInitialState("Sim");
+  state.settings.debugChallenges = false;
   chooseStarter(state, options.starter ?? "typobit", rng);
 
   const regions: RegionReport[] = REGIONS.map((r) => ({ regionId: r.id, clearedAtMin: null, bossAttempts: 0, bossTimeouts: 0, wipes: 0, teamLevelsAtClear: [], coinsAtClear: 0 }));

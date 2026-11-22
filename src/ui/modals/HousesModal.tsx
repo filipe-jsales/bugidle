@@ -6,6 +6,7 @@ import {
   collectAll,
   collectHouse,
   getHouse,
+  highestEra,
   HOUSE_LOTS,
   HOUSE_TIERS,
   houseCoinRate,
@@ -24,6 +25,7 @@ import { formatNumber } from "../format";
 import { Bar, BugSprite, Button, Icon, Modal, Tag } from "../components/primitives";
 import { eraUrl } from "../render/eras";
 import { store, useGame } from "../store";
+import { LEARN_UI } from "../../i18n/learning.ptBR";
 
 function BugPicker({ lot, onDone }: { lot: number; onDone: () => void }) {
   const state = useGame();
@@ -135,6 +137,31 @@ function HouseCard({ house }: { house: House }) {
   );
 }
 
+function Museum({ reached }: { reached: number }) {
+  const M = LEARN_UI.museum;
+  return (
+    <section className="subpanel museum">
+      <h4>{M.title}</h4>
+      <p className="muted small">{M.intro}</p>
+      <div className="museum-timeline">
+        {HOUSE_TIERS.map((tier, i) => {
+          const era = HOUSE_ERAS[tier.id]!;
+          const open = i <= reached;
+          return (
+            <div key={tier.id} className={`museum-room ${open ? "open" : "locked"}`}>
+              <img className="pixel era-art" src={eraUrl(i)} width={64} height={48} alt="" />
+              <strong>{era.year}</strong>
+              <span className="small">{open ? era.name : "???"}</span>
+              <small className="muted">{open ? era.description : M.locked}</small>
+              <Tag tone={open ? "gold" : "dark"}>{M.multiplier(tier.multiplier)}</Tag>
+            </div>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
 export function HousesModal() {
   const state = useGame();
   const { close, report, toast } = useApp();
@@ -156,6 +183,7 @@ export function HousesModal() {
       }
     >
       <p className="muted small">{UI.houses.intro}</p>
+      <Museum reached={highestEra(state)} />
       <div className="house-list">
         {HOUSE_LOTS.map((lot) => {
           const house = getHouse(state, lot.lot);

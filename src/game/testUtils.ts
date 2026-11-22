@@ -8,6 +8,8 @@ export const FIXED_IVS = { hp: 15, atk: 15, def: 15, spd: 15 };
 /** A fresh state with the given bugs (speciesId, level) already in the team/box. */
 export function stateWith(...members: [string, number][]): GameState {
   const state = createInitialState();
+  // Tests drive the idle loop without a player, so the optional challenge is off unless a test turns it on.
+  state.settings.debugChallenges = false;
   const rng = createSeededRng(99);
   for (const [speciesId, level] of members) {
     addBug(state, createBug({ uid: nextUid(state), speciesId, level, rng, origin: "test", shiny: false, ivs: { ...FIXED_IVS }, potency: 1 }));
