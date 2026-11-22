@@ -10,7 +10,7 @@ export function stateWith(...members: [string, number][]): GameState {
   const state = createInitialState();
   const rng = createSeededRng(99);
   for (const [speciesId, level] of members) {
-    addBug(state, createBug({ uid: nextUid(state), speciesId, level, rng, origin: "test", shiny: false, ivs: { ...FIXED_IVS } }));
+    addBug(state, createBug({ uid: nextUid(state), speciesId, level, rng, origin: "test", shiny: false, ivs: { ...FIXED_IVS }, potency: 1 }));
   }
   return state;
 }

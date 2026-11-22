@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { ActionResult } from "../game/result";
 import { needsStarter } from "../game/state";
-import { ERROR_TEXT } from "../i18n/ptBR";
+import { ERROR_TEXT, UI } from "../i18n/ptBR";
 import { AppContext, type AppActions, type ModalState } from "./appContext";
 import { BattleView } from "./components/BattleView";
 import { AutomationPanel, LogPanel } from "./components/RightColumn";
@@ -10,7 +10,10 @@ import { TopNav } from "./components/TopNav";
 import { BoxModal } from "./modals/BoxModal";
 import { BugDetailModal } from "./modals/BugDetailModal";
 import { BugdexModal } from "./modals/BugdexModal";
+import { CompareModal } from "./modals/CompareModal";
+import { HatcheryModal } from "./modals/HatcheryModal";
 import { HousesModal } from "./modals/HousesModal";
+import { ProximityPanel } from "./components/ProximityPanel";
 import { MapModal } from "./modals/MapModal";
 import { BossesModal, SaveModal, StarterModal } from "./modals/MiscModals";
 import { BagModal, ShopModal } from "./modals/ShopBagModals";
@@ -28,7 +31,7 @@ function ModalHost({ modal }: { modal: ModalState | null }) {
     case "map":
       return <MapModal />;
     case "bugdex":
-      return <BugdexModal />;
+      return <BugdexModal initialSpecies={modal.speciesId} />;
     case "box":
       return <BoxModal />;
     case "shop":
@@ -43,6 +46,10 @@ function ModalHost({ modal }: { modal: ModalState | null }) {
       return <SoundModal />;
     case "houses":
       return <HousesModal />;
+    case "hatchery":
+      return <HatcheryModal />;
+    case "compare":
+      return <CompareModal a={modal.a} b={modal.b} />;
   }
 }
 
@@ -51,6 +58,7 @@ export function App() {
   const [stack, setStack] = useState<ModalState[]>([]);
   const [toastText, setToastText] = useState<string | null>(null);
   const toastTimer = useRef<number>();
+  const compareSlots = useRef<{ A?: string; B?: string }>({});
 
   useEffect(() => store.start(), []);
   useAudio(state);
@@ -63,14 +71,24 @@ export function App() {
 
   const actions = useMemo<AppActions>(
     () => ({
-      // Opening a bug from the box keeps the box underneath; closing returns to it.
-      open: (modal) => setStack((s) => (modal.kind === "bug" ? [...s, modal] : [modal])),
+      // Opening a bug or a species sheet from another window keeps it underneath; closing returns to it.
+      open: (modal) => setStack((s) => (modal.kind === "bug" || modal.kind === "compare" || (modal.kind === "bugdex" && modal.speciesId) ? [...s, modal] : [modal])),
       close: () => setStack((s) => s.slice(0, -1)),
       report: (result: ActionResult) => {
         if (!result.ok) toast(ERROR_TEXT[result.reason]);
         return result.ok;
       },
       toast,
+      markCompare: (slot, uid) => {
+        compareSlots.current[slot] = uid;
+        const { A, B } = compareSlots.current;
+        if (A && B && A !== B) {
+          compareSlots.current = {};
+          setStack((s) => [...s, { kind: "compare", a: A, b: B }]);
+        } else {
+          toast(UI.compare.pickOther(slot));
+        }
+      },
     }),
     [toast],
   );
@@ -89,6 +107,7 @@ export function App() {
         </main>
         <aside className="column right-column">
           <AutomationPanel />
+          <ProximityPanel />
           <LogPanel />
         </aside>
       </div>

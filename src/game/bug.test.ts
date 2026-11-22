@@ -4,7 +4,7 @@ import { createSeededRng } from "./rng";
 
 const ivs = { hp: 31, atk: 31, def: 31, spd: 31 };
 const make = (level = 5) =>
-  createBug({ uid: "b1", speciesId: "typobit", level, rng: createSeededRng(1), origin: "test", shiny: false, ivs });
+  createBug({ uid: "b1", speciesId: "typobit", level, rng: createSeededRng(1), origin: "test", shiny: false, ivs, potency: 1 });
 
 describe("bug instances", () => {
   it("starts with full HP", () => {

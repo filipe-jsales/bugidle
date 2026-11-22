@@ -3,6 +3,7 @@ import type { BugInstance } from "./bug";
 import type { ItemId } from "./data/items";
 import type { Trainer } from "./experience";
 import type { House } from "./housing";
+import type { StoneWallet } from "./stones";
 
 export const SAVE_VERSION = 1;
 export const MAX_TEAM_SIZE = 6;
@@ -49,6 +50,10 @@ export interface PersistentState {
   totals: { defeats: number; captures: number; playTimeMs: number };
   /** "From Transistor to Cloud" houses where boxed bugs farm. */
   houses: House[];
+  /** Type stones for evolving and refining. */
+  stones: StoneWallet;
+  /** Play time (ms) when the egg in each hatchery slot started, or null. */
+  hatchery: (number | null)[];
   nextUid: number;
 }
 
@@ -100,6 +105,8 @@ export function createInitialState(trainerName = "Hunter"): GameState {
     settings: defaultSettings(),
     totals: { defeats: 0, captures: 0, playTimeMs: 0 },
     houses: [],
+    stones: {},
+    hatchery: [null, null],
     nextUid: 1,
     runtime: createRuntime(),
   };

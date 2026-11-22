@@ -3,13 +3,16 @@
  * throw traps, collect rewards and unlock content. `tick` is called by the UI clock.
  */
 import { activeEnemy, activePlayerBug, createBattle, stepBattle, type BattleEvent, type BattleOutcome } from "./battle";
-import { createBug, healFully, isFainted, maxHp, type BugInstance } from "./bug";
+import { computeStats, createBug, healFully, isFainted, maxHp, type BugInstance } from "./bug";
 import { registerCaught, registerDefeated, registerSeen } from "./bugdex";
 import { captureChance, MAX_THROWS_PER_ENCOUNTER, pickTrap, shouldAttemptCapture } from "./capture";
 import { addBug } from "./collection";
 import { ITEMS, itemsOfCategory, type ItemId, type PotionItem } from "./data/items";
 import { getBoss, getRoute, type RouteDef } from "./data/world";
-import { canEvolveByLevel, evolve } from "./evolution";
+import { evolve } from "./evolution";
+import { tickHatchery } from "./hatchery";
+import { addStones, canEvolveNow, evolutionStoneCost, rollStoneDrops, spendStones } from "./stones";
+import { getSpecies } from "./data/species";
 import { gainTrainerXp, gainXp, xpReward } from "./experience";
 import { tickHousing } from "./housing";
 import { addItem, consumeItem, itemCount } from "./inventory";
@@ -17,6 +20,7 @@ import { awardBadge, canChallengeBoss, isRouteUnlocked, levelCap, refreshRouteUn
 import { fail, OK, type ActionResult } from "./result";
 import { chance, pickWeighted, randomInt, type Rng } from "./rng";
 import { nextUid, STARTER_IDS, teamBugs, type GameState } from "./state";
+import type { BugType } from "./types";
 
 /** Time between encounters: the trainer walks the map looking for the next bug. */
 export const SPAWN_DELAY_MS = 2200;
@@ -35,6 +39,7 @@ const DROP_TABLE: readonly { itemId: ItemId; chance: number; minLevel: number }[
   { itemId: "mutex", chance: 0.002, minLevel: 15 },
   { itemId: "legacyPatch", chance: 0.002, minLevel: 15 },
   { itemId: "cdnToken", chance: 0.002, minLevel: 15 },
+  { itemId: "mysteryEgg", chance: 0.003, minLevel: 10 },
 ];
 
 export type GameEvent =
@@ -58,6 +63,8 @@ export type GameEvent =
   | { type: "levelUp"; uid: string; level: number }
   | { type: "evolved"; uid: string; from: string; to: string }
   | { type: "itemDrop"; itemId: ItemId }
+  | { type: "stoneDrop"; stoneType: BugType; count: number }
+  | { type: "hatched"; uid: string; speciesId: string; shiny: boolean }
   | { type: "potionUsed"; itemId: ItemId; uid: string }
   | { type: "routeUnlocked"; routeId: string }
   | { type: "badge"; badgeId: string; coins: number }
@@ -72,6 +79,8 @@ export function chooseStarter(state: GameState, speciesId: string, rng: Rng): Ac
   if (state.team.length > 0) return fail("busy");
   if (!(STARTER_IDS as readonly string[]).includes(speciesId)) return fail("unknownBug");
   const bug = createBug({ uid: nextUid(state), speciesId, level: STARTER_LEVEL, rng, origin: "starter", shiny: false });
+  bug.caughtAt = Date.now();
+  bug.caughtBy = state.trainer.name;
   addBug(state, bug);
   registerCaught(state, speciesId, false);
   return OK;
@@ -111,12 +120,25 @@ export function visitRebootCenter(state: GameState): ActionResult {
   return OK;
 }
 
-/** RF07: manual evolution for bugs that reached their level (when auto-evolve is off). */
+/** RF07: manual evolution for bugs that reached their level and have the stones (when auto-evolve is off). */
 export function evolveBug(state: GameState, uid: string): ActionResult {
   const bug = state.bugs[uid];
   if (!bug) return fail("unknownBug");
-  if (!canEvolveByLevel(bug)) return fail("cannotEvolve");
+  if (!canEvolveNow(state, bug)) return fail("cannotEvolve");
+  spendStones(state, bug, evolutionStoneCost(getSpecies(bug.speciesId)));
   evolve(state, bug);
+  return OK;
+}
+
+/** Lowers a bug one level (to fit a level cap). XP inside the level is lost. */
+export function reduceLevel(state: GameState, uid: string): ActionResult {
+  const bug = state.bugs[uid];
+  if (!bug) return fail("unknownBug");
+  if (bug.level <= 1) return fail("minLevel");
+  if (state.activity.kind === "boss" && state.team.includes(uid)) return fail("busy");
+  bug.level -= 1;
+  bug.xp = 0;
+  bug.currentHp = Math.min(bug.currentHp, computeStats(bug).hp);
   return OK;
 }
 
@@ -142,6 +164,7 @@ export function tick(state: GameState, dtMs: number, rng: Rng): GameEvent[] {
 function stepOnce(state: GameState, dtMs: number, rng: Rng, events: GameEvent[]): void {
   state.totals.playTimeMs += dtMs;
   tickHousing(state, dtMs);
+  for (const bug of tickHatchery(state, rng)) events.push({ type: "hatched", uid: bug.uid, speciesId: bug.speciesId, shiny: bug.shiny });
   const team = teamBugs(state);
   if (team.length === 0) return;
   const rt = state.runtime;
@@ -224,6 +247,9 @@ function tryCapture(state: GameState, rng: Rng, events: GameEvent[]): void {
 
   const caught: BugInstance = { ...wild, uid: nextUid(state), ivs: { ...wild.ivs }, boosts: { ...wild.boosts }, origin: battle.enemies[0]?.origin ?? wild.origin };
   caught.currentHp = Math.max(1, caught.currentHp);
+  caught.caughtAt = Date.now();
+  caught.caughtBy = state.trainer.name;
+  caught.refine = { ...wild.refine };
   const newEntry = registerCaught(state, caught.speciesId, caught.shiny);
   const destination = addBug(state, caught);
   state.totals.captures += 1;
@@ -259,11 +285,17 @@ function onEnemyDefeated(state: GameState, speciesId: string, level: number, vic
     const { levelsGained } = gainXp(bug, share, cap);
     if (levelsGained > 0) {
       events.push({ type: "levelUp", uid: bug.uid, level: bug.level });
-      if (state.settings.autoEvolve && canEvolveByLevel(bug)) {
+      if (state.settings.autoEvolve && canEvolveNow(state, bug)) {
+        spendStones(state, bug, evolutionStoneCost(getSpecies(bug.speciesId)));
         const from = evolve(state, bug);
         events.push({ type: "evolved", uid: bug.uid, from, to: bug.speciesId });
       }
     }
+  }
+
+  for (const drop of rollStoneDrops(speciesId, isBoss, rng)) {
+    addStones(state, drop.type, drop.count);
+    events.push({ type: "stoneDrop", stoneType: drop.type, count: drop.count });
   }
 
   const trainerLevels = gainTrainerXp(state.trainer, trainerXp);

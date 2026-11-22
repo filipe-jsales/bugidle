@@ -6,6 +6,13 @@ export function xpToNextLevel(level: number): number {
   return Math.floor(Math.pow(level + 1, 3) * 0.8) - Math.floor(Math.pow(level, 3) * 0.8);
 }
 
+/** XP gathered since level 1. */
+export function totalXp(level: number, xpInLevel: number): number {
+  let total = xpInLevel;
+  for (let l = 1; l < level; l++) total += xpToNextLevel(l);
+  return total;
+}
+
 /** Larger means slower leveling. Tuned with `npm run simulate`. */
 export const XP_DIVISOR = 100;
 

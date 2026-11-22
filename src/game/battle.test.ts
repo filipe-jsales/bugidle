@@ -7,7 +7,7 @@ import { createSeededRng } from "./rng";
 const ivs = { hp: 15, atk: 15, def: 15, spd: 15 };
 let counter = 0;
 const bug = (speciesId: string, level: number): BugInstance =>
-  createBug({ uid: `u${counter++}`, speciesId, level, rng: createSeededRng(counter), origin: "test", shiny: false, ivs });
+  createBug({ uid: `u${counter++}`, speciesId, level, rng: createSeededRng(counter), origin: "test", shiny: false, ivs, potency: 1 });
 
 function runToEnd(team: BugInstance[], enemies: BugInstance[], seed = 1, timeLimitMs?: number) {
   const battle = createBattle(timeLimitMs ? "boss" : "wild", enemies, { timeLimitMs });

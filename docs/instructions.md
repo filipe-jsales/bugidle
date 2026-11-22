@@ -37,6 +37,8 @@ src/
     progression.ts      route unlocks, badges, level cap, boss access (RF03, RF04)
     save.ts             export/import JSON with validation, local storage (RF10)
     housing.ts          "From Transistor to Cloud" houses: eras, slots, production
+    stones.ts           type stones: drops, evolution cost, refine
+    hatchery.ts         mystery eggs: incubation and hatching
     simulation.ts       headless playthrough with a simple player policy, for balancing
     state.ts            GameState = PersistentState + RuntimeState
     engine.ts           the idle loop `tick()` and player commands
@@ -77,6 +79,9 @@ The game engine decides *when* an encounter happens and resolves it; `worldModel
 | Defeats to unlock a route (15), base level cap (20) | `data/world.ts` |
 | Prices, trap multipliers, vitamin limit | `data/items.ts` |
 | XP speed (`XP_DIVISOR`) | `experience.ts` |
+| Potency odds and bonuses | `POTENCY_TABLE` in `bug.ts` |
+| Stone drops, evolution stone cost, refine cost | `stones.ts` |
+| Egg time, slots, IV floor, shiny odds | `hatchery.ts` |
 | Capture difficulty, traps per encounter | `CAPTURE_DIFFICULTY`, `MAX_THROWS_PER_ENCOUNTER` in `capture.ts` |
 | Walk speeds, fight spacing, roaming bugs | `worldModel.ts` |
 | Wins to open a route, per region | `DEFEATS_TO_UNLOCK_BY_REGION` in `data/world.ts` |
@@ -119,3 +124,5 @@ Run `npm run simulate` (optionally with seeds: `npm run simulate -- 1 2 3`). It 
 | - | Attack effects per type | `render/attackFx.ts`, `AttackLayer.tsx` | `attackFx.test.ts` |
 | - | Explorable map, trainer and follower | `world/worldModel.ts`, `BattleView.tsx` | `worldModel.test.ts`, `trainerSprite.test.ts` |
 | - | Item pixel art | `render/itemArt.ts` | `itemArt.test.ts` |
+| - | Potency, score, stones, refine, hatchery, reduce level | `bug.ts`, `stones.ts`, `hatchery.ts`, `engine.ts` | `stones.test.ts` |
+| - | Bug screen, compare, proximity panel | `BugDetailModal.tsx`, `CompareModal.tsx`, `ProximityPanel.tsx` | manual check in the browser |

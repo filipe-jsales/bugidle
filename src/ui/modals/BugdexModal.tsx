@@ -74,10 +74,10 @@ function DexEntryView({ speciesId }: { speciesId: string }) {
   );
 }
 
-export function BugdexModal() {
+export function BugdexModal({ initialSpecies }: { initialSpecies?: string }) {
   const state = useGame();
   const { close } = useApp();
-  const [selected, setSelected] = useState<string>(SPECIES[0]!.id);
+  const [selected, setSelected] = useState<string>(initialSpecies ?? SPECIES[0]!.id);
   const progress = dexProgress(state);
   return (
     <Modal

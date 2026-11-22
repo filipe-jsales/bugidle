@@ -1,6 +1,6 @@
 import type { StatKey } from "./stats";
 
-export type ItemCategory = "trap" | "potion" | "vitamin" | "evolution";
+export type ItemCategory = "trap" | "potion" | "vitamin" | "evolution" | "egg";
 
 interface BaseItem {
   readonly id: ItemId;
@@ -25,7 +25,10 @@ export interface VitaminItem extends BaseItem {
 export interface EvolutionItem extends BaseItem {
   readonly category: "evolution";
 }
-export type ItemDef = TrapItem | PotionItem | VitaminItem | EvolutionItem;
+export interface EggItem extends BaseItem {
+  readonly category: "egg";
+}
+export type ItemDef = TrapItem | PotionItem | VitaminItem | EvolutionItem | EggItem;
 
 export const ITEM_IDS = [
   "breakpoint",
@@ -42,6 +45,7 @@ export const ITEM_IDS = [
   "mutex",
   "legacyPatch",
   "cdnToken",
+  "mysteryEgg",
 ] as const;
 export type ItemId = (typeof ITEM_IDS)[number];
 
@@ -63,6 +67,7 @@ export const ITEMS: Readonly<Record<ItemId, ItemDef>> = {
   mutex: { id: "mutex", category: "evolution", price: 800 },
   legacyPatch: { id: "legacyPatch", category: "evolution", price: 800 },
   cdnToken: { id: "cdnToken", category: "evolution", price: 800 },
+  mysteryEgg: { id: "mysteryEgg", category: "egg", price: 3000 },
 };
 
 export function isItemId(value: unknown): value is ItemId {

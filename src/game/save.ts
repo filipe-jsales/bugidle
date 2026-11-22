@@ -1,6 +1,8 @@
 import { MAX_IV, type BugInstance } from "./bug";
 import { isItemId } from "./data/items";
+import { HATCHERY_SLOTS } from "./hatchery";
 import { HOUSE_LOTS, HOUSE_TIERS, type House } from "./housing";
+import { isBugType } from "./types";
 import { hasSpecies } from "./data/species";
 import { BOSSES, ROUTES } from "./data/world";
 import { createInitialState, createRuntime, defaultSettings, SAVE_VERSION, type CaptureMode, type GameState, type PersistentState } from "./state";
@@ -78,7 +80,17 @@ export function importSave(text: string): GameState {
     if (!isObject(raw.bugs)) throw new SaveError("Invalid bugs");
     for (const [uid, bug] of Object.entries(raw.bugs)) {
       if (!isValidBug(bug) || bug.uid !== uid) throw new SaveError(`Invalid bug ${uid}`);
-      bugs[uid] = { ...bug, origin: typeof bug.origin === "string" ? bug.origin : "unknown" };
+      const raw = bug as unknown as Json;
+      const potency = isNumber(raw.potency) && raw.potency >= 1 && raw.potency <= 5 ? (Math.floor(raw.potency) as BugInstance["potency"]) : 1;
+      const refine = isStats(raw.refine) ? (raw.refine as unknown as BugInstance["refine"]) : { hp: 0, atk: 0, def: 0, spd: 0 };
+      bugs[uid] = {
+        ...bug,
+        origin: typeof bug.origin === "string" ? bug.origin : "unknown",
+        potency,
+        refine,
+        caughtAt: isNumber(raw.caughtAt) ? raw.caughtAt : undefined,
+        caughtBy: typeof raw.caughtBy === "string" ? raw.caughtBy : undefined,
+      };
     }
   }
 
@@ -168,6 +180,11 @@ export function importSave(text: string): GameState {
       playTimeMs: isNumber(totalsRaw.playTimeMs) ? totalsRaw.playTimeMs : 0,
     },
     houses,
+    stones: Object.fromEntries(Object.entries(isObject(raw.stones) ? raw.stones : {}).filter(([k, v]) => isBugType(k) && isNumber(v) && v > 0).map(([k, v]) => [k, Math.floor(v as number)])),
+    hatchery: Array.from({ length: HATCHERY_SLOTS }, (_, i) => {
+      const slot = Array.isArray(raw.hatchery) ? raw.hatchery[i] : null;
+      return isNumber(slot) ? slot : null;
+    }),
     nextUid: Math.max(isNumber(raw.nextUid) ? raw.nextUid : 1, maxUid + 1),
     runtime: createRuntime(),
   };

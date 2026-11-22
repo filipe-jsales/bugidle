@@ -15,6 +15,7 @@ import { trainerSpriteUrl } from "../render/pixels";
 import { terrainUrl } from "../render/terrain";
 import { store, useGame, type TimedEvent } from "../store";
 import { createWorld, stepWorld, type Vec, type WorldModel } from "../world/worldModel";
+import { worldFor } from "../world/worldRegistry";
 import { AttackLayer } from "./AttackLayer";
 import { Bar, BugSprite, Button, Icon, ItemIcon, Tag } from "./primitives";
 
@@ -86,7 +87,7 @@ export function BattleView() {
   const scene = sceneInfo(state);
   const region = getRegion(scene.regionId);
 
-  const world = useMemo<WorldModel>(() => createWorld(MAP_W, MAP_H, scene.pool, defaultRng), [scene.key]);
+  const world = useMemo<WorldModel>(() => worldFor(scene.key, () => createWorld(MAP_W, MAP_H, scene.pool, defaultRng)), [scene.key]);
   const lastEnemy = useRef<{ bug: BugInstance; pos: Vec; endedAt: number | null } | null>(null);
 
   useEffect(() => {

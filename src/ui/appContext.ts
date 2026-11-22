@@ -4,14 +4,16 @@ import type { ActionResult } from "../game/result";
 export type ModalState =
   | { kind: "bug"; uid: string }
   | { kind: "map" }
-  | { kind: "bugdex" }
+  | { kind: "bugdex"; speciesId?: string }
   | { kind: "box" }
   | { kind: "shop" }
   | { kind: "bag" }
   | { kind: "bosses" }
   | { kind: "save" }
   | { kind: "sound" }
-  | { kind: "houses" };
+  | { kind: "houses" }
+  | { kind: "hatchery" }
+  | { kind: "compare"; a: string; b: string };
 
 export interface AppActions {
   open: (modal: ModalState) => void;
@@ -19,6 +21,8 @@ export interface AppActions {
   /** Shows an error toast when the result failed. Returns whether it succeeded. */
   report: (result: ActionResult) => boolean;
   toast: (message: string) => void;
+  /** Marks a bug as side A or B of a comparison; opens the comparison when both are set. */
+  markCompare: (slot: "A" | "B", uid: string) => void;
 }
 
 export const AppContext = createContext<AppActions | null>(null);

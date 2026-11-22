@@ -38,6 +38,12 @@ export function captureChance(bug: BugInstance, captureMultiplier: number): numb
   return Math.min(1, Math.max(0, value));
 }
 
+/** Chance of one throw at a full-HP bug of this species: what the proximity list shows. */
+export function baseCaptureChance(speciesId: string, captureMultiplier: number): number {
+  if (captureMultiplier >= GUARANTEED_CAPTURE) return 1;
+  return Math.min(1, ((getSpecies(speciesId).catchRate * captureMultiplier) / (3 * 255)) * CAPTURE_DIFFICULTY);
+}
+
 /** Preferred trap if in stock, otherwise the cheapest trap available (never wastes Root Access). */
 export function pickTrap(inventory: PersistentState["inventory"], preferred: ItemId): TrapItem | null {
   const preferredItem = ITEMS[preferred];

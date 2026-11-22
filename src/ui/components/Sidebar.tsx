@@ -2,7 +2,7 @@ import { activePlayerBug } from "../../game/battle";
 import { dexProgress } from "../../game/bugdex";
 import { BOSSES } from "../../game/data/world";
 import { evolveBug } from "../../game/engine";
-import { canEvolveByLevel } from "../../game/evolution";
+import { canEvolveNow } from "../../game/stones";
 import { trainerXpToNext } from "../../game/experience";
 import { levelCap } from "../../game/progression";
 import { MAX_TEAM_SIZE, teamBugs } from "../../game/state";
@@ -71,7 +71,7 @@ export function ActiveBugCard() {
       ) : (
         <div className="inset muted">-</div>
       )}
-      {active && !state.settings.autoEvolve && canEvolveByLevel(active) && (
+      {active && !state.settings.autoEvolve && canEvolveNow(state, active) && (
         <Button variant="gold" onClick={() => report(store.run((s) => evolveBug(s, active.uid)))}>
           {UI.evolve}
         </Button>

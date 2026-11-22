@@ -122,6 +122,7 @@ describe("idle loop (core loop)", () => {
   it("auto-evolves on level up when enabled", () => {
     const state = stateWith(["pixelmite", 14]);
     firstBug(state).xp = xpToNextLevel(14) - 1;
+    state.stones.ui = 3;
     state.settings.captureMode = "off";
     state.settings.alwaysCaptureShiny = false;
     state.activity = { kind: "route", routeId: "port-3000" };
@@ -226,6 +227,7 @@ describe("reboot center and manual evolution", () => {
   it("evolves on command once the level is reached", () => {
     const state = stateWith(["nullit", 17]);
     const bug = firstBug(state);
+    state.stones.logic = 3;
     expect(evolveBug(state, bug.uid).ok).toBe(false);
     bug.level = 18;
     expect(evolveBug(state, bug.uid).ok).toBe(true);

@@ -20,6 +20,20 @@ export const TYPE_NAMES: Record<BugType, string> = {
   ui: "INTERFACE",
 };
 
+/** Type names in normal case, used in phrases ("Pedra de Lógica"). */
+export const TYPE_LABELS: Record<BugType, string> = {
+  syntax: "Sintaxe",
+  logic: "Lógica",
+  memory: "Memória",
+  concurrency: "Concorrência",
+  network: "Rede",
+  security: "Segurança",
+  performance: "Desempenho",
+  ui: "Interface",
+};
+
+export const stoneName = (type: BugType): string => `Pedra de ${TYPE_LABELS[type]}`;
+
 export const STAT_NAMES: Record<StatKey, string> = { hp: "HP", atk: "ATK", def: "DEF", spd: "SPD" };
 
 export const RARITY_NAMES: Record<Rarity, string> = {
@@ -86,6 +100,7 @@ export const ITEM_TEXT: Record<ItemId, { name: string; description: string }> = 
   mutex: { name: "Mutex", description: "Evolui o Racemite. Trava demais e vira deadlock." },
   legacyPatch: { name: "Patch Legado", description: "Evolui o Floatfly." },
   cdnToken: { name: "Token de CDN", description: "Evolui o Cachemoth." },
+  mysteryEgg: { name: "Ovo Misterioso", description: "Vai para a chocadeira e vira um bug surpresa das regiões que você já abriu." },
 };
 
 export const CATEGORY_NAMES: Record<ItemCategory, string> = {
@@ -93,6 +108,7 @@ export const CATEGORY_NAMES: Record<ItemCategory, string> = {
   potion: "Poções",
   vitamin: "Melhorias",
   evolution: "Evolução",
+  egg: "Ovos",
 };
 
 /** Eras of the "From Transistor to Cloud" houses, keyed by HOUSE_TIERS ids. */
@@ -180,6 +196,11 @@ export const ERROR_TEXT: Record<ActionError, string> = {
   noHouse: "Construa a casa primeiro.",
   lotLocked: "Este terreno ainda está bloqueado.",
   maxTier: "Esta casa já está na última era.",
+  statFixed: "A velocidade não pode ser refinada.",
+  refineMaxed: "Este atributo já está no refino máximo (+10).",
+  notEnoughStones: "Pedras insuficientes.",
+  hatcheryFull: "A chocadeira está cheia.",
+  minLevel: "Este bug já está no nível 1.",
 };
 
 export const UI = {
@@ -194,6 +215,7 @@ export const UI = {
     bosses: "Chefes",
     save: "Save",
     houses: "Casas",
+    hatchery: "Ovos",
     sound: "Som",
   },
   inField: "EM CAMPO",
@@ -328,4 +350,79 @@ export const UI = {
     inHouse: "na casa",
   },
   encounterLevel: (name: string, level: number) => `${name} · nível ${level}`,
+  detail: {
+    tiers: { weak: "FRACO", fair: "RAZOÁVEL", good: "BOM", great: "ÓTIMO", excellent: "EXCELENTE", perfect: "PERFEITO" },
+    potency: "POTÊNCIA",
+    quality: "QUALIDADE",
+    ivSum: "IV SOMADO",
+    power: "PODER",
+    ranking: (rank: number, total: number) => `Ranking: #${rank} de ${total}`,
+    combatHp: "HP DE COMBATE",
+    speed: "VELOCIDADE",
+    attackEvery: (seconds: string) => `ataca a cada ${seconds} s`,
+    compareA: "Comparar com A",
+    compareB: "Comparar com B",
+    reduceLevel: "Reduzir o nível",
+    reduceConfirm: "Clique de novo para baixar 1 nível",
+    copySummary: "Copiar resumo",
+    copied: "Resumo copiado.",
+    speciesSheet: "Ver a ficha da espécie",
+    stats: "STATS ATUAIS",
+    legendStats: "Stats atuais",
+    legendIv: "IV (0 a 31)",
+    ivExplain:
+      "O IV de cada stat é sorteado na captura (0 a 31 por stat, soma até 124). Dá para montar a equipe pelo perfil: tanque (HP e DEF altos), atacante (ATK) ou rápido (SPD). Velocidade alta faz o bug atacar mais vezes.",
+    baseStats: "STATS-BASE DA ESPÉCIE",
+    baseHint: "antes de nível, IV, refino e potência",
+    fixed: "FIXO",
+    refineExplain: (unit: number) =>
+      `Refinar soma +2 ao stat-base. O preço é cúbico: ter +N num stat custa ${unit} x N³ pedras somando tudo. Cada stat tem a própria conta, até +10. Bugs de dois tipos podem usar pedras dos dois tipos.`,
+    evolution: "EVOLUÇÃO",
+    needsLevel: (current: number, needed: number) => `Precisa de Nv ${current}/${needed}`,
+    needsStones: (name: string, needed: number, owned: number) => `${name} x${needed} (você tem ${owned})`,
+    needsItem: (name: string) => `Precisa do item ${name}`,
+    finalForm: "Esta é a forma final.",
+    experience: "EXPERIÊNCIA",
+    xpTotal: "XP ACUMULADO",
+    xpMissing: "FALTAM",
+    nextLevel: "PRÓXIMO NÍVEL",
+    atCap: "No limite de nível",
+    identity: "IDENTIDADE E CONQUISTAS",
+    id: "IDENTIDADE",
+    caughtAt: "CAPTURADO EM",
+    caughtBy: "CAPTURADO POR",
+    species: "ESPÉCIE",
+    origin: "ORIGEM",
+    unknown: "desconhecido",
+    potencyTitle: "A POTÊNCIA DESTE BUG",
+    thisOne: "É ESTE",
+    potencyExplain:
+      "A coluna destacada é a potência que ele tirou ao nascer. As outras mostram o que ele seria com outra sorte: por isso uma potência alta vale tanto.",
+    origins: { starter: "Bug inicial", egg: "Chocadeira" } as Record<string, string>,
+  },
+  hatchery: {
+    title: "CHOCADEIRA",
+    intro: "Ponha um Ovo Misterioso numa vaga. Depois de 20 minutos de jogo ele choca sozinho e vira um bug surpresa das regiões que você já abriu, com IV mínimo de 10 por stat, mais chance de potência alta e de ser shiny (1 em 128).",
+    emptySlot: "Vaga livre",
+    timeLeft: "choca em",
+    incubate: "Chocar um ovo",
+    buy: "Comprar ovo",
+    poolTitle: "PODE NASCER",
+    poolHint: "Comuns nascem mais que raros. Lendários não nascem de ovos.",
+  },
+  proximity: {
+    title: "PROXIMIDADE PARA CAPTURA",
+    fighting: "em batalha",
+    throwsLeft: (n: number) => `${n} armadilha${n === 1 ? "" : "s"} restante${n === 1 ? "" : "s"}`,
+    chance: (pct: string) => `${pct}% por armadilha`,
+    newTag: "NOVO",
+    empty: "Nenhum bug por perto.",
+  },
+  bagStones: "PEDRAS",
+  compare: {
+    title: "COMPARAR BUGS",
+    pickOther: (slot: string) => `Marcado como ${slot}. Agora abra outro bug e use "Comparar com ${slot === "A" ? "B" : "A"}".`,
+    better: "melhor",
+    score: "Nota",
+  },
 } as const;

@@ -41,7 +41,21 @@ Status: `[x]` done, `[ ]` to do. Keep this file current when a task is finished 
 - [x] Harder capture: chance x0.3 (`CAPTURE_DIFFICULTY`) and at most 3 traps per encounter (`MAX_THROWS_PER_ENCOUNTER`)
 - [x] Slower leveling: `XP_DIVISOR` 55 -> 100; encounters every 2.2 s (time to walk). Simulated playthrough now about 31 h (first region 1.4-3.3 h)
 
+## v0.4
+
+- [x] Potency P1-P5 rolled at birth (74.5% / 20% / 5% / 0.5% / 0.005%), +0% to +100% on every stat
+- [x] Bug score 0-10 (IVs up to 6 points, potency up to 4) with tiers from FRACO to PERFEITO
+- [x] Type stones: dropped by defeated bugs (30% per type, bosses 3 per type); level evolutions now cost 3 (first stage) or 8 (second stage) stones
+- [x] Refine: +1 on HP/ATK/DEF raises the base stat by 2, cubic cost (3 x N^3 total), up to +10; speed is fixed; dual types spend both stone types
+- [x] Hatchery: 2 slots, mystery eggs (shop 3000 or rare drop) hatch in 20 min of play into a bug from opened regions, IV >= 10, better potency odds, shiny 1/128
+- [x] Proximity panel: nearest wild bugs with the catch chance of the preferred trap, the current fight and traps left
+- [x] Bug screen redesign (PokeIdle style): score hero, potency/quality/IV, power with ranking, combat HP, speed, compare A/B, copy summary, reduce level, species sheet, stats radar with IVs, base stats with refine, evolution path with requirements, experience, identity (id, date, caught by, origin), potency table
+- [x] Catch date and catcher saved on every new bug
+
 ## Next (core polish)
+
+- [ ] Early game is slow (first region about 3 h in the simulation; a level-2 win gives +1 xp)
+- [ ] Simulation policy does not refine or hatch eggs yet
 
 - [ ] Early levels feel slow: a level-2 bug gives +1 xp. Consider a minimum XP per win or a gentler curve for levels 1-10
 - [ ] Trainer customization (avatar colors, outfits)

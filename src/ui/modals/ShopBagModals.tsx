@@ -3,13 +3,15 @@ import { maxHp } from "../../game/bug";
 import { ITEMS, itemsOfCategory, type ItemCategory, type ItemId } from "../../game/data/items";
 import { getSpecies } from "../../game/data/species";
 import { buyItem, itemCount, useItemOnBug } from "../../game/inventory";
-import { CATEGORY_NAMES, ITEM_TEXT, UI } from "../../i18n/ptBR";
+import { BUG_TYPES } from "../../game/types";
+import { CATEGORY_NAMES, ITEM_TEXT, stoneName, UI } from "../../i18n/ptBR";
+import { stoneIconUrl } from "../render/icons";
 import { useApp } from "../appContext";
 import { formatNumber } from "../format";
 import { BugSprite, Button, Icon, ItemIcon, Modal } from "../components/primitives";
 import { store, useGame } from "../store";
 
-const CATEGORIES: ItemCategory[] = ["trap", "potion", "vitamin", "evolution"];
+const CATEGORIES: ItemCategory[] = ["trap", "potion", "vitamin", "evolution", "egg"];
 const QUANTITIES = [1, 10, 50];
 
 export function ShopModal() {
@@ -77,11 +79,22 @@ export function BagModal() {
   const { close, report, toast } = useApp();
   const [selected, setSelected] = useState<ItemId | null>(null);
   const owned = (Object.keys(ITEMS) as ItemId[]).filter((id) => itemCount(state, id) > 0);
-  const usable = selected && ITEMS[selected].category !== "trap";
+  const usable = selected && ITEMS[selected].category !== "trap" && ITEMS[selected].category !== "egg";
   const bugs = Object.values(state.bugs).sort((a, b) => Number(state.team.includes(b.uid)) - Number(state.team.includes(a.uid)));
 
   return (
     <Modal title={UI.nav.bag.toUpperCase()} onClose={close} wide>
+      <section className="subpanel">
+        <h4>{UI.bagStones}</h4>
+        <div className="stone-grid">
+          {BUG_TYPES.map((type) => (
+            <span key={type} className="stone-chip">
+              <img className="pixel" src={stoneIconUrl(type)} width={24} height={24} alt="" />
+              {stoneName(type)} <strong>x{state.stones[type] ?? 0}</strong>
+            </span>
+          ))}
+        </div>
+      </section>
       {owned.length === 0 ? (
         <p className="muted">{UI.bag.empty}</p>
       ) : (

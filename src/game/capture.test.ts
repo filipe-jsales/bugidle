@@ -1,6 +1,6 @@
 import { maxHp } from "./bug";
 import { registerCaught } from "./bugdex";
-import { captureChance, pickTrap, shouldAttemptCapture } from "./capture";
+import { baseCaptureChance, captureChance, pickTrap, shouldAttemptCapture } from "./capture";
 import { createInitialState } from "./state";
 import { firstBug, stateWith } from "./testUtils";
 
@@ -77,6 +77,12 @@ describe("trap choice", () => {
 });
 
 describe("capture difficulty", () => {
+  it("base chance matches a full-HP bug and is guaranteed with Root Access", () => {
+    const bug = firstBug(stateWith(["typobit", 5]));
+    expect(baseCaptureChance("typobit", 1)).toBeCloseTo(captureChance(bug, 1), 6);
+    expect(baseCaptureChance("markmoth", 255)).toBe(1);
+  });
+
   it("a common bug at full HP is rarely caught with a basic trap", () => {
     const bug = firstBug(stateWith(["typobit", 5]));
     expect(captureChance(bug, 1)).toBeLessThan(0.1);

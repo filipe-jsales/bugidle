@@ -1,5 +1,7 @@
 import type { ItemId } from "../../game/data/items";
 import { ITEM_ART, ITEM_COLORS } from "./itemArt";
+import type { BugType } from "../../game/types";
+import { TYPE_PALETTES } from "../../sprites/bugSprite";
 import { pixelArtUrl } from "./pixels";
 
 /** Hand-drawn 12x12 pixel icons. k = dark outline, w = white, other letters = colors below. */
@@ -15,6 +17,7 @@ const COLORS = {
   B: "#3a6fb8",
   p: "#c477e8",
   P: "#8a45b0",
+  O: "#5a3a22",
   n: "#5fcf7a",
   N: "#3a9152",
   o: "#8a5a3a",
@@ -189,6 +192,20 @@ const ART = {
     ".kwwwookwwk.",
     ".kkkkkkkkkk.",
   ],
+  hatchery: [
+    "....kkkk....",
+    "...kwwwwk...",
+    "..kwwnwwwk..",
+    "..kwnnnwwk..",
+    ".kwwwnwwwwk.",
+    ".kwwwwwwpwk.",
+    ".kwpwwwppwk.",
+    "kkkkkkkkkkkk",
+    "koooooooooOk",
+    "kOooooooooOk",
+    ".kOOOOOOOOk.",
+    "..kkkkkkkk..",
+  ],
   close: [
     "kk......kk..",
     "kwk....kwk..",
@@ -209,6 +226,27 @@ export type IconName = keyof typeof ART;
 
 export function itemIconUrl(id: ItemId): string {
   return pixelArtUrl(ITEM_ART[id], ITEM_COLORS);
+}
+
+const STONE_ART = [
+  "............",
+  "....kkkk....",
+  "...kLLMMk...",
+  "..kLLwMMMk..",
+  ".kLLwMMMMDk.",
+  ".kLMMMMMMDk.",
+  ".kMMMMMMDDk.",
+  ".kMMMMMDDDk.",
+  "..kMMMDDDk..",
+  "...kMDDDk...",
+  "....kkkk....",
+  "............",
+];
+
+/** A gem tinted with the type's colors. */
+export function stoneIconUrl(type: BugType): string {
+  const palette = TYPE_PALETTES[type];
+  return pixelArtUrl(STONE_ART, { k: "#1f1424", w: "#ffffff", L: palette.light, M: palette.body, D: palette.shade });
 }
 
 export function iconUrl(name: IconName): string {

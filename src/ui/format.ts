@@ -45,6 +45,10 @@ export function describeEvent(event: GameEvent, state: GameState): { text: strin
       return { text: `${bugName(state, event.uid)} subiu para o nível ${event.level}!`, tone: "good" };
     case "evolved":
       return { text: `${speciesName(event.from)} evoluiu para ${speciesName(event.to)}!`, tone: "rare" };
+    case "hatched":
+      return { text: `Um ovo chocou: ${speciesName(event.speciesId)}${event.shiny ? " SHINY" : ""}!`, tone: event.shiny ? "rare" : "good" };
+    case "stoneDrop":
+      return null;
     case "itemDrop":
       return { text: `Encontrou ${ITEM_TEXT[event.itemId].name}!`, tone: "good" };
     case "potionUsed":

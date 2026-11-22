@@ -25,7 +25,12 @@ export type ActionError =
   | "houseExists"
   | "noHouse"
   | "lotLocked"
-  | "maxTier";
+  | "maxTier"
+  | "statFixed"
+  | "refineMaxed"
+  | "notEnoughStones"
+  | "hatcheryFull"
+  | "minLevel";
 
 export const OK: ActionResult = { ok: true };
 export const fail = (reason: ActionError): ActionResult => ({ ok: false, reason });
