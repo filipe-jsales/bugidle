@@ -11,7 +11,7 @@ import { formatNumber } from "../format";
 import { BugSprite, Button, Icon, ItemIcon, Modal } from "../components/primitives";
 import { store, useGame } from "../store";
 
-const CATEGORIES: ItemCategory[] = ["trap", "potion", "vitamin", "evolution", "egg"];
+const CATEGORIES: ItemCategory[] = ["trap", "potion", "revive", "vitamin", "evolution", "egg"];
 const QUANTITIES = [1, 10, 50];
 
 export function ShopModal() {

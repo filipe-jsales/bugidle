@@ -52,8 +52,15 @@ export function LevelTag({ level }: { level: number }) {
   );
 }
 
-export function BugSprite({ speciesId, shiny = false, size = 48, silhouette = false, className = "" }: { speciesId: string; shiny?: boolean; size?: number; silhouette?: boolean; className?: string }) {
-  return <img className={`pixel ${className}`} src={bugSpriteUrl(speciesId, shiny, silhouette)} width={size} height={size} alt="" draggable={false} />;
+const FRAME_MS = 420;
+
+/**
+ * A bug sprite. With `animate`, it alternates its two idle frames; `phase`
+ * offsets the cycle so bugs on screen do not breathe in sync.
+ */
+export function BugSprite({ speciesId, shiny = false, size = 48, silhouette = false, className = "", animate = false, phase = 0 }: { speciesId: string; shiny?: boolean; size?: number; silhouette?: boolean; className?: string; animate?: boolean; phase?: number }) {
+  const frame = animate ? ((Math.floor(performance.now() / FRAME_MS + phase) % 2) as 0 | 1) : 0;
+  return <img className={`pixel ${className}`} src={bugSpriteUrl(speciesId, shiny, silhouette, frame)} width={size} height={size} alt="" draggable={false} />;
 }
 
 export function Icon({ name, size = 24 }: { name: IconName; size?: number }) {

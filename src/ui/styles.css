@@ -752,7 +752,7 @@ input[type="range"] {
 .modal-backdrop {
   position: fixed;
   inset: 0;
-  z-index: 50;
+  z-index: 9000;
   background: rgba(14, 6, 18, 0.72);
   display: grid;
   place-items: center;
@@ -844,7 +844,7 @@ input[type="range"] {
   left: 50%;
   bottom: 24px;
   transform: translateX(-50%);
-  z-index: 100;
+  z-index: 9500;
   background: var(--inset);
   border: 3px solid var(--purple);
   border-radius: 4px;
@@ -985,12 +985,20 @@ input[type="range"] {
   justify-content: space-between;
   align-items: center;
 }
-.map-canvas {
+.map-viewport {
   position: relative;
   height: 420px;
+  overflow: hidden;
   border: 3px solid var(--inset-border);
   border-radius: 4px;
-  background-size: cover;
+  background: #1a1020;
+}
+.map-canvas {
+  position: absolute;
+  left: 0;
+  top: 0;
+  transform-origin: 0 0;
+  background-repeat: no-repeat;
 }
 .map-paths {
   position: absolute;
@@ -1668,7 +1676,7 @@ input[type="range"] {
     max-height: 100vh;
     border-radius: 0;
   }
-  .map-canvas {
+  .map-viewport {
     height: 340px;
   }
   .map-node {
@@ -2260,4 +2268,58 @@ input[type="range"] {
 }
 .proximity-panel {
   max-height: 250px;
+}
+
+/* pan and zoom */
+.battle-scene,
+.map-viewport {
+  touch-action: none;
+  cursor: grab;
+  user-select: none;
+}
+.battle-scene:active,
+.map-viewport:active {
+  cursor: grabbing;
+}
+.world {
+  transform-origin: 0 0;
+}
+.map-controls {
+  position: absolute;
+  right: 10px;
+  bottom: 10px;
+  z-index: 7000;
+  display: flex;
+  gap: 4px;
+}
+.map-controls .btn {
+  min-width: 34px;
+  font-size: 18px;
+  line-height: 1;
+}
+.battle-label,
+.battle-actions {
+  z-index: 7000;
+}
+
+/* livelier hits: the target is pushed back while it flashes */
+.hit-flash {
+  animation: hit-knock 320ms steps(4);
+}
+@keyframes hit-knock {
+  0% {
+    filter: brightness(2.4) saturate(0);
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-3px);
+  }
+  50% {
+    filter: brightness(2.4) saturate(0);
+    transform: translateX(3px);
+  }
+  100% {
+    filter: none;
+    transform: none;
+  }
 }

@@ -1,6 +1,6 @@
 import type { StatKey } from "./stats";
 
-export type ItemCategory = "trap" | "potion" | "vitamin" | "evolution" | "egg";
+export type ItemCategory = "trap" | "potion" | "revive" | "vitamin" | "evolution" | "egg";
 
 interface BaseItem {
   readonly id: ItemId;
@@ -25,10 +25,15 @@ export interface VitaminItem extends BaseItem {
 export interface EvolutionItem extends BaseItem {
   readonly category: "evolution";
 }
+export interface ReviveItem extends BaseItem {
+  readonly category: "revive";
+  /** Fraction of max HP restored. */
+  readonly restore: number;
+}
 export interface EggItem extends BaseItem {
   readonly category: "egg";
 }
-export type ItemDef = TrapItem | PotionItem | VitaminItem | EvolutionItem | EggItem;
+export type ItemDef = TrapItem | PotionItem | ReviveItem | VitaminItem | EvolutionItem | EggItem;
 
 export const ITEM_IDS = [
   "breakpoint",
@@ -38,6 +43,7 @@ export const ITEM_IDS = [
   "coffee",
   "energyDrink",
   "rebootDisk",
+  "revive",
   "docs",
   "codeReview",
   "unitTest",
@@ -60,6 +66,7 @@ export const ITEMS: Readonly<Record<ItemId, ItemDef>> = {
   coffee: { id: "coffee", category: "potion", price: 15, heal: 30 },
   energyDrink: { id: "energyDrink", category: "potion", price: 45, heal: 90 },
   rebootDisk: { id: "rebootDisk", category: "potion", price: 120, heal: Infinity },
+  revive: { id: "revive", category: "revive", price: 250, restore: 0.5 },
   docs: { id: "docs", category: "vitamin", price: 1000, stat: "hp", boost: 2 },
   codeReview: { id: "codeReview", category: "vitamin", price: 1000, stat: "atk", boost: 2 },
   unitTest: { id: "unitTest", category: "vitamin", price: 1000, stat: "def", boost: 2 },

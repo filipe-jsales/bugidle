@@ -106,6 +106,7 @@ export function soundForEvent(event: GameEvent): SoundId | null {
     case "bossStart":
       return "bossStart";
     case "potionUsed":
+    case "revived":
     case "recovered":
       return "heal";
     default:

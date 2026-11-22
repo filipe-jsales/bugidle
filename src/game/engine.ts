@@ -71,6 +71,7 @@ export type GameEvent =
   | { type: "bossFailed"; bossId: string; outcome: BattleOutcome }
   | { type: "teamWiped" }
   | { type: "recovered" }
+  | { type: "revived"; uid: string }
   | { type: "trainerLevelUp"; level: number };
 
 // ---------------------------------------------------------------- commands
@@ -91,6 +92,7 @@ export function selectRoute(state: GameState, routeId: string): ActionResult {
   if (!isRouteUnlocked(state, routeId)) return fail("routeLocked");
   if (state.activity.kind === "boss") return fail("busy");
   state.activity = { kind: "route", routeId };
+  state.runtime.atCenter = false;
   endBattle(state);
   return OK;
 }
@@ -101,6 +103,7 @@ export function challengeBoss(state: GameState, bossId: string): ActionResult {
   if (state.activity.kind === "boss") return fail("busy");
   const returnRouteId = state.activity.routeId;
   state.activity = { kind: "boss", bossId, returnRouteId };
+  state.runtime.atCenter = false;
   endBattle(state);
   return OK;
 }
@@ -117,6 +120,14 @@ export function visitRebootCenter(state: GameState): ActionResult {
   if (state.activity.kind === "boss") return fail("busy");
   endBattle(state);
   state.runtime.recoveryMs = RECOVERY_MS;
+  state.runtime.atCenter = !state.settings.returnToHunt;
+  return OK;
+}
+
+/** Sends the team back out after it was left at the Reboot Center. */
+export function returnToHunt(state: GameState): ActionResult {
+  state.runtime.atCenter = false;
+  state.runtime.spawnTimerMs = SPAWN_DELAY_MS;
   return OK;
 }
 
@@ -178,6 +189,7 @@ function stepOnce(state: GameState, dtMs: number, rng: Rng, events: GameEvent[])
     }
     return;
   }
+  if (rt.atCenter) return;
 
   if (!rt.battle) {
     rt.spawnTimerMs -= dtMs;
@@ -191,7 +203,13 @@ function stepOnce(state: GameState, dtMs: number, rng: Rng, events: GameEvent[])
   const battle = rt.battle;
   const battleEvents = stepBattle(battle, team, dtMs, { levelCap: levelCap(state), rng });
   for (const event of battleEvents) {
+    if (event.type === "outcome" && event.outcome === "lost" && teamBugs(state).some((b) => !isFainted(b))) {
+      // A Revive brought a bug back after the last faint: the fight goes on.
+      battle.outcome = null;
+      continue;
+    }
     events.push(event);
+    if (event.type === "faint" && event.side === "player") tryRevive(state, event.uid, events);
     if (event.type === "faint" && event.side === "enemy") onEnemyDefeated(state, event.speciesId, event.level, event.victorUid, rng, events);
     if (event.type === "attack" && event.side === "player") tryCapture(state, rng, events);
   }
@@ -226,13 +244,22 @@ export function spawnWild(route: RouteDef, rng: Rng): BugInstance {
   return createBug({ uid: `wild-${Math.floor(rng() * 1e9)}`, speciesId: encounter.speciesId, level, rng, origin: route.id });
 }
 
+/** Automation: bring a fallen bug back with a Revive, keeping it in the fight. */
+function tryRevive(state: GameState, uid: string, events: GameEvent[]): void {
+  const bug = state.bugs[uid];
+  if (!bug || !state.settings.autoRevive || !consumeItem(state, "revive")) return;
+  bug.currentHp = Math.max(1, Math.floor(maxHp(bug) * (ITEMS.revive as { restore: number }).restore));
+  events.push({ type: "revived", uid });
+}
+
 /** RF05: automatic, filter-driven trap throws. */
 function tryCapture(state: GameState, rng: Rng, events: GameEvent[]): void {
   const battle = state.runtime.battle;
   if (!battle || battle.kind !== "wild" || battle.outcome) return;
   const wild = activeEnemy(battle);
   if (!wild || isFainted(wild) || !shouldAttemptCapture(state.settings, wild, state)) return;
-  if (state.runtime.captureAttemptsThisBattle >= MAX_THROWS_PER_ENCOUNTER) return;
+  const limit = state.settings.throwUntilCaught ? Infinity : MAX_THROWS_PER_ENCOUNTER;
+  if (state.runtime.captureAttemptsThisBattle >= limit) return;
   const trap = pickTrap(state.inventory, state.settings.preferredTrap);
   if (!trap) {
     if (state.runtime.captureAttemptsThisBattle === 0) events.push({ type: "outOfTraps" });
@@ -334,6 +361,7 @@ function finishBattle(state: GameState, outcome: BattleOutcome, events: GameEven
   if (outcome === "lost") {
     events.push({ type: "teamWiped" });
     state.runtime.recoveryMs = RECOVERY_MS;
+    state.runtime.atCenter = !state.settings.returnToHunt;
   }
 }
 

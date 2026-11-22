@@ -45,6 +45,11 @@ export function useItemOnBug(state: PersistentState, itemId: ItemId, uid: string
       bug.currentHp = Math.min(max, bug.currentHp + item.heal);
       break;
     }
+    case "revive": {
+      if (!isFainted(bug)) return fail("notFainted");
+      bug.currentHp = Math.max(1, Math.floor(maxHp(bug) * item.restore));
+      break;
+    }
     case "vitamin": {
       if (bug.boosts[item.stat] + item.boost > MAX_VITAMIN_BOOST) return fail("vitaminMaxed");
       const hpBefore = computeStats(bug).hp;
@@ -58,6 +63,7 @@ export function useItemOnBug(state: PersistentState, itemId: ItemId, uid: string
       break;
     }
     case "trap":
+    case "egg":
       return fail("wrongItem");
   }
   consumeItem(state, itemId);

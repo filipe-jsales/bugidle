@@ -1,5 +1,5 @@
 import { getSpecies } from "../../game/data/species";
-import { colorFor, generateBugSprite, shinyPalette, SPRITE_SIZE, TYPE_PALETTES } from "../../sprites/bugSprite";
+import { colorFor, generateBugSprite, shinyPalette, SPRITE_SIZE, TYPE_PALETTES, type AnimFrame } from "../../sprites/bugSprite";
 import { TRAINER_HEIGHT, TRAINER_PALETTE, TRAINER_WIDTH, trainerPixels, Tp, type Facing, type WalkFrame } from "../../sprites/trainerSprite";
 
 const urlCache = new Map<string, string>();
@@ -14,15 +14,15 @@ function createCanvas(width: number, height: number): [HTMLCanvasElement, Canvas
 }
 
 /** Data URL of a species sprite at 1 pixel per cell (scale it with CSS, pixelated). */
-export function bugSpriteUrl(speciesId: string, shiny: boolean, silhouette = false): string {
-  const key = `${speciesId}|${shiny}|${silhouette}`;
+export function bugSpriteUrl(speciesId: string, shiny: boolean, silhouette = false, frame: AnimFrame = 0): string {
+  const key = `${speciesId}|${shiny}|${silhouette}|${frame}`;
   const cached = urlCache.get(key);
   if (cached) return cached;
   const species = getSpecies(speciesId);
   const base = TYPE_PALETTES[species.types[0]];
   const palette = shiny ? shinyPalette(base) : base;
   const secondary = species.types[1] ? TYPE_PALETTES[species.types[1]] : undefined;
-  const grid = generateBugSprite(species);
+  const grid = generateBugSprite(species, frame);
   const [canvas, ctx] = createCanvas(SPRITE_SIZE, SPRITE_SIZE);
   for (let i = 0; i < grid.pixels.length; i++) {
     const color = colorFor(grid.pixels[i]!, palette, shiny ? undefined : secondary);

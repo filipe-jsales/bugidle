@@ -3,7 +3,7 @@ import { activeEnemy, activePlayerBug } from "../../game/battle";
 import { maxHp, type BugInstance } from "../../game/bug";
 import { getSpecies } from "../../game/data/species";
 import { getBoss, getRegion, getRoute } from "../../game/data/world";
-import { forfeitBoss, RECOVERY_MS, visitRebootCenter } from "../../game/engine";
+import { forfeitBoss, RECOVERY_MS, returnToHunt, visitRebootCenter } from "../../game/engine";
 import { defaultRng } from "../../game/rng";
 import { teamBugs, type GameState } from "../../game/state";
 import { walkFrame } from "../../sprites/trainerSprite";
@@ -16,12 +16,14 @@ import { terrainUrl } from "../render/terrain";
 import { store, useGame, type TimedEvent } from "../store";
 import { createWorld, stepWorld, type Vec, type WorldModel } from "../world/worldModel";
 import { worldFor } from "../world/worldRegistry";
+import { usePanZoom } from "../world/usePanZoom";
 import { AttackLayer } from "./AttackLayer";
 import { Bar, BugSprite, Button, Icon, ItemIcon, Tag } from "./primitives";
 
 /** Map size in screen pixels; the terrain is generated at half and scaled 2x. */
 const MAP_W = 1800;
 const MAP_H = 1100;
+const MAP_SIZE = { width: MAP_W, height: MAP_H };
 const BUG_PX = 56;
 const WILD_PX = 44;
 const TRAINER_SCALE = 2.5;
@@ -89,6 +91,7 @@ export function BattleView() {
 
   const world = useMemo<WorldModel>(() => worldFor(scene.key, () => createWorld(MAP_W, MAP_H, scene.pool, defaultRng)), [scene.key]);
   const lastEnemy = useRef<{ bug: BugInstance; pos: Vec; endedAt: number | null } | null>(null);
+  const view = usePanZoom(MAP_SIZE, true);
 
   useEffect(() => {
     const el = viewportRef.current;
@@ -165,16 +168,17 @@ export function BattleView() {
   const activity = state.activity;
   const isBoss = activity.kind === "boss";
   const trainerFacing = world.trainer.facing;
+  const camera = view.cameraFor(world.trainer.pos, viewport);
 
   return (
     <section className="panel battle-panel">
-      <div ref={viewportRef} className={`battle-scene ${shaking ? "shake" : ""}`}>
+      <div ref={viewportRef} className={`battle-scene ${shaking ? "shake" : ""}`} {...view.bind(viewport)}>
         <div
           className="world pixel"
           style={{
             width: MAP_W,
             height: MAP_H,
-            transform: `translate(${-Math.round(world.camera.x)}px, ${-Math.round(world.camera.y)}px)`,
+            transform: `translate(${-Math.round(camera.x * view.zoom)}px, ${-Math.round(camera.y * view.zoom)}px) scale(${view.zoom})`,
             backgroundImage: `url(${terrainUrl(region.terrain, scene.key, MAP_W / 2, MAP_H / 2)})`,
             backgroundSize: `${MAP_W}px ${MAP_H}px`,
           }}
@@ -182,7 +186,7 @@ export function BattleView() {
           {world.wanderers.map((w) => (
             <div key={w.id} className="entity wild" style={at(w.pos)}>
               <div className="shadow" />
-              <BugSprite speciesId={w.speciesId} size={WILD_PX} className="bob" />
+              <BugSprite speciesId={w.speciesId} size={WILD_PX} animate phase={w.id * 0.37} />
             </div>
           ))}
 
@@ -192,7 +196,7 @@ export function BattleView() {
               <div className="shadow" />
               <div key={lastEnemyHit?.id ?? 0} className="lunge" style={{ "--lx": `${Math.sign(playerPos.x - enemyPos.x) * 14}px`, "--ly": `${Math.sign(playerPos.y - enemyPos.y) * 8}px` } as CSSProperties}>
                 <div key={lastPlayerHit?.id ?? 0} className="hit-flash">
-                  <BugSprite speciesId={enemy.speciesId} shiny={enemy.shiny} size={BUG_PX} className="bob" />
+                  <BugSprite speciesId={enemy.speciesId} shiny={enemy.shiny} size={BUG_PX} animate phase={0.5} />
                 </div>
               </div>
               {throwing && (
@@ -227,7 +231,7 @@ export function BattleView() {
               <div className="shadow" />
               <div key={lastPlayerHit?.id ?? 0} className="lunge" style={{ "--lx": `${Math.sign(enemyPos.x - playerPos.x) * 14}px`, "--ly": `${Math.sign(enemyPos.y - playerPos.y) * 8}px` } as CSSProperties}>
                 <div key={lastEnemyHit?.id ?? 0} className="hit-flash">
-                  <BugSprite speciesId={player.speciesId} shiny={player.shiny} size={BUG_PX} className={world.follower.moving ? "hop" : "bob slow"} />
+                  <BugSprite speciesId={player.speciesId} shiny={player.shiny} size={BUG_PX} className={world.follower.moving ? "hop" : ""} animate />
                 </div>
               </div>
             </div>
@@ -263,7 +267,7 @@ export function BattleView() {
           )}
         </div>
 
-        <div className="battle-actions">
+        <div className="battle-actions" onPointerDown={(e) => e.stopPropagation()}>
           <Button variant="dark" small onClick={() => open({ kind: "sound" })} aria-label={UI.sound.title}>
             <Icon name="sound" size={14} />
           </Button>
@@ -277,6 +281,29 @@ export function BattleView() {
             </Button>
           )}
         </div>
+
+        <div className="map-controls" onPointerDown={(e) => e.stopPropagation()}>
+          <Button variant="dark" small aria-label={UI.mapControls.zoomIn} title={UI.mapControls.zoomIn} onClick={() => view.zoomIn(viewport)}>
+            +
+          </Button>
+          <Button variant="dark" small aria-label={UI.mapControls.zoomOut} title={UI.mapControls.zoomOut} onClick={() => view.zoomOut(viewport)}>
+            -
+          </Button>
+          {!view.following && (
+            <Button variant="purple" small onClick={view.recenter}>
+              {UI.mapControls.recenter}
+            </Button>
+          )}
+        </div>
+
+        {rt.atCenter && rt.recoveryMs <= 0 && (
+          <div className="scene-overlay" onPointerDown={(e) => e.stopPropagation()}>
+            <span>{UI.atCenter}</span>
+            <Button variant="gold" onClick={() => report(store.run(returnToHunt))}>
+              {UI.backToHunt}
+            </Button>
+          </div>
+        )}
 
         {rt.recoveryMs > 0 && (
           <div className="scene-overlay">

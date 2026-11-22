@@ -61,6 +61,8 @@ export function describeEvent(event: GameEvent, state: GameState): { text: strin
       return { text: event.outcome === "timeout" ? "O tempo acabou. Tente o chefe de novo." : "O chefe venceu desta vez.", tone: "bad" };
     case "teamWiped":
       return { text: "Sua equipe caiu. Reiniciando...", tone: "bad" };
+    case "revived":
+      return { text: `${bugName(state, event.uid)} voltou com o Reviver!`, tone: "good" };
     case "recovered":
       return { text: "Equipe reiniciada com HP cheio.", tone: "info" };
     case "trainerLevelUp":

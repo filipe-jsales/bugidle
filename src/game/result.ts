@@ -30,7 +30,8 @@ export type ActionError =
   | "refineMaxed"
   | "notEnoughStones"
   | "hatcheryFull"
-  | "minLevel";
+  | "minLevel"
+  | "notFainted";
 
 export const OK: ActionResult = { ok: true };
 export const fail = (reason: ActionError): ActionResult => ({ ok: false, reason });

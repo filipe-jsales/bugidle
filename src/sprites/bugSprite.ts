@@ -6,6 +6,7 @@
 import type { SpriteFamily } from "../game/data/species";
 import { createSeededRng, hashString, type Rng } from "../game/rng";
 import type { BugType } from "../game/types";
+import { HAND_DRAWN_HALVES } from "./handDrawn";
 
 export const SPRITE_SIZE = 24;
 
@@ -225,16 +226,67 @@ function outlineAndShade(c: Canvas): void {
 
 const cache = new Map<string, SpriteGrid>();
 
-export function generateBugSprite(spec: SpriteSpec): SpriteGrid {
-  const key = `${spec.id}:${spec.family}:${spec.stage}`;
+const HAND_CODES: Readonly<Record<string, Px>> = {
+  ".": Px.Empty,
+  k: Px.Outline,
+  b: Px.Body,
+  s: Px.Shade,
+  l: Px.Light,
+  a: Px.Accent,
+  e: Px.Eye,
+  p: Px.Pupil,
+  w: Px.Wing,
+};
+
+export type AnimFrame = 0 | 1;
+
+/** Rows from the top down to here move in the "breathing" frame. */
+const BREATH_PIVOT = 15;
+
+export function hasHandDrawnSprite(id: string): boolean {
+  return id in HAND_DRAWN_HALVES;
+}
+
+function fromHalves(half: readonly string[]): Uint8Array {
+  const pixels = new Uint8Array(SPRITE_SIZE * SPRITE_SIZE);
+  half.forEach((row, y) => {
+    for (let x = 0; x < SPRITE_SIZE / 2; x++) {
+      const value = HAND_CODES[row[x] ?? "."] ?? Px.Empty;
+      pixels[y * SPRITE_SIZE + x] = value;
+      pixels[y * SPRITE_SIZE + (SPRITE_SIZE - 1 - x)] = value;
+    }
+  });
+  return pixels;
+}
+
+/** Idle frame 1: the upper body sinks one pixel, like breathing in. */
+function breathe(pixels: Uint8Array): Uint8Array {
+  const out = Uint8Array.from(pixels);
+  for (let y = BREATH_PIVOT; y >= 1; y--) {
+    for (let x = 0; x < SPRITE_SIZE; x++) out[y * SPRITE_SIZE + x] = pixels[(y - 1) * SPRITE_SIZE + x]!;
+  }
+  for (let x = 0; x < SPRITE_SIZE; x++) out[x] = Px.Empty;
+  return out;
+}
+
+export function generateBugSprite(spec: SpriteSpec, frame: AnimFrame = 0): SpriteGrid {
+  const key = `${spec.id}:${spec.family}:${spec.stage}:${frame}`;
   const cached = cache.get(key);
   if (cached) return cached;
-  const canvas = new Canvas();
-  const rng = createSeededRng(hashString(spec.id));
-  const scale = spec.stage === 1 ? 0.72 : spec.stage === 2 ? 0.86 : 1;
-  DRAWERS[spec.family](canvas, rng, scale, spec.stage);
-  outlineAndShade(canvas);
-  const grid = { size: SPRITE_SIZE, pixels: canvas.pixels };
+  let pixels: Uint8Array;
+  if (frame === 1) {
+    pixels = breathe(generateBugSprite(spec, 0).pixels);
+  } else if (HAND_DRAWN_HALVES[spec.id]) {
+    pixels = fromHalves(HAND_DRAWN_HALVES[spec.id]!);
+  } else {
+    const canvas = new Canvas();
+    const rng = createSeededRng(hashString(spec.id));
+    const scale = spec.stage === 1 ? 0.72 : spec.stage === 2 ? 0.86 : 1;
+    DRAWERS[spec.family](canvas, rng, scale, spec.stage);
+    outlineAndShade(canvas);
+    pixels = canvas.pixels;
+  }
+  const grid = { size: SPRITE_SIZE, pixels };
   cache.set(key, grid);
   return grid;
 }

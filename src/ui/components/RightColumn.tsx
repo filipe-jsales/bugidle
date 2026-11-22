@@ -71,6 +71,9 @@ export function AutomationPanel() {
       </div>
 
       <Toggle checked={settings.autoEvolve} onChange={(v) => set({ autoEvolve: v })} label={UI.autoEvolve} />
+      <Toggle checked={settings.throwUntilCaught} onChange={(v) => set({ throwUntilCaught: v })} label={UI.throwUntilCaught} hint={UI.throwUntilCaughtHint} />
+      <Toggle checked={settings.autoRevive} onChange={(v) => set({ autoRevive: v })} label={`${UI.autoRevive} (${itemCount(state, "revive")})`} />
+      <Toggle checked={settings.returnToHunt} onChange={(v) => set({ returnToHunt: v })} label={UI.returnToHunt} hint={UI.returnToHuntHint} />
     </Panel>
   );
 }

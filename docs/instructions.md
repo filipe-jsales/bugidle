@@ -84,12 +84,22 @@ The game engine decides *when* an encounter happens and resolves it; `worldModel
 | Egg time, slots, IV floor, shiny odds | `hatchery.ts` |
 | Capture difficulty, traps per encounter | `CAPTURE_DIFFICULTY`, `MAX_THROWS_PER_ENCOUNTER` in `capture.ts` |
 | Walk speeds, fight spacing, roaming bugs | `worldModel.ts` |
+| Zoom limits and step | `MIN_ZOOM`, `MAX_ZOOM`, `ZOOM_STEP` in `world/viewport.ts` |
 | Wins to open a route, per region | `DEFEATS_TO_UNLOCK_BY_REGION` in `data/world.ts` |
 | House eras (cost, slots, multiplier, storage) and lots | `HOUSE_TIERS`, `HOUSE_LOTS` in `housing.ts` |
 
 ### Balancing
 
 Run `npm run simulate` (optionally with seeds: `npm run simulate -- 1 2 3`). It plays the whole game headless in about a second per seed and prints, per region, when the boss was beaten, boss tries, timeouts, wipes, team levels and coins. After changing any number above, run it and keep the pacing inside the bounds of `simulation.test.ts` (20-45 h total, first region 45 min-5 h, every region slower than the last). Change those bounds only on purpose.
+
+## Art pipeline
+
+All art is code today: procedural bug sprites (`sprites/bugSprite.ts`), hand-drawn halves for the strongest bugs (`sprites/handDrawn.ts`: write 12 columns, the code mirrors them), the trainer (`sprites/trainerSprite.ts`) and item art (`render/itemArt.ts`). Colors always come from the type palette, so shiny and dual types keep working.
+
+To go further:
+- **Aseprite** (desktop pixel editor) or **Piskel** (free, in the browser) for drawing sprites and animation frames by hand; export PNG sprite sheets into `public/sprites/` and load them in `render/pixels.ts` instead of the generated ones.
+- **PixelLab** generates pixel-art characters and animations with AI and offers an MCP server; it is not in the app's connector directory, it needs an account and an API key the owner creates.
+- **PixiJS** (WebGL renderer) only if the map gets hundreds of animated objects; today CSS transforms and canvas data URLs are enough.
 
 ## How to add content
 
@@ -125,4 +135,7 @@ Run `npm run simulate` (optionally with seeds: `npm run simulate -- 1 2 3`). It 
 | - | Explorable map, trainer and follower | `world/worldModel.ts`, `BattleView.tsx` | `worldModel.test.ts`, `trainerSprite.test.ts` |
 | - | Item pixel art | `render/itemArt.ts` | `itemArt.test.ts` |
 | - | Potency, score, stones, refine, hatchery, reduce level | `bug.ts`, `stones.ts`, `hatchery.ts`, `engine.ts` | `stones.test.ts` |
+| - | Map pan and zoom | `world/viewport.ts`, `world/usePanZoom.ts` | `viewport.test.ts` |
+| - | Automations (throw until caught, auto revive, return to hunt) | `engine.ts` | `automation.test.ts` |
+| - | Hand-drawn sprites and idle frames | `sprites/handDrawn.ts`, `sprites/bugSprite.ts` | `bugSprite.test.ts` |
 | - | Bug screen, compare, proximity panel | `BugDetailModal.tsx`, `CompareModal.tsx`, `ProximityPanel.tsx` | manual check in the browser |

@@ -1,8 +1,38 @@
 import { SPECIES } from "../game/data/species";
 import { BUG_TYPES } from "../game/types";
-import { colorFor, generateBugSprite, Px, shinyPalette, SPRITE_SIZE, TYPE_PALETTES } from "./bugSprite";
+import { colorFor, generateBugSprite, hasHandDrawnSprite, Px, shinyPalette, SPRITE_SIZE, TYPE_PALETTES } from "./bugSprite";
+import { HAND_DRAWN_HALVES } from "./handDrawn";
 
 const filled = (pixels: Uint8Array) => pixels.reduce((n, p) => n + (p !== Px.Empty ? 1 : 0), 0);
+
+describe("hand-drawn sprites and animation frames", () => {
+  const handDrawn = ["syntaxwyrm", "heapocalypse", "lagmoth", "y2kbeetle", "zeroday", "markmoth"];
+
+  it("final forms and legendaries use hand-drawn art", () => {
+    for (const id of handDrawn) {
+      expect(hasHandDrawnSprite(id), id).toBe(true);
+      const species = SPECIES.find((s) => s.id === id)!;
+      expect(species.stage === 3 || species.rarity === "legendary").toBe(true);
+    }
+    expect(hasHandDrawnSprite("typobit")).toBe(false);
+  });
+
+  it("every hand-drawn half is 12x24 and uses known codes", () => {
+    for (const [id, rows] of Object.entries(HAND_DRAWN_HALVES)) {
+      expect(rows, id).toHaveLength(SPRITE_SIZE);
+      for (const row of rows) expect(row, `${id}: ${row}`).toMatch(/^[.kbslaepw]{12}$/);
+    }
+  });
+
+  it("every bug has a second, different idle frame of the same size", () => {
+    for (const species of SPECIES) {
+      const a = generateBugSprite(species, 0).pixels;
+      const b = generateBugSprite(species, 1).pixels;
+      expect(b.length).toBe(a.length);
+      expect(Array.from(a), species.id).not.toEqual(Array.from(b));
+    }
+  });
+});
 
 describe("procedural bug sprites", () => {
   it("is deterministic per species", () => {
@@ -13,10 +43,12 @@ describe("procedural bug sprites", () => {
 
   it("is mirror-symmetric", () => {
     for (const species of SPECIES) {
-      const { pixels } = generateBugSprite(species);
-      for (let y = 0; y < SPRITE_SIZE; y++) {
-        for (let x = 0; x < SPRITE_SIZE / 2; x++) {
-          expect(pixels[y * SPRITE_SIZE + x], `${species.id} at ${x},${y}`).toBe(pixels[y * SPRITE_SIZE + (SPRITE_SIZE - 1 - x)]);
+      for (const frame of [0, 1] as const) {
+        const { pixels } = generateBugSprite(species, frame);
+        for (let y = 0; y < SPRITE_SIZE; y++) {
+          for (let x = 0; x < SPRITE_SIZE / 2; x++) {
+            expect(pixels[y * SPRITE_SIZE + x], `${species.id} at ${x},${y}`).toBe(pixels[y * SPRITE_SIZE + (SPRITE_SIZE - 1 - x)]);
+          }
         }
       }
     }

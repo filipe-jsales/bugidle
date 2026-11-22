@@ -52,6 +52,14 @@ Status: `[x]` done, `[ ]` to do. Keep this file current when a task is finished 
 - [x] Bug screen redesign (PokeIdle style): score hero, potency/quality/IV, power with ranking, combat HP, speed, compare A/B, copy summary, reduce level, species sheet, stats radar with IVs, base stats with refine, evolution path with requirements, experience, identity (id, date, caught by, origin), potency table
 - [x] Catch date and catcher saved on every new bug
 
+## v0.5
+
+- [x] Pannable, zoomable maps: drag to move, mouse wheel or +/- to zoom (0.5x-2.5x) on the route map and the region map; "Seguir caçador" re-centres (`world/viewport.ts`, `world/usePanZoom.ts`)
+- [x] Automations: "Lançar até capturar" (no 3-trap limit), "Usar Reviver ao cair" (new Reviver item, back at 50% HP, also usable from the bag) and "Voltar à caça após o reboot" (off = the team waits at the Reboot Center)
+- [x] Hand-drawn sprites for the stage-3 and legendary bugs: Syntaxwyrm, Heapocalypse, Lagmoth, Y2Kbeetle, Zeroday, Markmoth (`sprites/handDrawn.ts`)
+- [x] Two-frame idle ("breathing") animation for every bug, staggered per bug on the map; knockback on hits
+- [ ] Better art at scale needs an external tool (see "Art pipeline" in instructions.md)
+
 ## Next (core polish)
 
 - [ ] Early game is slow (first region about 3 h in the simulation; a level-2 win gives +1 xp)
@@ -64,7 +72,7 @@ Status: `[x]` done, `[ ]` to do. Keep this file current when a task is finished 
 - [ ] Offline progress: simulate the time the tab was closed (today the catch-up is capped at 60 s). Houses are the natural first step: compute their production from the save timestamp
 - [ ] Final-boss wall: benched bugs fall far behind the lead late in the game (lead 100, others about 80). Consider XP share based on level gap or a "train the weakest" automation
 - [ ] Tune house prices with real play (the simulation only builds when it has 4x the cost)
-- [ ] Hand-drawn sprites for the legendaries and final evolutions
+- [ ] Hand-drawn sprites for the remaining 32 species (today only the 6 stage-3/legendary bugs are hand-drawn)
 - [ ] Achievements (catch N, shinies, defeat all bosses)
 - [ ] Held items / equipment for bugs
 - [ ] Rematch bosses at higher levels (daily)

@@ -111,6 +111,9 @@ export function importSave(text: string): GameState {
     autoPotion: typeof settingsRaw.autoPotion === "boolean" ? settingsRaw.autoPotion : defaults.autoPotion,
     potionThreshold: isNumber(settingsRaw.potionThreshold) ? Math.min(1, Math.max(0, settingsRaw.potionThreshold)) : defaults.potionThreshold,
     autoEvolve: typeof settingsRaw.autoEvolve === "boolean" ? settingsRaw.autoEvolve : defaults.autoEvolve,
+    throwUntilCaught: typeof settingsRaw.throwUntilCaught === "boolean" ? settingsRaw.throwUntilCaught : defaults.throwUntilCaught,
+    autoRevive: typeof settingsRaw.autoRevive === "boolean" ? settingsRaw.autoRevive : defaults.autoRevive,
+    returnToHunt: typeof settingsRaw.returnToHunt === "boolean" ? settingsRaw.returnToHunt : defaults.returnToHunt,
   };
 
   const unlockedRoutes = isStringArray(raw.unlockedRoutes) ? raw.unlockedRoutes.filter(validRoute) : base.unlockedRoutes;

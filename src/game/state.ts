@@ -30,6 +30,12 @@ export interface Settings {
   /** Use a potion when the active bug is below this HP fraction (0..1). */
   potionThreshold: number;
   autoEvolve: boolean;
+  /** Keep throwing traps until the bug is caught (no 3-trap limit). */
+  throwUntilCaught: boolean;
+  /** Use a Revive when the active bug falls in battle. */
+  autoRevive: boolean;
+  /** After a team wipe or a reboot, go straight back to hunting. */
+  returnToHunt: boolean;
 }
 
 /** Everything that is saved. */
@@ -66,6 +72,8 @@ export interface RuntimeState {
   potionCooldownMs: number;
   /** Trap throws in the current encounter. */
   captureAttemptsThisBattle: number;
+  /** The team waits at the Reboot Center until the player sends it back. */
+  atCenter: boolean;
 }
 
 export interface GameState extends PersistentState {
@@ -75,7 +83,7 @@ export interface GameState extends PersistentState {
 export const STARTER_IDS = ["typobit", "leaklet", "pixelmite"] as const;
 
 export function createRuntime(): RuntimeState {
-  return { battle: null, spawnTimerMs: 0, recoveryMs: 0, potionCooldownMs: 0, captureAttemptsThisBattle: 0 };
+  return { battle: null, spawnTimerMs: 0, recoveryMs: 0, potionCooldownMs: 0, captureAttemptsThisBattle: 0, atCenter: false };
 }
 
 export function defaultSettings(): Settings {
@@ -86,6 +94,9 @@ export function defaultSettings(): Settings {
     autoPotion: true,
     potionThreshold: 0.4,
     autoEvolve: true,
+    throwUntilCaught: false,
+    autoRevive: true,
+    returnToHunt: true,
   };
 }
 
@@ -96,7 +107,7 @@ export function createInitialState(trainerName = "Hunter"): GameState {
     coins: 150,
     bugs: {},
     team: [],
-    inventory: { breakpoint: 10, coffee: 5 },
+    inventory: { breakpoint: 10, coffee: 5, revive: 2 },
     bugdex: {},
     routeDefeats: {},
     unlockedRoutes: ["port-3000"],

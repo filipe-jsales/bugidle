@@ -93,6 +93,7 @@ export const ITEM_TEXT: Record<ItemId, { name: string; description: string }> = 
   coffee: { name: "Café", description: "Recupera 30 de HP." },
   energyDrink: { name: "Energético", description: "Recupera 90 de HP." },
   rebootDisk: { name: "Disco de Reboot", description: "Recupera todo o HP." },
+  revive: { name: "Reviver", description: "Traz um bug fora de combate de volta com metade do HP." },
   docs: { name: "Documentação", description: "+2 de HP permanente (máx. +20)." },
   codeReview: { name: "Code Review", description: "+2 de ATK permanente (máx. +20)." },
   unitTest: { name: "Teste Unitário", description: "+2 de DEF permanente (máx. +20)." },
@@ -106,6 +107,7 @@ export const ITEM_TEXT: Record<ItemId, { name: string; description: string }> = 
 export const CATEGORY_NAMES: Record<ItemCategory, string> = {
   trap: "Armadilhas",
   potion: "Poções",
+  revive: "Reviver",
   vitamin: "Melhorias",
   evolution: "Evolução",
   egg: "Ovos",
@@ -201,6 +203,7 @@ export const ERROR_TEXT: Record<ActionError, string> = {
   notEnoughStones: "Pedras insuficientes.",
   hatcheryFull: "A chocadeira está cheia.",
   minLevel: "Este bug já está no nível 1.",
+  notFainted: "O Reviver só funciona em bugs fora de combate.",
 };
 
 export const UI = {
@@ -228,6 +231,13 @@ export const UI = {
   autoPotion: "Usar poções",
   useBelow: "usar abaixo de",
   autoEvolve: "Evoluir automaticamente",
+  throwUntilCaught: "Lançar até capturar",
+  throwUntilCaughtHint: "sem o limite de 3 armadilhas por encontro",
+  autoRevive: "Usar Reviver ao cair",
+  returnToHunt: "Voltar à caça após o reboot",
+  returnToHuntHint: "desligado, a equipe espera no Centro de Reboot",
+  atCenter: "Sua equipe está no Centro de Reboot.",
+  backToHunt: "Voltar à caça",
   rebootCenter: "Ir para o Centro de Reboot",
   forfeit: "Desistir do Chefe",
   rebooting: "Reiniciando a equipe...",
@@ -419,6 +429,12 @@ export const UI = {
     empty: "Nenhum bug por perto.",
   },
   bagStones: "PEDRAS",
+  mapControls: {
+    zoomIn: "Aproximar",
+    zoomOut: "Afastar",
+    recenter: "Seguir caçador",
+    hint: "arraste para mover, roda do mouse para zoom",
+  },
   compare: {
     title: "COMPARAR BUGS",
     pickOther: (slot: string) => `Marcado como ${slot}. Agora abra outro bug e use "Comparar com ${slot === "A" ? "B" : "A"}".`,
