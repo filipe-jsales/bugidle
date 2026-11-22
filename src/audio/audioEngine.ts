@@ -78,6 +78,9 @@ export class AudioEngine {
     for (const tone of SOUNDS[id]) this.scheduleTone(tone, now + tone.at, this.sfxBus);
   }
 
+  /** Silences the music without touching the saved volume (ULTRA economy mode). */
+  musicOff = false;
+
   /** Switches the background loop ("localhost", ..., "boss"). Same name = no restart. */
   setMusic(name: string): void {
     if (name === this.trackName) return;
@@ -104,7 +107,7 @@ export class AudioEngine {
     if (!ctx || !track || !this.musicBus) return;
     const step = stepSeconds(track);
     while (this.nextStepTime < ctx.currentTime + LOOKAHEAD_S) {
-      if (!this.settings.muted && this.settings.music > 0) {
+      if (!this.settings.muted && this.settings.music > 0 && !this.musicOff) {
         for (const note of track.notes) {
           if (note.step !== this.nextStep) continue;
           const duration = note.length * step * 0.9;

@@ -45,6 +45,21 @@ export interface Settings {
   debugChallenges: boolean;
 }
 
+/** Lifetime counters, used by achievements and the player card. */
+export interface Totals {
+  defeats: number;
+  captures: number;
+  playTimeMs: number;
+  shinies: number;
+  evolutions: number;
+  hatched: number;
+  refines: number;
+}
+
+export function emptyTotals(): Totals {
+  return { defeats: 0, captures: 0, playTimeMs: 0, shinies: 0, evolutions: 0, hatched: 0, refines: 0 };
+}
+
 /** Everything that is saved. */
 export interface PersistentState {
   version: number;
@@ -60,7 +75,9 @@ export interface PersistentState {
   badges: string[];
   activity: Activity;
   settings: Settings;
-  totals: { defeats: number; captures: number; playTimeMs: number };
+  totals: Totals;
+  /** Achievement id -> play time (ms) when it was unlocked. */
+  achievements: Record<string, number>;
   /** "From Transistor to Cloud" houses where boxed bugs farm. */
   houses: House[];
   /** Type stones for evolving and refining. */
@@ -139,7 +156,8 @@ export function createInitialState(trainerName = "Hunter"): GameState {
     badges: [],
     activity: { kind: "route", routeId: "port-3000" },
     settings: defaultSettings(),
-    totals: { defeats: 0, captures: 0, playTimeMs: 0 },
+    totals: emptyTotals(),
+    achievements: {},
     houses: [],
     stones: {},
     hatchery: [null, null],

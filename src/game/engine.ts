@@ -2,6 +2,8 @@
  * The idle core loop: spawn encounters on the selected route, fight automatically,
  * throw traps, collect rewards and unlock content. `tick` is called by the UI clock.
  */
+import { checkAchievements, getAchievement } from "./achievements";
+import { heldCoinMult, heldXpMult } from "./held";
 import { activeEnemy, activePlayerBug, createBattle, stepBattle, type BattleEvent, type BattleOutcome } from "./battle";
 import { computeStats, createBug, healFully, isFainted, maxHp, type BugInstance } from "./bug";
 import { registerCaught, registerDefeated, registerSeen } from "./bugdex";
@@ -77,6 +79,7 @@ export type GameEvent =
   | { type: "itemDrop"; itemId: ItemId }
   | { type: "stoneDrop"; stoneType: BugType; count: number }
   | { type: "hatched"; uid: string; speciesId: string; shiny: boolean }
+  | { type: "achievement"; id: string; reward: number }
   | { type: "potionUsed"; itemId: ItemId; uid: string }
   | { type: "routeUnlocked"; routeId: string }
   | { type: "badge"; badgeId: string; coins: number }
@@ -199,6 +202,7 @@ export function tick(state: GameState, dtMs: number, rng: Rng): GameEvent[] {
     remaining -= step;
     stepOnce(state, step, rng, events);
   }
+  for (const id of checkAchievements(state)) events.push({ type: "achievement", id, reward: getAchievement(id)!.reward });
   return events;
 }
 
@@ -335,7 +339,7 @@ function tryCapture(state: GameState, rng: Rng, events: GameEvent[]): void {
   events.push({ type: "captureAttempt", itemId: trap.id, speciesId: wild.speciesId, success });
   if (!success) return;
 
-  const caught: BugInstance = { ...wild, uid: nextUid(state), ivs: { ...wild.ivs }, boosts: { ...wild.boosts }, origin: battle.enemies[0]?.origin ?? wild.origin };
+  const caught: BugInstance = { ...wild, uid: nextUid(state), ivs: { ...wild.ivs }, boosts: { ...wild.boosts }, origin: battle.enemies[0]?.origin ?? wild.origin, held: null };
   caught.currentHp = Math.max(1, caught.currentHp);
   caught.caughtAt = Date.now();
   caught.caughtBy = state.trainer.name;
@@ -343,6 +347,7 @@ function tryCapture(state: GameState, rng: Rng, events: GameEvent[]): void {
   const newEntry = registerCaught(state, caught.speciesId, caught.shiny);
   const destination = addBug(state, caught);
   state.totals.captures += 1;
+  if (caught.shiny) state.totals.shinies += 1;
   events.push({ type: "captured", uid: caught.uid, speciesId: caught.speciesId, shiny: caught.shiny, newEntry, destination });
   // Catching also counts as clearing the encounter for route progress.
   addRouteProgress(state, events);
@@ -362,8 +367,9 @@ function onEnemyDefeated(state: GameState, speciesId: string, level: number, vic
   registerDefeated(state, speciesId);
   state.totals.defeats += 1;
 
-  const xp = xpReward(speciesId, level, isBoss);
-  const coins = isBoss ? 0 : Math.max(1, Math.floor((4 + level * 1.5) * (0.8 + rng() * 0.4)));
+  const victor = victorUid ? state.bugs[victorUid] : undefined;
+  const xp = Math.floor(xpReward(speciesId, level, isBoss) * heldXpMult(victor));
+  const coins = isBoss ? 0 : Math.max(1, Math.floor((4 + level * 1.5) * (0.8 + rng() * 0.4) * heldCoinMult(victor)));
   state.coins += coins;
   const benchXp = Math.floor(xp * BENCH_XP_SHARE);
   const trainerXp = Math.max(1, Math.floor(level / 2)) + (isBoss ? 20 : 0);
@@ -371,7 +377,7 @@ function onEnemyDefeated(state: GameState, speciesId: string, level: number, vic
 
   const cap = levelCap(state);
   for (const bug of teamBugs(state)) {
-    const share = bug.uid === victorUid ? xp : isFainted(bug) ? 0 : benchXp;
+    const share = bug.uid === victorUid ? xp : isFainted(bug) ? 0 : Math.floor(benchXp * heldXpMult(bug));
     const { levelsGained } = gainXp(bug, share, cap);
     if (levelsGained > 0) {
       events.push({ type: "levelUp", uid: bug.uid, level: bug.level });

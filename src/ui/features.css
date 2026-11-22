@@ -1,0 +1,363 @@
+/*
+ * v0.8 screens: settings window, achievements, held items, time lighting,
+ * and the body classes set by the preferences (night mode, solid scene,
+ * reduced effects, ULTRA economy, immersive layout). Same theme as styles.css.
+ */
+
+/* ---------------------------------------------------------------- settings window */
+
+.settings-tabs {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 6px;
+}
+.settings-tab {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 8px 4px 6px;
+  background: linear-gradient(var(--panel-light), var(--panel));
+  border: 3px solid var(--panel-border);
+  border-radius: 4px;
+  box-shadow:
+    inset 0 3px 0 rgba(90, 42, 34, 0.45),
+    0 3px 0 var(--shadow);
+  font-weight: 700;
+  font-size: 12px;
+  cursor: pointer;
+  text-shadow: 1px 1px 0 rgba(0, 0, 0, 0.4);
+  transition:
+    transform 80ms steps(2),
+    filter 80ms steps(2);
+}
+.settings-tab:hover:not(.active) {
+  transform: translateY(-1px);
+  filter: brightness(1.08);
+}
+.settings-tab.active {
+  background: linear-gradient(var(--purple), #d98cf0);
+  border-color: var(--purple-border);
+  box-shadow:
+    inset 0 3px 0 var(--purple-dark),
+    inset 0 -3px 0 #f0a6e0,
+    0 3px 0 var(--shadow);
+}
+.settings-tab span {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+.settings-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 320px;
+  padding: 12px;
+  background: var(--inset);
+  border: 3px solid var(--inset-border);
+  border-radius: 4px;
+  box-shadow: inset 0 3px 0 rgba(0, 0, 0, 0.35);
+}
+.settings-subtitle {
+  margin: 8px 0 0;
+  font-family: var(--font-title);
+  font-size: 12px;
+  font-weight: 400;
+}
+.setting-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 14px;
+  background: var(--inset-2);
+  border: 2px solid var(--inset-border);
+  border-left: 5px solid var(--inset-border);
+  border-radius: 4px;
+}
+.setting-row.on {
+  border-left-color: var(--purple);
+}
+.setting-label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 15px;
+  font-weight: 700;
+}
+.setting-help {
+  grid-column: 1 / -1;
+  margin: 0;
+  padding: 6px 8px;
+  background: var(--inset);
+  border: 2px solid var(--inset-border);
+  border-radius: 4px;
+  color: var(--muted);
+  line-height: 1.45;
+}
+.help-dot {
+  flex: none;
+  width: 26px;
+  height: 26px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border-radius: 50%;
+  background: #ffe9a8;
+  border: 2px solid var(--gold-dark);
+  box-shadow: inset 0 -2px 0 #e8c46a;
+  color: #5a2a22;
+  font-weight: 700;
+  font-size: 14px;
+  cursor: pointer;
+  transition: transform 80ms steps(2);
+}
+.help-dot:hover,
+.help-dot[aria-expanded="true"] {
+  transform: translateY(-1px);
+  background: #fff3c8;
+}
+
+/* ON/OFF switch: a square knob that slides, the text on the free side */
+.switch {
+  position: relative;
+  width: 82px;
+  height: 36px;
+  padding: 0;
+  background: var(--inset);
+  border: 3px solid var(--inset-border);
+  border-radius: 4px;
+  box-shadow: 0 2px 0 var(--panel-dark);
+  cursor: pointer;
+  transition: background 80ms steps(2);
+}
+.switch-knob {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 24px;
+  height: 24px;
+  background: var(--panel);
+  border: 2px solid var(--panel-border);
+  border-radius: 3px;
+  box-shadow: inset 0 2px 0 var(--panel-light);
+  transition: left 90ms steps(3);
+}
+.switch-text {
+  position: absolute;
+  top: 50%;
+  right: 10px;
+  transform: translateY(-50%);
+  font-family: var(--font-title);
+  font-size: 11px;
+  color: var(--muted);
+}
+.switch.on {
+  background: linear-gradient(var(--purple), #d98cf0);
+  border-color: var(--purple-border);
+}
+.switch.on .switch-knob {
+  left: 47px;
+  background: #ffffff;
+  border-color: var(--purple-border);
+  box-shadow: inset 0 -2px 0 #e6d6ee;
+}
+.switch.on .switch-text {
+  right: auto;
+  left: 10px;
+  color: #ffffff;
+  text-shadow: 1px 1px 0 var(--purple-border);
+}
+.switch:hover {
+  filter: brightness(1.1);
+}
+.switch:focus-visible,
+.settings-tab:focus-visible,
+.help-dot:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 2px;
+}
+.setting-volumes,
+.setting-support {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.setting-support p {
+  margin: 0;
+  line-height: 1.45;
+}
+.setting-support a {
+  color: var(--gold);
+}
+.setting-version {
+  font-family: var(--font-title);
+  font-size: 12px;
+}
+.link-button {
+  padding: 0;
+  background: none;
+  border: none;
+  color: var(--gold);
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+@media (max-width: 760px) {
+  .settings-tabs {
+    gap: 4px;
+  }
+  .settings-tab {
+    font-size: 10px;
+    padding: 6px 2px;
+  }
+  .setting-label {
+    font-size: 14px;
+  }
+  .settings-panel {
+    padding: 8px;
+  }
+}
+
+/* ---------------------------------------------------------------- achievements */
+
+.achievement-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 6px;
+}
+.achievement-card {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 8px;
+  padding: 8px;
+  background: var(--inset);
+  border: 2px solid var(--inset-border);
+  border-radius: 4px;
+}
+.achievement-card.unlocked {
+  border-color: var(--gold-dark);
+  box-shadow: inset 0 0 0 1px rgba(242, 193, 78, 0.35);
+}
+.achievement-card:not(.unlocked) .achievement-medal {
+  filter: grayscale(1) brightness(0.55);
+}
+.achievement-info {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+.achievement-info .bar {
+  height: 12px;
+}
+.achievement-info .bar-label {
+  font-size: 9px;
+}
+
+/* ---------------------------------------------------------------- held items */
+
+.held-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.held-slot {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 52px;
+  padding: 8px;
+  background: var(--inset);
+  border: 2px dashed var(--inset-border);
+  border-radius: 4px;
+}
+.held-slot.filled {
+  border-style: solid;
+  border-color: var(--gold-dark);
+}
+.held-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.held-choices {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(84px, 1fr));
+  gap: 4px;
+}
+
+/* ---------------------------------------------------------------- map lighting and modes */
+
+.time-lighting {
+  position: absolute;
+  inset: 0;
+  z-index: 6000;
+  pointer-events: none;
+  mix-blend-mode: multiply;
+}
+
+/* Solid scene: overlays over the map are opaque instead of see-through */
+body.solid-scene .battle-label,
+body.solid-scene .proximity-overlay {
+  background: #1e1222;
+}
+body:not(.solid-scene) .battle-label,
+body:not(.solid-scene) .proximity-overlay {
+  background: rgba(30, 18, 34, 0.72);
+}
+
+/* Reduced effects (optimized and economy modes): no idle motion, no sparkles or rings */
+body.reduced-effects .bob,
+body.reduced-effects .hop,
+body.reduced-effects .shiny-sparkles,
+body.reduced-effects .levelup-ring,
+body.reduced-effects .spawn-pop,
+body.reduced-effects .nav-button:hover img,
+body.reduced-effects .nav-button:hover canvas {
+  animation: none;
+}
+body.reduced-effects .shiny-sparkles,
+body.reduced-effects .levelup-ring {
+  display: none;
+}
+body.reduced-effects * {
+  transition-duration: 0s !important;
+}
+body.ultra-economy .battle-scene::after {
+  display: none;
+}
+
+/* Night mode: the terracotta panels turn to deep plum and the text keeps its contrast */
+body.night-mode {
+  --panel: #4a2d4f;
+  --panel-dark: #3a2240;
+  --panel-light: #5e3a64;
+  --panel-border: #1c0f20;
+  --muted-panel: #d8c2dc;
+  --bg-a: #160f1d;
+  --bg-b: #1b1324;
+  --inset: #1b111f;
+  --inset-2: #261a2c;
+}
+
+/* Immersive: only the top bar and the map */
+.layout.immersive {
+  grid-template-columns: minmax(0, 1fr);
+}
+.layout.immersive .left-column,
+.layout.immersive .right-column {
+  display: none;
+}
+
+/* ---------------------------------------------------------------- map obstacles */
+
+.map-prop {
+  position: absolute;
+  pointer-events: none;
+  filter: drop-shadow(0 4px 0 rgba(10, 4, 14, 0.35));
+}

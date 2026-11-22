@@ -1,6 +1,6 @@
 import type { StatKey } from "./stats";
 
-export type ItemCategory = "trap" | "potion" | "revive" | "vitamin" | "evolution" | "egg";
+export type ItemCategory = "trap" | "potion" | "revive" | "vitamin" | "evolution" | "egg" | "held";
 
 interface BaseItem {
   readonly id: ItemId;
@@ -33,7 +33,21 @@ export interface ReviveItem extends BaseItem {
 export interface EggItem extends BaseItem {
   readonly category: "egg";
 }
-export type ItemDef = TrapItem | PotionItem | ReviveItem | VitaminItem | EvolutionItem | EggItem;
+/** What a held item does for the bug carrying it. */
+export interface HeldEffect {
+  /** Multiplies one stat. */
+  readonly stat?: StatKey;
+  readonly statMult?: number;
+  /** Multiplies the XP the holder earns. */
+  readonly xpMult?: number;
+  /** Multiplies the coins of fights the holder wins. */
+  readonly coinMult?: number;
+}
+export interface HeldItem extends BaseItem {
+  readonly category: "held";
+  readonly effect: HeldEffect;
+}
+export type ItemDef = TrapItem | PotionItem | ReviveItem | VitaminItem | EvolutionItem | EggItem | HeldItem;
 
 export const ITEM_IDS = [
   "breakpoint",
@@ -52,6 +66,12 @@ export const ITEM_IDS = [
   "legacyPatch",
   "cdnToken",
   "mysteryEgg",
+  "rubberDuck",
+  "linter",
+  "antivirus",
+  "ssd",
+  "testSuite",
+  "cacheCard",
 ] as const;
 export type ItemId = (typeof ITEM_IDS)[number];
 
@@ -75,6 +95,12 @@ export const ITEMS: Readonly<Record<ItemId, ItemDef>> = {
   legacyPatch: { id: "legacyPatch", category: "evolution", price: 800 },
   cdnToken: { id: "cdnToken", category: "evolution", price: 800 },
   mysteryEgg: { id: "mysteryEgg", category: "egg", price: 3000 },
+  rubberDuck: { id: "rubberDuck", category: "held", price: 2500, effect: { xpMult: 1.25 } },
+  linter: { id: "linter", category: "held", price: 3000, effect: { stat: "atk", statMult: 1.1 } },
+  antivirus: { id: "antivirus", category: "held", price: 3000, effect: { stat: "def", statMult: 1.1 } },
+  ssd: { id: "ssd", category: "held", price: 3000, effect: { stat: "spd", statMult: 1.1 } },
+  testSuite: { id: "testSuite", category: "held", price: 3000, effect: { stat: "hp", statMult: 1.1 } },
+  cacheCard: { id: "cacheCard", category: "held", price: 4000, effect: { coinMult: 1.2 } },
 };
 
 export function isItemId(value: unknown): value is ItemId {

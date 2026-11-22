@@ -58,7 +58,6 @@ Status: `[x]` done, `[ ]` to do. Keep this file current when a task is finished 
 - [x] Automations: "Lançar até capturar" (no 3-trap limit), "Usar Reviver ao cair" (new Reviver item, back at 50% HP, also usable from the bag) and "Voltar à caça após o reboot" (off = the team waits at the Reboot Center)
 - [x] Hand-drawn sprites for the stage-3 and legendary bugs: Syntaxwyrm, Heapocalypse, Lagmoth, Y2Kbeetle, Zeroday, Markmoth (`sprites/handDrawn.ts`)
 - [x] Two-frame idle ("breathing") animation for every bug, staggered per bug on the map; knockback on hits
-- [ ] Better art at scale needs an external tool (see "Art pipeline" in instructions.md)
 
 ## v0.6 - learning computing while playing
 
@@ -85,30 +84,32 @@ Principle: learning is optional, short and rewarded; it never blocks progress.
 - [x] Map animations: enemy spawn pop, level-up ring, shiny sparkles
 - [x] Simulation player moves strong bugs out of houses into the team (7 houses kept too many good bugs locked)
 
+## v0.8 - pacing, achievements, equipment, map paths, settings
+
+- [x] Faster early game: a win against a level 1-11 bug is worth at least a slice of a level (fades to zero at 12). First region 1.1-1.2 h (was 2.3-3.3 h)
+- [x] Simulation plays every system: refines, eggs, held items, houses at 2x the price; reports house return
+- [x] House prices re-tuned: each step pays back in about 45 min; later categories cost 1.5x-6x (was up to 16x and never paid back)
+- [x] Achievements: 28 goals in 4 groups with coin rewards, toast and sound (both can be turned off), window in the top bar
+- [x] Held items: 6 items (Pato de Borracha +25% XP, Linter ATK, Antivírus DEF, SSD VEL, Suíte de Testes HP, Cartão de Cache +20% coins), equipped on the bug screen or from the bag
+- [x] Battle map roads and obstacles: A* that prefers roads, props per region, nobody walks through obstacles
+- [x] Settings window like PokeIdle: Áudio (4 sound switches and the volumes), Interatividade (immersive, scene transparency, time-of-day lighting), HUD (nameplates, hide achievement toasts, night mode, phone layout), Desempenho (optimized, economy, keep screen on, ULTRA economy), Suporte (version, save, reset, report)
+
 ## Next (core polish)
 
 - [ ] More lessons per bug (today one each) so reviews do not repeat
 - [ ] Terminal: pipes and grep (`ls box | grep shiny`) as a later lesson
 - [ ] Guild: search/sort visualizer (bars moving) while a raid runs
 
-- [ ] Early game is slow (first region about 3 h in the simulation; a level-2 win gives +1 xp)
-- [ ] Simulation policy does not refine or hatch eggs yet
 
-- [ ] Early levels feel slow: a level-2 bug gives +1 xp. Consider a minimum XP per win or a gentler curve for levels 1-10
 - [ ] Trainer customization (avatar colors, outfits)
-- [ ] Map obstacles and paths (today the trainer walks over everything)
 
-- [ ] Offline progress: simulate the time the tab was closed (today the catch-up is capped at 60 s). Houses are the natural first step: compute their production from the save timestamp
 - [ ] Final-boss wall: benched bugs fall far behind the lead late in the game (lead 100, others about 80). Consider XP share based on level gap or a "train the weakest" automation
-- [ ] Tune house prices with real play (the simulation only builds when it has 4x the cost)
-- [ ] Achievements (catch N, shinies, defeat all bosses)
-- [ ] Held items / equipment for bugs
 - [ ] Rematch bosses at higher levels (daily)
-- [ ] Settings window (animation speed, number format)
 - [ ] English translation (`src/i18n/en.ts` with the same shape)
 - [ ] Lint and format setup (ESLint + Prettier) in CI
 - [ ] Test on a real phone (only checked in a 375x812 emulated viewport)
 
 ## Later: other mechanics (not started on purpose)
 
+- [ ] Offline progress (the owner does not want it for now)
 - [ ] Online: accounts, cloud save sync, chat, trading, PvP, rankings

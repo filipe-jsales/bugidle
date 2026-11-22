@@ -14,11 +14,23 @@ export function totalXp(level: number, xpInLevel: number): number {
 }
 
 /** Larger means slower leveling. Tuned with `npm run simulate`. */
-export const XP_DIVISOR = 100;
+export const XP_DIVISOR = 115;
+
+/** Below this enemy level a win is worth at least a slice of a level, so the first minutes are not a grind. */
+export const EARLY_LEVELS = 12;
+/** Share of a level a level-1 win is worth; it fades to zero at EARLY_LEVELS. */
+export const EARLY_SHARE = 0.15;
+
+/** Minimum XP for beating a bug of `level`: generous at level 1-3, gone by level 12. */
+export function earlyXpFloor(level: number): number {
+  if (level >= EARLY_LEVELS) return 0;
+  const fade = (EARLY_LEVELS - level) / (EARLY_LEVELS - 1);
+  return Math.floor(xpToNextLevel(level) * EARLY_SHARE * fade);
+}
 
 /** XP a defeated bug gives. Boss bugs give 50% more. */
 export function xpReward(speciesId: string, level: number, isBoss: boolean): number {
-  const base = Math.floor((getSpecies(speciesId).xpYield * level) / XP_DIVISOR);
+  const base = Math.max(Math.floor((getSpecies(speciesId).xpYield * level) / XP_DIVISOR), earlyXpFloor(level));
   return Math.max(1, isBoss ? Math.floor(base * 1.5) : base);
 }
 

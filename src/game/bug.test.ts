@@ -1,5 +1,5 @@
 import { computeStats, createBug, healFully, ivGrade, ivTotal, powerRating } from "./bug";
-import { gainTrainerXp, gainXp, xpReward, xpToNextLevel } from "./experience";
+import { EARLY_LEVELS, earlyXpFloor, gainTrainerXp, gainXp, xpReward, xpToNextLevel } from "./experience";
 import { createSeededRng } from "./rng";
 
 const ivs = { hp: 31, atk: 31, def: 31, spd: 31 };
@@ -88,5 +88,16 @@ describe("experience", () => {
     const trainer = { name: "t", level: 1, xp: 0 };
     expect(gainTrainerXp(trainer, 60)).toBe(1);
     expect(trainer.level).toBe(2);
+  });
+});
+
+describe("early game XP", () => {
+  it("a low-level win is worth a real slice of a level, fading out by level 12", () => {
+    expect(xpReward("typobit", 2, false)).toBeGreaterThanOrEqual(Math.floor(xpToNextLevel(2) / 10));
+    expect(xpReward("typobit", 2, false)).toBeGreaterThan(1);
+    const share = (level: number) => earlyXpFloor(level) / xpToNextLevel(level);
+    for (let level = 2; level < EARLY_LEVELS - 1; level++) expect(share(level) + 0.01).toBeGreaterThanOrEqual(share(level + 1));
+    expect(earlyXpFloor(EARLY_LEVELS)).toBe(0);
+    expect(earlyXpFloor(40)).toBe(0);
   });
 });

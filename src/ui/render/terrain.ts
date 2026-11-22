@@ -16,7 +16,8 @@ function density(w: number, h: number): number {
 interface Theme {
   base: string;
   noise: readonly string[];
-  draw: (ctx: CanvasRenderingContext2D, rng: Rng, w: number, h: number) => void;
+  /** `props` false leaves out the big objects: on the battle map they are real obstacles instead. */
+  draw: (ctx: CanvasRenderingContext2D, rng: Rng, w: number, h: number, props: boolean) => void;
 }
 
 function rect(ctx: CanvasRenderingContext2D, color: string, x: number, y: number, w: number, h: number) {
@@ -24,7 +25,7 @@ function rect(ctx: CanvasRenderingContext2D, color: string, x: number, y: number
   ctx.fillRect(Math.round(x), Math.round(y), Math.round(w), Math.round(h));
 }
 
-function circuit(ctx: CanvasRenderingContext2D, rng: Rng, w: number, h: number) {
+function circuit(ctx: CanvasRenderingContext2D, rng: Rng, w: number, h: number, props: boolean) {
   const d = density(w, h);
   const copper = "#c9a24a";
   const copperDark = "#8a6a2a";
@@ -46,7 +47,7 @@ function circuit(ctx: CanvasRenderingContext2D, rng: Rng, w: number, h: number) 
     rect(ctx, copper, x - 1, y - 1, 4, 4);
     rect(ctx, "#1a3b26", x, y, 2, 2);
   }
-  for (let i = 0; i < 7 * d; i++) {
+  for (let i = 0; i < (props ? 7 * d : 0); i++) {
     const cw = randomInt(rng, 3, 6) * TILE;
     const ch = randomInt(rng, 2, 4) * TILE;
     const x = randomInt(rng, 0, w - cw);
@@ -61,11 +62,11 @@ function circuit(ctx: CanvasRenderingContext2D, rng: Rng, w: number, h: number) 
   }
 }
 
-function serverRoom(ctx: CanvasRenderingContext2D, rng: Rng, w: number, h: number) {
+function serverRoom(ctx: CanvasRenderingContext2D, rng: Rng, w: number, h: number, props: boolean) {
   const d = density(w, h);
   for (let y = 0; y < h; y += TILE * 2) rect(ctx, "#252c3a", 0, y, w, 1);
   for (let x = 0; x < w; x += TILE * 2) rect(ctx, "#252c3a", x, 0, 1, h);
-  for (let i = 0; i < 9 * d; i++) {
+  for (let i = 0; i < (props ? 9 * d : 0); i++) {
     const rw = TILE * 3;
     const rh = TILE * randomInt(rng, 4, 7);
     const x = randomInt(rng, 0, w - rw);
@@ -95,12 +96,12 @@ function datacenter(ctx: CanvasRenderingContext2D, rng: Rng, w: number, h: numbe
   }
 }
 
-function mainframe(ctx: CanvasRenderingContext2D, rng: Rng, w: number, h: number) {
+function mainframe(ctx: CanvasRenderingContext2D, rng: Rng, w: number, h: number, props: boolean) {
   const d = density(w, h);
   for (let y = 0; y < h; y += TILE) {
     for (let x = (y / TILE) % 2 === 0 ? 0 : TILE; x < w; x += TILE * 2) rect(ctx, "#8a6f4e", x, y, TILE, TILE);
   }
-  for (let i = 0; i < 7 * d; i++) {
+  for (let i = 0; i < (props ? 7 * d : 0); i++) {
     const x = randomInt(rng, 0, w - 34);
     const y = randomInt(rng, 0, h - 44);
     rect(ctx, "#2a2018", x + 2, y + 2, 32, 42);
@@ -144,8 +145,8 @@ const THEMES: Record<TerrainId, Theme> = {
 const cache = new Map<string, string>();
 
 /** Data URL of a pixel background, deterministic per seed. */
-export function terrainUrl(terrain: TerrainId, seed: string, width = 320, height = 200): string {
-  const key = `${terrain}|${seed}|${width}x${height}`;
+export function terrainUrl(terrain: TerrainId, seed: string, width = 320, height = 200, props = true): string {
+  const key = `${terrain}|${seed}|${width}x${height}|${props}`;
   const cached = cache.get(key);
   if (cached) return cached;
   const theme = THEMES[terrain];
@@ -159,7 +160,7 @@ export function terrainUrl(terrain: TerrainId, seed: string, width = 320, height
       }
     }
   }
-  theme.draw(ctx, rng, width, height);
+  theme.draw(ctx, rng, width, height, props);
   const url = canvas.toDataURL();
   cache.set(key, url);
   return url;

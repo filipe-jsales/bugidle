@@ -25,6 +25,34 @@ const COLORS = {
 } as const;
 
 const ART = {
+  medal: [
+    "..kk....kk..",
+    "..kbk..kbk..",
+    "...kbkkbk...",
+    "....kbbk....",
+    "...kkkkkk...",
+    "..kyyyyyyk..",
+    ".kyywyyyyyk.",
+    ".kywyyyyyYk.",
+    ".kyyyyyyyYk.",
+    ".kyyyyyyYYk.",
+    "..kyYYYYYk..",
+    "...kkkkkk...",
+  ],
+  gear: [
+    "....kkkk....",
+    ".kk.kggk.kk.",
+    ".kgkkggkkgk.",
+    "..kggggggk..",
+    "kkggkkkkggkk",
+    "kgggk..kgggk",
+    "kgggk..kgggk",
+    "kkggkkkkggkk",
+    "..kggggggk..",
+    ".kgkkggkkgk.",
+    ".kk.kggk.kk.",
+    "....kkkk....",
+  ],
   bugdex: [
     "..kkkkkkkk..",
     ".krrrrrrrrk.",

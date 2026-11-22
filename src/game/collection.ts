@@ -1,6 +1,7 @@
 import { ivTotal, powerRating, type BugInstance } from "./bug";
 import { getSpecies, type Rarity } from "./data/species";
 import { houseOf } from "./housing";
+import { addItem } from "./inventory";
 import { fail, OK, type ActionResult } from "./result";
 import { MAX_TEAM_SIZE, type GameState, type PersistentState } from "./state";
 import type { BugType } from "./types";
@@ -75,6 +76,7 @@ export function releaseBug(state: GameState, uid: string): ActionResult {
   state.team = state.team.filter((id) => id !== uid);
   const house = houseOf(state, uid);
   if (house) house.bugs = house.bugs.filter((id) => id !== uid);
+  if (bug.held) addItem(state, bug.held);
   delete state.bugs[uid];
   state.coins += bug.level * RELEASE_COINS_PER_LEVEL;
   return OK;

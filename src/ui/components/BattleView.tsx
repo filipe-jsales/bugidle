@@ -13,11 +13,14 @@ import { formatClock, formatNumber } from "../format";
 import { buildAttackFx } from "../render/attackFx";
 import { trainerSpriteUrl } from "../render/pixels";
 import { terrainUrl } from "../render/terrain";
+import { propSprite, roadsUrl } from "../render/mapProps";
 import { store, useGame, type TimedEvent } from "../store";
 import { createWorld, stepWorld, type Vec, type WorldModel } from "../world/worldModel";
 import { worldFor } from "../world/worldRegistry";
 import { centerOn, followZoom, MIN_ZOOM, ZOOM_STEP } from "../world/viewport";
 import { ProximityPanel } from "./ProximityPanel";
+import { getPreferences, lightingFor, mapFps, setPreference, usePreferences } from "../preferences";
+import { SETTINGS_UI } from "../../i18n/settings.ptBR";
 import { AttackLayer } from "./AttackLayer";
 import { DebugPanel } from "./DebugPanel";
 import { Bar, BugSprite, Button, Icon, ItemIcon, Tag } from "./primitives";
@@ -125,15 +128,20 @@ export function BattleView() {
     let last = performance.now();
     let raf = 0;
     const loop = (now: number) => {
+      raf = requestAnimationFrame(loop);
+      // performance modes draw fewer frames; the world still advances by the real time passed
+      const fps = mapFps(getPreferences());
+      if (now - last < 1000 / fps - 2) return;
       stepWorld(world, (now - last) / 1000, { encounterKey: encounterKeyOf(store.state), viewport: viewportSize.current }, defaultRng);
       last = now;
       setFrame((f) => (f + 1) % 1_000_000);
-      raf = requestAnimationFrame(loop);
     };
     raf = requestAnimationFrame(loop);
     return () => cancelAnimationFrame(raf);
   }, [world]);
 
+  const prefs = usePreferences();
+  const lighting = prefs.timeLighting ? lightingFor(new Date().getHours()) : null;
   const now = performance.now();
   const rt = state.runtime;
   const battle = rt.battle;
@@ -198,10 +206,27 @@ export function BattleView() {
             width: MAP_W,
             height: MAP_H,
             transform: `translate(${-Math.round(camera.x * zoom)}px, ${-Math.round(camera.y * zoom)}px) scale(${zoom})`,
-            backgroundImage: `url(${terrainUrl(region.terrain, scene.key, MAP_W / 2, MAP_H / 2)})`,
-            backgroundSize: `${MAP_W}px ${MAP_H}px`,
+            backgroundImage: `url(${roadsUrl(world.nav, region.terrain, scene.key)}), url(${terrainUrl(region.terrain, scene.key, MAP_W / 2, MAP_H / 2, false)})`,
+            backgroundSize: `${MAP_W}px ${MAP_H}px, ${MAP_W}px ${MAP_H}px`,
           }}
         >
+          {world.nav.obstacles.map((o) => {
+            const prop = propSprite(region.terrain, o);
+            // the footprint circle sits at the bottom of the drawing; depth by the footprint's front edge
+            return (
+              <img
+                key={`o${o.id}`}
+                className="map-prop pixel"
+                src={prop.url}
+                width={prop.width}
+                height={prop.height}
+                alt=""
+                draggable={false}
+                style={{ left: o.x - prop.width / 2, top: o.y + o.r * 0.55 - prop.height, zIndex: Math.round(o.y + o.r * 0.55) }}
+              />
+            );
+          })}
+
           {world.wanderers.map((w) => (
             <div key={w.id} className="entity wild" style={at(w.pos)}>
               <div className="shadow" />
@@ -211,7 +236,7 @@ export function BattleView() {
 
           {enemy && world.encounter && (
             <div className="entity" style={at(world.encounter.pos)}>
-              <Nameplate bug={enemy} showHp={false} />
+              {prefs.nameplates && <Nameplate bug={enemy} showHp={false} />}
               <div className="shadow" />
               <div key={lastEnemyHit?.id ?? 0} className="lunge" style={{ "--lx": `${Math.sign(playerPos.x - enemyPos.x) * 14}px`, "--ly": `${Math.sign(playerPos.y - enemyPos.y) * 8}px` } as CSSProperties}>
                 <div key={lastPlayerHit?.id ?? 0} className="hit-flash">
@@ -249,7 +274,7 @@ export function BattleView() {
 
           {player && (
             <div className="entity" style={at(playerPos)}>
-              <Nameplate bug={player} showHp />
+              {prefs.nameplates && <Nameplate bug={player} showHp />}
               <div className="shadow" />
               {levelUp && <div key={levelUp.id} className="levelup-ring" />}
               <div key={lastPlayerHit?.id ?? 0} className="lunge" style={{ "--lx": `${Math.sign(enemyPos.x - playerPos.x) * 14}px`, "--ly": `${Math.sign(enemyPos.y - playerPos.y) * 8}px` } as CSSProperties}>
@@ -260,7 +285,7 @@ export function BattleView() {
             </div>
           )}
 
-          {enemy && <AttackLayer recent={recent} now={now} positions={{ player: body(playerPos), enemy: body(enemyPos) }} />}
+          {enemy && !prefs.economy && !prefs.ultraEconomy && <AttackLayer recent={recent} now={now} positions={{ player: body(playerPos), enemy: body(enemyPos) }} />}
 
           {floats.map((f) => (
             <span key={f.id} className={`float-text float-${f.tone}`} style={{ left: f.pos.x, top: f.pos.y, animationDelay: `${f.delayMs}ms` }}>
@@ -268,6 +293,8 @@ export function BattleView() {
             </span>
           ))}
         </div>
+
+        {lighting && lighting.opacity > 0 && <div className="time-lighting" style={{ background: lighting.color, opacity: lighting.opacity }} />}
 
         <div className="battle-label">
           {isBoss ? (
@@ -291,9 +318,14 @@ export function BattleView() {
         </div>
 
         <div className="battle-actions" onPointerDown={(e) => e.stopPropagation()}>
-          <Button variant="dark" small onClick={() => open({ kind: "sound" })} aria-label={UI.sound.title}>
+          <Button variant="dark" small onClick={() => open({ kind: "settings", tab: "audio" })} aria-label={UI.sound.title}>
             <Icon name="sound" size={14} />
           </Button>
+          {prefs.immersive && (
+            <Button variant="dark" small onClick={() => setPreference("immersive", false)}>
+              {SETTINGS_UI.immersiveExit}
+            </Button>
+          )}
           {isBoss ? (
             <Button variant="danger" onClick={() => report(store.run(forfeitBoss))}>
               {UI.forfeit}

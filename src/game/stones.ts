@@ -72,6 +72,7 @@ export function refineStat(state: PersistentState, uid: string, stat: StatKey): 
   if (!spendStones(state, bug, refineCost(current))) return fail("notEnoughStones");
   const hpBefore = computeStats(bug).hp;
   bug.refine[stat] = current + 1;
+  state.totals.refines += 1;
   if (stat === "hp") bug.currentHp += computeStats(bug).hp - hpBefore;
   return OK;
 }

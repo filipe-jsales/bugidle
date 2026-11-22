@@ -68,6 +68,8 @@ export function hatchEgg(state: PersistentState, rng: Rng): BugInstance {
   registerCaught(state, speciesId, bug.shiny);
   addBug(state, bug);
   state.totals.captures += 1;
+  state.totals.hatched += 1;
+  if (bug.shiny) state.totals.shinies += 1;
   return bug;
 }
 

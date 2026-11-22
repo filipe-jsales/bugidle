@@ -3,6 +3,7 @@ import { audio } from "../audio/audioEngine";
 import { soundForEvent } from "../audio/sounds";
 import { getRoute } from "../game/data/world";
 import type { GameState } from "../game/state";
+import { getPreferences, soundAllowed, usePreferences } from "./preferences";
 import { store } from "./store";
 
 /** Name of the song for what the player is doing now. */
@@ -22,7 +23,7 @@ export function useAudio(state: GameState): void {
     const stop = store.onEvents((events) => {
       for (const event of events) {
         const id = soundForEvent(event);
-        if (id) engine.play(id);
+        if (id && soundAllowed(event, getPreferences())) engine.play(id);
       }
     });
     return () => {
@@ -36,4 +37,9 @@ export function useAudio(state: GameState): void {
   useEffect(() => {
     audio?.setMusic(song);
   }, [song]);
+
+  const ultra = usePreferences().ultraEconomy;
+  useEffect(() => {
+    if (audio) audio.musicOff = ultra;
+  }, [ultra]);
 }

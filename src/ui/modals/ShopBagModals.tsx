@@ -1,3 +1,4 @@
+import { equipItem } from "../../game/held";
 import { useState } from "react";
 import { maxHp } from "../../game/bug";
 import { ITEMS, itemsOfCategory, type ItemCategory, type ItemId } from "../../game/data/items";
@@ -11,7 +12,7 @@ import { formatNumber } from "../format";
 import { BugSprite, Button, Icon, ItemIcon, Modal } from "../components/primitives";
 import { store, useGame } from "../store";
 
-const CATEGORIES: ItemCategory[] = ["trap", "potion", "revive", "vitamin", "evolution", "egg"];
+const CATEGORIES: ItemCategory[] = ["trap", "potion", "revive", "vitamin", "evolution", "held", "egg"];
 const QUANTITIES = [1, 10, 50];
 
 export function ShopModal() {
@@ -121,7 +122,7 @@ export function BagModal() {
                       type="button"
                       className="bag-bug"
                       onClick={() => {
-                        if (report(store.run((s) => useItemOnBug(s, selected, bug.uid)))) toast(`${ITEM_TEXT[selected].name}: ${getSpecies(bug.speciesId).name}`);
+                        if (report(store.run((s) => (ITEMS[selected].category === "held" ? equipItem(s, bug.uid, selected) : useItemOnBug(s, selected, bug.uid))))) toast(`${ITEM_TEXT[selected].name}: ${getSpecies(bug.speciesId).name}`);
                       }}
                     >
                       <BugSprite speciesId={bug.speciesId} shiny={bug.shiny} size={32} />

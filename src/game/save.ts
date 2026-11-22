@@ -1,5 +1,5 @@
 import { MAX_IV, type BugInstance } from "./bug";
-import { isItemId } from "./data/items";
+import { isItemId, ITEMS } from "./data/items";
 import { HATCHERY_SLOTS } from "./hatchery";
 import { HOUSE_LOTS, HOUSE_TIERS, type House } from "./housing";
 import { isBugType } from "./types";
@@ -90,6 +90,7 @@ export function importSave(text: string): GameState {
         origin: typeof bug.origin === "string" ? bug.origin : "unknown",
         potency,
         refine,
+        held: isItemId(raw.held) && ITEMS[raw.held].category === "held" ? raw.held : null,
         caughtAt: isNumber(raw.caughtAt) ? raw.caughtAt : undefined,
         caughtBy: typeof raw.caughtBy === "string" ? raw.caughtBy : undefined,
       };
@@ -181,10 +182,17 @@ export function importSave(text: string): GameState {
     badges: isStringArray(raw.badges) ? raw.badges.filter((b) => BOSSES.some((boss) => boss.badgeId === b)) : [],
     activity,
     settings,
+    achievements: isObject(raw.achievements)
+      ? Object.fromEntries(Object.entries(raw.achievements).filter((entry): entry is [string, number] => isNumber(entry[1])))
+      : {},
     totals: {
       defeats: isNumber(totalsRaw.defeats) ? totalsRaw.defeats : 0,
       captures: isNumber(totalsRaw.captures) ? totalsRaw.captures : 0,
       playTimeMs: isNumber(totalsRaw.playTimeMs) ? totalsRaw.playTimeMs : 0,
+      shinies: isNumber(totalsRaw.shinies) ? totalsRaw.shinies : 0,
+      evolutions: isNumber(totalsRaw.evolutions) ? totalsRaw.evolutions : 0,
+      hatched: isNumber(totalsRaw.hatched) ? totalsRaw.hatched : 0,
+      refines: isNumber(totalsRaw.refines) ? totalsRaw.refines : 0,
     },
     houses,
     rules: sanitizeRules(raw.rules),

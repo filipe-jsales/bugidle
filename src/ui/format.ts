@@ -1,3 +1,4 @@
+import { ACHIEVEMENT_TEXT, ACHIEVEMENTS_UI } from "../i18n/achievements.ptBR";
 import { getSpecies } from "../game/data/species";
 import { getBoss } from "../game/data/world";
 import type { GameEvent } from "../game/engine";
@@ -45,6 +46,8 @@ export function describeEvent(event: GameEvent, state: GameState): { text: strin
       return { text: `${bugName(state, event.uid)} subiu para o nível ${event.level}!`, tone: "good" };
     case "evolved":
       return { text: `${speciesName(event.from)} evoluiu para ${speciesName(event.to)}!`, tone: "rare" };
+    case "achievement":
+      return { text: ACHIEVEMENTS_UI.toast(ACHIEVEMENT_TEXT[event.id]?.name ?? event.id, formatNumber(event.reward)), tone: "rare" };
     case "hatched":
       return { text: `Um ovo chocou: ${speciesName(event.speciesId)}${event.shiny ? " SHINY" : ""}!`, tone: event.shiny ? "rare" : "good" };
     case "stoneDrop":

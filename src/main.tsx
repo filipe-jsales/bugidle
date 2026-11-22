@@ -6,6 +6,7 @@ import "@fontsource/silkscreen/400.css";
 import "./ui/styles.css";
 import "./ui/learning.css";
 import "./ui/polish.css";
+import "./ui/features.css";
 import { App } from "./ui/App";
 
 const root = document.getElementById("root");

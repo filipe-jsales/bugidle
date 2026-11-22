@@ -25,14 +25,19 @@ export interface HouseTier {
  * Moore's law: chips roughly doubled in capacity every couple of years, so every
  * era here doubles production (1x, 2x, 4x ... 64x).
  */
+/**
+ * Prices are set so each step pays itself back in about 45 minutes with its
+ * slots full of bugs at the level a player has when the step is affordable
+ * (10, 20, 30, 40, 50, 60, 70). `housing.test.ts` checks this payback.
+ */
 export const HOUSE_TIERS: readonly HouseTier[] = [
   { slots: 1, multiplier: 1, storageHours: 1, cost: 400 },
-  { slots: 2, multiplier: 2, storageHours: 2, cost: 2_500 },
-  { slots: 3, multiplier: 4, storageHours: 3, cost: 12_000 },
-  { slots: 3, multiplier: 8, storageHours: 4, cost: 45_000 },
-  { slots: 4, multiplier: 16, storageHours: 6, cost: 160_000 },
-  { slots: 5, multiplier: 32, storageHours: 8, cost: 550_000 },
-  { slots: 6, multiplier: 64, storageHours: 12, cost: 2_000_000 },
+  { slots: 2, multiplier: 2, storageHours: 2, cost: 2_000 },
+  { slots: 3, multiplier: 4, storageHours: 3, cost: 8_000 },
+  { slots: 3, multiplier: 8, storageHours: 4, cost: 28_000 },
+  { slots: 4, multiplier: 16, storageHours: 6, cost: 90_000 },
+  { slots: 5, multiplier: 32, storageHours: 8, cost: 280_000 },
+  { slots: 6, multiplier: 64, storageHours: 12, cost: 900_000 },
 ];
 
 export type HouseCategory = "history" | "languages" | "cloud" | "databases" | "networks" | "security" | "ai";
@@ -54,17 +59,17 @@ export interface HouseLot {
 export const HOUSE_LOTS: readonly HouseLot[] = [
   { lot: 0, category: "history", requiredBadge: null, costFactor: 1, coinMult: 1, xpMult: 1, storageMult: 1,
     eras: ["vacuumTube", "transistor", "integratedCircuit", "microprocessor", "personalComputer", "web", "smartphone"] },
-  { lot: 1, category: "languages", requiredBadge: "badge-localhost", costFactor: 2, coinMult: 0.8, xpMult: 1.6, storageMult: 1,
+  { lot: 1, category: "languages", requiredBadge: "badge-localhost", costFactor: 1.5, coinMult: 0.8, xpMult: 1.6, storageMult: 1,
     eras: ["assembly", "fortran", "cobol", "c", "python", "javascript", "rust"] },
-  { lot: 2, category: "cloud", requiredBadge: "badge-staging", costFactor: 3, coinMult: 1, xpMult: 1, storageMult: 2,
+  { lot: 2, category: "cloud", requiredBadge: "badge-staging", costFactor: 2, coinMult: 1, xpMult: 1, storageMult: 2,
     eras: ["timeSharing", "datacenter", "virtualization", "iaas", "containers", "orchestration", "serverless"] },
-  { lot: 3, category: "databases", requiredBadge: "badge-production", costFactor: 5, coinMult: 1.1, xpMult: 1, storageMult: 1.5,
+  { lot: 3, category: "databases", requiredBadge: "badge-production", costFactor: 3, coinMult: 1.1, xpMult: 1, storageMult: 1.5,
     eras: ["punchedCards", "magneticTape", "hierarchical", "relational", "sql", "nosql", "vectorDb"] },
-  { lot: 4, category: "networks", requiredBadge: "badge-production", costFactor: 6, coinMult: 1.25, xpMult: 0.8, storageMult: 1,
+  { lot: 4, category: "networks", requiredBadge: "badge-production", costFactor: 3, coinMult: 1.25, xpMult: 0.8, storageMult: 1,
     eras: ["arpanet", "ethernet", "tcpip", "dns", "wifi", "cdn", "fiveG"] },
-  { lot: 5, category: "security", requiredBadge: "badge-legacy", costFactor: 9, coinMult: 1.15, xpMult: 1.15, storageMult: 1.2,
+  { lot: 5, category: "security", requiredBadge: "badge-legacy", costFactor: 4, coinMult: 1.15, xpMult: 1.15, storageMult: 1.2,
     eras: ["password", "firstVirus", "publicKey", "firewall", "https", "twoFactor", "zeroTrust"] },
-  { lot: 6, category: "ai", requiredBadge: "badge-cloud", costFactor: 16, coinMult: 1.3, xpMult: 1.3, storageMult: 1,
+  { lot: 6, category: "ai", requiredBadge: "badge-cloud", costFactor: 6, coinMult: 1.3, xpMult: 1.3, storageMult: 1,
     eras: ["turingTest", "perceptron", "expertSystems", "backprop", "deepBlue", "deepLearning", "transformer"] },
 ];
 

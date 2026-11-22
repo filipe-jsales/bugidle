@@ -1,3 +1,4 @@
+import { ITEMS, type ItemId } from "./data/items";
 import { getSpecies, type SpeciesDef } from "./data/species";
 import { STAT_KEYS, zeroStats, type Stats } from "./data/stats";
 import { randomInt, type Rng } from "./rng";
@@ -40,6 +41,8 @@ export interface BugInstance {
   /** Epoch ms when it joined the player, if it is the player's. */
   caughtAt?: number;
   caughtBy?: string;
+  /** Held item (one per bug), or null. */
+  held: ItemId | null;
 }
 
 export interface CreateBugOptions {
@@ -87,6 +90,7 @@ export function createBug(options: CreateBugOptions): BugInstance {
     currentHp: 0,
     shiny,
     origin: options.origin,
+    held: null,
   };
   bug.currentHp = computeStats(bug).hp;
   return bug;
@@ -113,7 +117,12 @@ export function computeStatsFor(species: SpeciesDef, level: number, ivs: Stats, 
 }
 
 export function computeStats(bug: BugInstance): Stats {
-  return computeStatsFor(getSpecies(bug.speciesId), bug.level, bug.ivs, bug.boosts, bug.refine, bug.potency);
+  const stats = computeStatsFor(getSpecies(bug.speciesId), bug.level, bug.ivs, bug.boosts, bug.refine, bug.potency);
+  const item = bug.held ? ITEMS[bug.held] : undefined;
+  if (item?.category === "held" && item.effect.stat && item.effect.statMult) {
+    stats[item.effect.stat] = Math.floor(stats[item.effect.stat] * item.effect.statMult);
+  }
+  return stats;
 }
 
 export function maxHp(bug: BugInstance): number {

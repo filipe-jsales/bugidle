@@ -44,6 +44,8 @@ src/
     rules.ts            player IF/THEN automation rules (capture and heal decisions)
     learning.ts         spaced repetition, daily challenge, boss code review
     guild.ts            Guild of Algorithms: champions, raids, Big-O based durations
+    achievements.ts     long-term goals read from the state, each pays coins once (checked at the end of every tick)
+    held.ts             held items: one per bug, equip/unequip, stat/XP/coin multipliers
     data/lessons.ts     one buggy snippet + fix per species (the base of every learning feature)
     state.ts            GameState = PersistentState + RuntimeState
     engine.ts           the idle loop `tick()` and player commands
@@ -59,6 +61,10 @@ src/
     polish.css          loaded last: layout limits, battle overlay, themed scrollbars, hover/press states, spacing
     world/worldModel.ts pure model of the explorable map: trainer walk, follower, roaming bugs, camera
     terminal.ts         the optional shell: parses a line and calls the same commands as the buttons
+    preferences.ts      settings window switches (sound, display, performance), per browser in localStorage
+    usePreferenceEffects.ts applies them outside React: body classes, viewport, screen wake lock
+    world/navigation.ts battle map roads and obstacles: grid, A* (roads are cheaper), push-out
+    features.css        settings window, achievements, held items, lighting and preference modes
     components/         layout pieces (sidebar, top nav, battle view, automations, log)
     modals/             windows (bug details, map, Bugdex, box, shop, bag, bosses, save, starter)
 ```
@@ -66,6 +72,8 @@ src/
 ### The battle scene
 
 The game engine decides *when* an encounter happens and resolves it; `worldModel.ts` decides *where* it is drawn. Every animation frame, `BattleView` steps the world model with the current encounter key: between fights the trainer walks toward the nearest roaming bug and the active bug follows his trail; when the engine starts a fight, the nearest roaming bug becomes the enemy and both line up in front of it. The camera centres on the trainer and is clamped to the map.
+
+Obstacles and roads (`world/navigation.ts`): the map has a few wobbly roads (one through the start) and about 50 obstacles off the roads. The trainer plans with A* on a 40px grid where roads cost less, so he walks around obstacles and along the roads; the follower and the wild bugs are pushed out of obstacles. Obstacles are drawn as props of the region (`render/mapProps.ts`) with depth by their front edge; the terrain is drawn without its big objects on the battle map (`terrainUrl(..., props=false)`).
 
 Battle map rules (keep them):
 - The camera **always follows the trainer**. There is no dragging and no mouse-wheel zoom on the battle map; the only control is the zoom **+ / -** buttons (bottom right). Pan and wheel zoom exist only in the region map (Mapa button, `usePanZoom`).
@@ -99,11 +107,20 @@ Battle map rules (keep them):
 | Walk speeds, fight spacing, roaming bugs | `worldModel.ts` |
 | Zoom limits and step | `MIN_ZOOM`, `MAX_ZOOM`, `ZOOM_STEP` in `world/viewport.ts` |
 | Wins to open a route, per region | `DEFEATS_TO_UNLOCK_BY_REGION` in `data/world.ts` |
+| Early XP floor (levels 1-11) | `EARLY_LEVELS`, `EARLY_SHARE` in `experience.ts` |
+| Achievements (goals, rewards) | `ACHIEVEMENTS` in `achievements.ts` |
+| Held items (price, effect) | `ITEMS` (category `held`) in `data/items.ts` |
 | House tiers (cost, slots, multiplier, storage) and categories (badge, cost factor, coin/XP/storage perks, milestones) | `HOUSE_TIERS`, `HOUSE_LOTS` in `housing.ts` |
 
 ### Balancing
 
 Run `npm run simulate` (optionally with seeds: `npm run simulate -- 1 2 3`). It plays the whole game headless in about a second per seed and prints, per region, when the boss was beaten, boss tries, timeouts, wipes, team levels and coins. After changing any number above, run it and keep the pacing inside the bounds of `simulation.test.ts` (20-45 h total, first region 45 min-5 h, every region slower than the last). Change those bounds only on purpose.
+
+The simulated player uses every system: it arranges the team (moving strong bugs out of houses), shops, builds houses when the price is half its wallet, refines the top three bugs keeping 8 stones for evolutions, buys and hatches eggs, and equips held items. It also prints refines, eggs hatched and the house return (coins collected / coins spent). Current results (v0.8): 22-23 h total, first region 1.1-1.2 h, houses return 1.7-3.1x. House prices are set so each step pays itself back in about 45 minutes (`housing.test.ts`).
+
+## Settings and preferences
+
+The settings window (Config. in the top bar, or the sound button on the map) has five tabs: Áudio, Interatividade, HUD, Desempenho, Suporte. Every switch has a "?" with a one-line explanation in `i18n/settings.ptBR.ts`. They are browser preferences (`ui/preferences.ts`), not game state, so they are not in the save. To add one: a key in `Preferences` with its default, its text in `PREFERENCE_TEXT`, its tab in `KEYS` (`SettingsModal.tsx`), and its effect (CSS body class in `usePreferenceEffects.ts`, or read `usePreferences()` where needed). Pure decisions (`soundAllowed`, `mapFps`, `lightingFor`, `bodyClasses`) are unit tested.
 
 ## Learning features
 
@@ -153,6 +170,10 @@ To go further:
 | RF08 | Bugdex: seen/caught/shiny, stats, locations | `bugdex.ts`, `BugdexModal.tsx` | `progression.test.ts` |
 | RF09 | Shop and inventory | `inventory.ts` | `inventory.test.ts` |
 | RF10 | Autosave in the browser, JSON export/import | `save.ts`, `store.ts` | `save.test.ts`, `store.test.ts` |
+| - | Achievements | `achievements.ts`, `AchievementsModal.tsx` | `achievements.test.ts` |
+| - | Held items | `held.ts`, `HeldItemSection.tsx` | `held.test.ts` |
+| - | Map obstacles and roads | `world/navigation.ts`, `render/mapProps.ts` | `navigation.test.ts` |
+| - | Settings window (5 tabs) | `preferences.ts`, `SettingsModal.tsx`, `usePreferenceEffects.ts` | `preferences.test.ts` |
 | - | Houses by category with milestone timelines | `housing.ts`, `HousesModal.tsx`, `i18n/houses.ptBR.ts`, `render/houseArt.ts` | `housing.test.ts` |
 | - | Balance / pacing | `simulation.ts` | `simulation.test.ts` |
 | - | Sound and music | `src/audio` | `audio.test.ts` |

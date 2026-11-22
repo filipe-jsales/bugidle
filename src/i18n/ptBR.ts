@@ -102,6 +102,12 @@ export const ITEM_TEXT: Record<ItemId, { name: string; description: string }> = 
   legacyPatch: { name: "Patch Legado", description: "Evolui o Floatfly." },
   cdnToken: { name: "Token de CDN", description: "Evolui o Cachemoth." },
   mysteryEgg: { name: "Ovo Misterioso", description: "Vai para a chocadeira e vira um bug surpresa das regiões que você já abriu." },
+  rubberDuck: { name: "Pato de Borracha", description: "Equipável. Explicar o código para um pato ajuda a achar o erro: quem carrega ganha +25% de XP." },
+  linter: { name: "Linter", description: "Equipável. Aponta problemas antes de rodar: +10% de ATK." },
+  antivirus: { name: "Antivírus", description: "Equipável. Bloqueia o que chega de fora: +10% de DEF." },
+  ssd: { name: "SSD", description: "Equipável. Lê e grava muito mais rápido que um disco: +10% de VEL." },
+  testSuite: { name: "Suíte de Testes", description: "Equipável. Cada teste é uma rede de segurança: +10% de HP." },
+  cacheCard: { name: "Cartão de Cache", description: "Equipável. Guarda o que já foi calculado: +20% de moedas nas vitórias de quem carrega." },
 };
 
 export const CATEGORY_NAMES: Record<ItemCategory, string> = {
@@ -110,6 +116,7 @@ export const CATEGORY_NAMES: Record<ItemCategory, string> = {
   revive: "Reviver",
   vitamin: "Melhorias",
   evolution: "Evolução",
+  held: "Equipamentos",
   egg: "Ovos",
 };
 

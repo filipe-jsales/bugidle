@@ -49,6 +49,16 @@ describe("house eras", () => {
     }
   });
 
+  it("every step pays itself back in 25 to 75 minutes with typical residents", () => {
+    HOUSE_TIERS.forEach((tier, i) => {
+      const residentLevel = 10 + i * 10;
+      const perMinute = (3 + residentLevel * 0.6) * tier.multiplier * tier.slots;
+      const payback = tier.cost / perMinute;
+      expect(payback, `tier ${i}`).toBeGreaterThan(25);
+      expect(payback, `tier ${i}`).toBeLessThan(75);
+    });
+  });
+
   it("follow Moore's law: every era doubles production", () => {
     for (let i = 1; i < HOUSE_TIERS.length; i++) expect(HOUSE_TIERS[i]!.multiplier).toBe(HOUSE_TIERS[i - 1]!.multiplier * 2);
   });

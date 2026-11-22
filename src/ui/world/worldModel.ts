@@ -3,9 +3,12 @@
  * the active bug follows behind, wild bugs roam, and the camera tracks the
  * trainer. The game engine decides *when* encounters happen; this model decides
  * *where* they are drawn. Pure (no DOM), stepped by the UI every frame.
+ * Obstacles and roads come from `navigation.ts`: the trainer plans around
+ * obstacles and prefers roads; everything else is pushed out of obstacles.
  */
 import { randomInt, type Rng } from "../../game/rng";
 import type { Facing } from "../../sprites/trainerSprite";
+import { createNav, findPath, freePoint, pushOut, type Nav } from "./navigation";
 
 export interface Vec {
   x: number;
@@ -48,6 +51,16 @@ export interface WorldModel {
   camera: Vec;
   nextId: number;
   speciesPool: readonly string[];
+  /** Obstacles and roads of this map. */
+  nav: Nav;
+  /** Trainer's planned waypoints toward `pathGoal`. */
+  path: Vec[];
+  pathGoal: Vec | null;
+}
+
+export interface WorldOptions {
+  /** Number of obstacles (default: by map area). 0 gives an open field. */
+  obstacles?: number;
 }
 
 export interface WorldInput {
@@ -78,8 +91,13 @@ function clampToWorld(w: Pick<WorldModel, "width" | "height">, p: Vec): Vec {
   return { x: Math.min(w.width - MARGIN, Math.max(MARGIN, p.x)), y: Math.min(w.height - MARGIN, Math.max(MARGIN, p.y)) };
 }
 
-function randomPoint(w: Pick<WorldModel, "width" | "height">, rng: Rng): Vec {
-  return { x: randomInt(rng, MARGIN, w.width - MARGIN), y: randomInt(rng, MARGIN, w.height - MARGIN) };
+function randomPoint(w: Pick<WorldModel, "nav">, rng: Rng): Vec {
+  return freePoint(w.nav, rng, MARGIN);
+}
+
+/** Inside the map and outside every obstacle. */
+function placeable(w: Pick<WorldModel, "width" | "height" | "nav">, p: Vec): Vec {
+  return pushOut(w.nav, clampToWorld(w, p), 6);
 }
 
 /** Moves `pos` toward `target` by at most `speed * dt`. Returns whether it moved. */
@@ -100,8 +118,9 @@ function spawnWanderer(w: WorldModel, rng: Rng, awayFrom: Vec): Wanderer {
   return { id: w.nextId++, speciesId, pos, target: { ...pos }, pauseS: rng() * 2 };
 }
 
-export function createWorld(width: number, height: number, speciesPool: readonly string[], rng: Rng): WorldModel {
+export function createWorld(width: number, height: number, speciesPool: readonly string[], rng: Rng, options: WorldOptions = {}): WorldModel {
   const start = { x: width / 2, y: height / 2 };
+  const nav = createNav(width, height, rng, { obstacles: options.obstacles, clearAround: start });
   const w: WorldModel = {
     width,
     height,
@@ -114,6 +133,9 @@ export function createWorld(width: number, height: number, speciesPool: readonly
     camera: { x: 0, y: 0 },
     nextId: 1,
     speciesPool,
+    nav,
+    path: [],
+    pathGoal: null,
   };
   for (let i = 0; i < WANDERER_COUNT; i++) w.wanderers.push(spawnWanderer(w, rng, start));
   return w;
@@ -160,7 +182,7 @@ export function stepWorld(w: WorldModel, dtS: number, input: WorldInput, rng: Rn
       pos = { ...near.pos };
       w.wanderers = w.wanderers.filter((x) => x !== near);
     } else {
-      pos = clampToWorld(w, add(trainer.pos, scale(FACING_VEC[trainer.facing], FIGHT_GAP + TRAINER_BEHIND + 30)));
+      pos = placeable(w, add(trainer.pos, scale(FACING_VEC[trainer.facing], FIGHT_GAP + TRAINER_BEHIND + 30)));
     }
     w.encounter = { key: input.encounterKey, pos };
   } else if (!input.encounterKey && w.encounter) {
@@ -171,8 +193,8 @@ export function stepWorld(w: WorldModel, dtS: number, input: WorldInput, rng: Rn
   let bugGoal: Vec | null = null;
   if (w.encounter) {
     const stands = fightStands(trainer.pos, w.encounter.pos, trainer.facing);
-    w.waypoint = clampToWorld(w, stands.trainer);
-    bugGoal = clampToWorld(w, stands.bug);
+    w.waypoint = placeable(w, stands.trainer);
+    bugGoal = placeable(w, stands.bug);
   } else {
     const prey = nearestWanderer(w, trainer.pos);
     if (prey) w.waypoint = prey.pos;
@@ -182,7 +204,12 @@ export function stepWorld(w: WorldModel, dtS: number, input: WorldInput, rng: Rn
   // 3. move the trainer
   const before = { ...trainer.pos };
   const stopShort = !w.encounter && distance(trainer.pos, w.waypoint) < 70;
-  trainer.moving = !stopShort && moveToward(trainer.pos, w.waypoint, TRAINER_SPEED, dt);
+  if (!w.pathGoal || distance(w.pathGoal, w.waypoint) > 24) {
+    w.path = findPath(w.nav, trainer.pos, w.waypoint);
+    w.pathGoal = { ...w.waypoint };
+  }
+  while (w.path.length > 1 && distance(trainer.pos, w.path[0]!) < 4) w.path.shift();
+  trainer.moving = !stopShort && moveToward(trainer.pos, w.path[0] ?? w.waypoint, TRAINER_SPEED, dt);
   if (trainer.moving) {
     trainer.facing = facingOf(sub(trainer.pos, before), trainer.facing);
     trainer.walkS += dt;
@@ -199,6 +226,7 @@ export function stepWorld(w: WorldModel, dtS: number, input: WorldInput, rng: Rn
   // 5. the active bug follows the trail, or takes its place in the fight
   const followGoal = bugGoal ?? trailPoint(w, FOLLOW_DISTANCE);
   w.follower.moving = moveToward(w.follower.pos, followGoal, FOLLOWER_SPEED, dt);
+  Object.assign(w.follower.pos, pushOut(w.nav, w.follower.pos, 2));
 
   // 6. roaming wild bugs
   for (const wanderer of w.wanderers) {
@@ -208,8 +236,9 @@ export function stepWorld(w: WorldModel, dtS: number, input: WorldInput, rng: Rn
     }
     if (!moveToward(wanderer.pos, wanderer.target, WANDER_SPEED, dt)) {
       wanderer.pauseS = 1 + rng() * 2.5;
-      wanderer.target = clampToWorld(w, add(wanderer.pos, { x: randomInt(rng, -120, 120), y: randomInt(rng, -120, 120) }));
+      wanderer.target = placeable(w, add(wanderer.pos, { x: randomInt(rng, -120, 120), y: randomInt(rng, -120, 120) }));
     }
+    Object.assign(wanderer.pos, pushOut(w.nav, wanderer.pos, 2));
   }
   while (w.wanderers.length < WANDERER_COUNT) w.wanderers.push(spawnWanderer(w, rng, trainer.pos));
 

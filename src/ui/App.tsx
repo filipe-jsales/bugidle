@@ -15,12 +15,17 @@ import { HatcheryModal } from "./modals/HatcheryModal";
 import { RulesModal } from "./modals/RulesModal";
 import { GuildModal } from "./modals/GuildModal";
 import { TerminalModal } from "./modals/TerminalModal";
+import { SettingsModal } from "./modals/SettingsModal";
+import { AchievementsModal } from "./modals/AchievementsModal";
+import { ACHIEVEMENT_TEXT, ACHIEVEMENTS_UI } from "../i18n/achievements.ptBR";
+import { getPreferences, usePreferences } from "./preferences";
+import { usePreferenceEffects } from "./usePreferenceEffects";
+import { formatNumber } from "./format";
 import { BossReviewModal, StudyModal } from "./modals/StudyModals";
 import { HousesModal } from "./modals/HousesModal";
 import { MapModal } from "./modals/MapModal";
 import { BossesModal, SaveModal, StarterModal } from "./modals/MiscModals";
 import { BagModal, ShopModal } from "./modals/ShopBagModals";
-import { SoundModal } from "./modals/SoundModal";
 import { store, useGame } from "./store";
 import { useAudio } from "./useAudio";
 
@@ -45,8 +50,10 @@ function ModalHost({ modal }: { modal: ModalState | null }) {
       return <BossesModal />;
     case "save":
       return <SaveModal />;
-    case "sound":
-      return <SoundModal />;
+    case "settings":
+      return <SettingsModal initialTab={modal.tab} />;
+    case "achievements":
+      return <AchievementsModal />;
     case "houses":
       return <HousesModal />;
     case "hatchery":
@@ -94,6 +101,21 @@ export function App() {
     toastTimer.current = window.setTimeout(() => setToastText(null), TOAST_MS);
   }, []);
 
+  // Achievement toasts, unless the player hid them (they stay in the log).
+  useEffect(
+    () =>
+      store.onEvents((events) => {
+        for (const event of events) {
+          if (event.type === "achievement" && !getPreferences().hideAchievementToasts) {
+            toast(ACHIEVEMENTS_UI.toast(ACHIEVEMENT_TEXT[event.id]?.name ?? event.id, formatNumber(event.reward)));
+          }
+        }
+      }),
+    [toast],
+  );
+  const prefs = usePreferences();
+  usePreferenceEffects(prefs);
+
   const actions = useMemo<AppActions>(
     () => ({
       // Opening a bug or a species sheet from another window keeps it underneath; closing returns to it.
@@ -120,7 +142,7 @@ export function App() {
 
   return (
     <AppContext.Provider value={actions}>
-      <div className="layout">
+      <div className={`layout ${prefs.immersive ? "immersive" : ""}`}>
         <aside className="column left-column">
           <PlayerCard />
           <ActiveBugCard />

@@ -29,6 +29,8 @@ import { formatNumber } from "../format";
 import { Bar, BugSprite, Button, ItemIcon, Modal, Tag, TypeTag } from "../components/primitives";
 import { stoneIconUrl } from "../render/icons";
 import { store, useGame } from "../store";
+import { HeldItemSection } from "./HeldItemSection";
+import { HELD_UI } from "../../i18n/held.ptBR";
 
 const D = UI.detail;
 const TIER_COLORS: Readonly<Record<ScoreTier, string>> = {
@@ -288,6 +290,10 @@ export function BugDetailModal({ uid }: { uid: string }) {
           </tbody>
         </table>
         <p className="muted small">{D.refineExplain(REFINE_COST_UNIT)}</p>
+      </Section>
+
+      <Section title={HELD_UI.title} hint={HELD_UI.hint}>
+        <HeldItemSection uid={uid} />
       </Section>
 
       <Section title={D.evolution}>

@@ -1,3 +1,4 @@
+export type SettingsTab = "audio" | "interactivity" | "hud" | "performance" | "support";
 import { createContext, useContext } from "react";
 import type { ActionResult } from "../game/result";
 
@@ -10,8 +11,9 @@ export type ModalState =
   | { kind: "bag" }
   | { kind: "bosses" }
   | { kind: "save" }
-  | { kind: "sound" }
   | { kind: "houses" }
+  | { kind: "achievements" }
+  | { kind: "settings"; tab?: SettingsTab }
   | { kind: "hatchery" }
   | { kind: "rules" }
   | { kind: "study" }

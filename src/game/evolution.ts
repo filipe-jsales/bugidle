@@ -26,5 +26,6 @@ export function evolve(state: PersistentState, bug: BugInstance): string {
   bug.speciesId = evo.to;
   bug.currentHp = Math.max(bug.currentHp > 0 ? 1 : 0, computeStats(bug).hp - missingHp);
   registerCaught(state, evo.to, bug.shiny);
+  state.totals.evolutions += 1;
   return from;
 }

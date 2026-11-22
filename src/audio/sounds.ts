@@ -99,6 +99,8 @@ export function soundForEvent(event: GameEvent): SoundId | null {
       return "unlock";
     case "badge":
       return "fanfare";
+    case "achievement":
+      return "unlock";
     case "teamWiped":
       return "wipe";
     case "encounter":
