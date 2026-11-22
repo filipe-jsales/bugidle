@@ -1,0 +1,282 @@
+/**
+ * All player-facing text (pt-BR). Code and data use English ids; the UI looks
+ * strings up here, so a second language only needs another file with this shape.
+ */
+import type { ItemCategory, ItemId } from "../game/data/items";
+import type { Rarity } from "../game/data/species";
+import type { StatKey } from "../game/data/stats";
+import type { ActionError } from "../game/result";
+import type { CaptureMode } from "../game/state";
+import type { BugType } from "../game/types";
+
+export const TYPE_NAMES: Record<BugType, string> = {
+  syntax: "SINTAXE",
+  logic: "LÓGICA",
+  memory: "MEMÓRIA",
+  concurrency: "CONCORRÊNCIA",
+  network: "REDE",
+  security: "SEGURANÇA",
+  performance: "DESEMPENHO",
+  ui: "INTERFACE",
+};
+
+export const STAT_NAMES: Record<StatKey, string> = { hp: "HP", atk: "ATK", def: "DEF", spd: "SPD" };
+
+export const RARITY_NAMES: Record<Rarity, string> = {
+  common: "Comum",
+  uncommon: "Incomum",
+  rare: "Raro",
+  legendary: "Lendário",
+};
+
+export const REGION_NAMES: Record<string, string> = {
+  localhost: "Localhost",
+  staging: "Staging",
+  production: "Produção",
+  legacy: "Legado",
+  cloud: "Nuvem",
+};
+
+export const ROUTE_NAMES: Record<string, string> = {
+  "port-3000": "Porta 3000",
+  "node-modules": "Pasta node_modules",
+  "dev-console": "Console do Navegador",
+  "ci-pipeline": "Pipeline de CI",
+  "test-suite": "Suíte de Testes",
+  "feature-flags": "Feature Flags",
+  "load-balancer": "Balanceador de Carga",
+  "database-cluster": "Cluster de Banco",
+  "on-call-night": "Plantão da Madrugada",
+  "cobol-vault": "Cofre COBOL",
+  mainframe: "Mainframe",
+  "y2k-bunker": "Bunker do Y2K",
+  "serverless-sky": "Céu Serverless",
+  "kubernetes-reef": "Recife Kubernetes",
+  "zero-day-abyss": "Abismo Zero-Day",
+};
+
+export const BOSS_TITLES: Record<string, string> = {
+  "boss-localhost": "Revisora de Código",
+  "boss-staging": "Guardião do Merge",
+  "boss-production": "Engenheira de Plantão",
+  "boss-legacy": "Mestre do Kernel",
+  "boss-cloud": "Arquiteta da Nuvem",
+};
+
+export const BADGE_NAMES: Record<string, string> = {
+  "badge-localhost": "Selo Compila",
+  "badge-staging": "Selo Build Verde",
+  "badge-production": "Selo Uptime",
+  "badge-legacy": "Selo Retrocompatível",
+  "badge-cloud": "Selo Escalável",
+};
+
+export const ITEM_TEXT: Record<ItemId, { name: string; description: string }> = {
+  breakpoint: { name: "Breakpoint", description: "Armadilha básica. Pausa o bug para a captura." },
+  watchpoint: { name: "Watchpoint", description: "Vigia a memória do bug. Captura 1,5x melhor." },
+  profiler: { name: "Profiler", description: "Rastreia cada passo do bug. Captura 2,5x melhor." },
+  rootAccess: { name: "Acesso Root", description: "Captura garantida. Só é usado se for a armadilha preferida." },
+  coffee: { name: "Café", description: "Recupera 30 de HP." },
+  energyDrink: { name: "Energético", description: "Recupera 90 de HP." },
+  rebootDisk: { name: "Disco de Reboot", description: "Recupera todo o HP." },
+  docs: { name: "Documentação", description: "+2 de HP permanente (máx. +20)." },
+  codeReview: { name: "Code Review", description: "+2 de ATK permanente (máx. +20)." },
+  unitTest: { name: "Teste Unitário", description: "+2 de DEF permanente (máx. +20)." },
+  benchmark: { name: "Benchmark", description: "+2 de SPD permanente (máx. +20)." },
+  mutex: { name: "Mutex", description: "Evolui o Racemite. Trava demais e vira deadlock." },
+  legacyPatch: { name: "Patch Legado", description: "Evolui o Floatfly." },
+  cdnToken: { name: "Token de CDN", description: "Evolui o Cachemoth." },
+};
+
+export const CATEGORY_NAMES: Record<ItemCategory, string> = {
+  trap: "Armadilhas",
+  potion: "Poções",
+  vitamin: "Melhorias",
+  evolution: "Evolução",
+};
+
+export const CAPTURE_MODE_NAMES: Record<CaptureMode, string> = {
+  off: "Não capturar",
+  all: "Capturar todos",
+  uncaught: "Só novos na Bugdex",
+  shiny: "Só shiny",
+};
+
+/** Bugdex entries: what the real-world bug is. */
+export const SPECIES_DESCRIPTIONS: Record<string, string> = {
+  typobit: "Um erro de digitação no código: um nome trocado ou uma letra a mais. O compilador costuma pegar na hora.",
+  typoworm: "Erros de digitação acumulados viram erros de sintaxe: chaves sem par, aspas abertas, vírgulas perdidas.",
+  syntaxwyrm: "O arquivo inteiro não compila. Um único caractere faltando gera centenas de mensagens de erro em cascata.",
+  mergefly: "Conflito de merge: duas pessoas mudaram a mesma linha e o Git deixa marcas <<<<<<< no meio do código.",
+  regexorpion: "Expressão regular com backtracking catastrófico: um texto um pouco maior trava o processador por minutos.",
+  nullit: "Acessar algo que não existe: uma variável vazia (null) usada como se tivesse valor.",
+  nullpointer: "A NullPointerException, chamada pelo próprio criador do null de \"erro de um bilhão de dólares\".",
+  offbyone: "Erro de um a mais ou um a menos: o laço roda uma vez além do fim da lista, ou para uma antes.",
+  fencepost: "O problema da cerca: 10 metros com um poste a cada metro precisam de 11 postes, não 10.",
+  floatfly: "Ponto flutuante: 0,1 + 0,2 dá 0,30000000000000004. Nunca guarde dinheiro em float.",
+  roundrot: "Erros de arredondamento somados ao longo do tempo. Centavos que somem viram grandes rombos.",
+  leaklet: "Vazamento de memória: o programa reserva memória e esquece de devolver. Cresce aos poucos.",
+  leakroach: "O vazamento já ocupa gigabytes. O sistema fica lento e outros programas começam a sofrer.",
+  heapocalypse: "A memória acabou (OutOfMemory). O sistema operacional encerra o processo para se proteger.",
+  segfaultula: "Falha de segmentação: o programa tentou ler uma memória que não era dele. Queda instantânea.",
+  stackmantis: "Estouro de pilha: uma função chama a si mesma sem parar até a pilha de chamadas lotar.",
+  racemite: "Condição de corrida: duas tarefas mexem no mesmo dado ao mesmo tempo e o resultado depende da sorte.",
+  deadlocust: "Deadlock: a tarefa A espera a B, que espera a A. Ninguém anda, para sempre.",
+  heisenbug: "Some quando você tenta observar. Basta colocar um print ou abrir o depurador e ele não acontece mais.",
+  timeoutick: "Tempo esgotado: a resposta demorou demais e a conexão desistiu de esperar.",
+  packetfly: "Perda de pacotes: pedaços da mensagem se perdem no caminho e precisam ser reenviados.",
+  lagmoth: "Latência alta em toda a rede. Cada clique leva segundos para ter resposta.",
+  dnsnail: "Falha de DNS: o nome do site não vira endereço. Diz a lenda que o problema é sempre o DNS.",
+  corsbee: "Erro de CORS: o navegador impede a página de falar com outro domínio que não deu permissão.",
+  injectick: "Injeção de SQL: um texto digitado pelo usuário vira um comando no banco de dados.",
+  injecthorn: "A injeção virou ataque completo: dados vazados ou tabelas apagadas por um único formulário.",
+  xssquito: "Cross-site scripting: um script escondido num comentário roda no navegador de quem lê.",
+  spinloop: "Espera ocupada: um laço que pergunta \"já terminou?\" sem parar e gasta processador à toa.",
+  infiniloop: "Laço infinito: a condição de parada nunca fica verdadeira e o programa congela.",
+  nplusone: "Consulta N+1: buscar uma lista e depois fazer uma consulta separada para cada item dela.",
+  cachemoth: "Cache desatualizado: o sistema mostra um dado velho porque esqueceu de invalidar a cópia.",
+  cachequeen: "Invalidação de cache, conhecida como um dos dois problemas mais difíceis da computação, junto com dar nomes.",
+  pixelmite: "Um pixel fora do lugar. Pequeno, mas o designer sempre vê.",
+  overflowasp: "Texto ou imagem estourando a caixa: o conteúdo vaza para fora do layout.",
+  flickerfly: "Tela piscando: a interface se redesenha várias vezes e o conteúdo pula de lugar.",
+  y2kbeetle: "O bug do ano 2000: datas com dois dígitos fariam 2000 virar 1900. Mobilizou empresas do mundo inteiro.",
+  zeroday: "Falha de segurança que ninguém conhece ainda. Os defensores tiveram zero dias para corrigir.",
+  markmoth: "Em 1947, uma mariposa presa num relé do computador Mark II foi colada no diário de bordo: o primeiro bug de verdade.",
+};
+
+export const ERROR_TEXT: Record<ActionError, string> = {
+  notEnoughCoins: "Moedas insuficientes.",
+  invalidQuantity: "Quantidade inválida.",
+  noItem: "Você não tem este item.",
+  wrongItem: "Este item não pode ser usado aqui.",
+  unknownBug: "Bug não encontrado.",
+  teamFull: "A equipe já tem 6 bugs.",
+  lastTeamMember: "A equipe precisa de pelo menos 1 bug.",
+  alreadyInTeam: "Este bug já está na equipe.",
+  notInTeam: "Este bug não está na equipe.",
+  cannotEvolve: "Este bug ainda não pode evoluir.",
+  vitaminMaxed: "Este atributo já chegou ao limite.",
+  hpFull: "O HP já está cheio.",
+  fainted: "O bug está fora de combate. Use o Centro de Reboot.",
+  routeLocked: "Rota bloqueada.",
+  bossLocked: "Libere todas as rotas da região primeiro.",
+  busy: "Termine a batalha contra o chefe primeiro.",
+  invalidSave: "Save inválido.",
+};
+
+export const UI = {
+  gameTitle: "BugIdle",
+  level: "Nv",
+  nav: {
+    bugdex: "Bugdex",
+    map: "Mapa",
+    box: "Box",
+    shop: "Loja",
+    bag: "Mochila",
+    bosses: "Chefes",
+    save: "Save",
+  },
+  inField: "EM CAMPO",
+  team: "EQUIPE",
+  automations: "AUTOMAÇÕES",
+  log: "REGISTRO",
+  captureFilter: "Lançar armadilhas",
+  alwaysShiny: "Sempre capturar shiny",
+  preferredTrap: "Armadilha preferida",
+  autoPotion: "Usar poções",
+  useBelow: "usar abaixo de",
+  autoEvolve: "Evoluir automaticamente",
+  rebootCenter: "Ir para o Centro de Reboot",
+  forfeit: "Desistir do Chefe",
+  rebooting: "Reiniciando a equipe...",
+  searching: "Procurando bugs...",
+  power: "PODER",
+  quality: "QUALIDADE",
+  ivSum: "IV SOMADO",
+  stats: "STATS ATUAIS",
+  baseStats: "STATS-BASE DA ESPÉCIE",
+  currentStats: "Stats atuais",
+  ivLegend: "IV (0 a 31)",
+  ivExplain:
+    "O IV de cada stat é sorteado na captura (0 a 31) e soma até 124. Com IV alto, o bug fica mais forte no mesmo nível. As Melhorias da loja somam até +20 por stat.",
+  moves: "GOLPES",
+  setLead: "Colocar na frente",
+  toBox: "Mandar para o Box",
+  toTeam: "Levar para a equipe",
+  release: "Soltar",
+  releaseConfirm: "Clique de novo para soltar",
+  evolve: "Evoluir",
+  evolvesAt: (level: number) => `Evolui no Nv ${level}`,
+  evolvesWith: (item: string) => `Evolui com ${item}`,
+  finalForm: "Forma final",
+  close: "Fechar",
+  buy: "Comprar",
+  use: "Usar",
+  owned: "você tem",
+  qualityGrades: ["Fraco", "Comum", "Bom", "Ótimo", "Perfeito"],
+  map: {
+    list: "LISTA",
+    map: "MAPA",
+    locked: "bloqueada",
+    defeats: "derrotados",
+    current: "você está aqui",
+    unlockHint: (count: number, routeName: string) => `Derrote ${count} em ${routeName}`,
+    badgeHint: (badge: string) => `Precisa do ${badge}`,
+    levels: (min: number, max: number) => `Nv ${min}-${max}`,
+  },
+  dex: {
+    seen: "vistos",
+    caught: "capturados",
+    shiny: "shiny",
+    unknown: "???",
+    whereFound: "Onde aparece",
+    noWhere: "Só por evolução",
+    starter: "Bug inicial",
+    catchRate: "Taxa de captura",
+    rarity: "Raridade",
+    defeated: "derrotados",
+  },
+  box: {
+    search: "buscar bug...",
+    anyType: "todos os tipos",
+    anyRarity: "todas as raridades",
+    shinyOnly: "só shiny",
+    sorts: { recent: "recentes", level: "nível", dex: "número", power: "poder", iv: "IV" },
+    empty: "Nenhum bug encontrado.",
+    inTeam: "na equipe",
+  },
+  bag: { empty: "A mochila está vazia.", chooseBug: "Usar em qual bug?" },
+  bosses: {
+    timeLimit: "Tempo",
+    reward: "Prêmio",
+    cap: "Novo limite de nível",
+    beaten: "vencido",
+    locked: "Libere todas as rotas da região",
+    challenge: "Desafiar",
+    fighting: "em batalha",
+  },
+  save: {
+    title: "SAVE",
+    autosave: "O jogo salva sozinho no navegador a cada 10 segundos.",
+    export: "Exportar",
+    exportHint: "Copie este texto para guardar seu progresso.",
+    copy: "Copiar",
+    import: "Importar",
+    importHint: "Cole um save exportado e clique em Importar.",
+    imported: "Save importado.",
+    copied: "Copiado.",
+    reset: "Apagar progresso",
+    resetConfirm: "Clique de novo para apagar tudo",
+    name: "Nome do caçador",
+    playTime: "Tempo de jogo",
+    totals: (defeats: number, captures: number) => `${defeats} bugs derrotados, ${captures} capturados`,
+  },
+  starter: {
+    title: "Escolha seu primeiro bug",
+    subtitle: "Ele luta sozinho. Você cuida das escolhas.",
+    pick: "Escolher",
+  },
+  levelCap: "limite de nível",
+  timeLeft: "tempo",
+  encounterLevel: (name: string, level: number) => `${name} · nível ${level}`,
+} as const;

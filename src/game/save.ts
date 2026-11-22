@@ -1,0 +1,184 @@
+import { MAX_IV, type BugInstance } from "./bug";
+import { isItemId } from "./data/items";
+import { hasSpecies } from "./data/species";
+import { BOSSES, ROUTES } from "./data/world";
+import { createInitialState, createRuntime, defaultSettings, SAVE_VERSION, type CaptureMode, type GameState, type PersistentState } from "./state";
+
+export class SaveError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "SaveError";
+  }
+}
+
+export interface SaveFile {
+  game: "bugidle";
+  version: number;
+  savedAt: string;
+  state: PersistentState;
+}
+
+/** RF10: everything except runtime data, as pretty JSON text. */
+export function exportSave(state: GameState, now: Date = new Date()): string {
+  const { runtime: _runtime, ...persistent } = state;
+  const file: SaveFile = { game: "bugidle", version: SAVE_VERSION, savedAt: now.toISOString(), state: persistent };
+  return JSON.stringify(file, null, 2);
+}
+
+type Json = Record<string, unknown>;
+const isObject = (v: unknown): v is Json => typeof v === "object" && v !== null && !Array.isArray(v);
+const isNumber = (v: unknown): v is number => typeof v === "number" && Number.isFinite(v);
+const isStringArray = (v: unknown): v is string[] => Array.isArray(v) && v.every((x) => typeof x === "string");
+const CAPTURE_MODES: readonly CaptureMode[] = ["off", "all", "uncaught", "shiny"];
+const validRoute = (id: unknown): id is string => typeof id === "string" && ROUTES.some((r) => r.id === id);
+const validBoss = (id: unknown): id is string => typeof id === "string" && BOSSES.some((b) => b.id === id);
+
+function isStats(v: unknown): boolean {
+  return isObject(v) && ["hp", "atk", "def", "spd"].every((k) => isNumber(v[k]));
+}
+
+function isValidBug(v: unknown): v is BugInstance {
+  if (!isObject(v)) return false;
+  return (
+    typeof v.uid === "string" &&
+    typeof v.speciesId === "string" &&
+    hasSpecies(v.speciesId) &&
+    isNumber(v.level) &&
+    v.level >= 1 &&
+    v.level <= 100 &&
+    isNumber(v.xp) &&
+    isNumber(v.currentHp) &&
+    typeof v.shiny === "boolean" &&
+    isStats(v.ivs) &&
+    Object.values(v.ivs as Json).every((iv) => (iv as number) >= 0 && (iv as number) <= MAX_IV) &&
+    isStats(v.boosts)
+  );
+}
+
+/**
+ * RF10: parses save text, validates it and fills any missing fields with defaults
+ * so older saves keep loading. Throws SaveError on bad input.
+ */
+export function importSave(text: string): GameState {
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(text);
+  } catch {
+    throw new SaveError("Not valid JSON");
+  }
+  if (!isObject(parsed) || parsed.game !== "bugidle") throw new SaveError("Not a BugIdle save");
+  if (!isNumber(parsed.version) || parsed.version > SAVE_VERSION) throw new SaveError("Unsupported save version");
+  const raw = parsed.state;
+  if (!isObject(raw)) throw new SaveError("Missing state");
+
+  const base = createInitialState();
+  const bugs: Record<string, BugInstance> = {};
+  if (raw.bugs !== undefined) {
+    if (!isObject(raw.bugs)) throw new SaveError("Invalid bugs");
+    for (const [uid, bug] of Object.entries(raw.bugs)) {
+      if (!isValidBug(bug) || bug.uid !== uid) throw new SaveError(`Invalid bug ${uid}`);
+      bugs[uid] = { ...bug, origin: typeof bug.origin === "string" ? bug.origin : "unknown" };
+    }
+  }
+
+  const team = isStringArray(raw.team) ? raw.team.filter((uid) => uid in bugs).slice(0, 6) : [];
+  const inventory: GameState["inventory"] = {};
+  if (isObject(raw.inventory)) {
+    for (const [id, count] of Object.entries(raw.inventory)) {
+      if (isItemId(id) && isNumber(count) && count > 0) inventory[id] = Math.floor(count);
+    }
+  }
+
+  const settingsRaw = isObject(raw.settings) ? raw.settings : {};
+  const defaults = defaultSettings();
+  const settings = {
+    captureMode: CAPTURE_MODES.includes(settingsRaw.captureMode as CaptureMode) ? (settingsRaw.captureMode as CaptureMode) : defaults.captureMode,
+    alwaysCaptureShiny: typeof settingsRaw.alwaysCaptureShiny === "boolean" ? settingsRaw.alwaysCaptureShiny : defaults.alwaysCaptureShiny,
+    preferredTrap: isItemId(settingsRaw.preferredTrap) ? settingsRaw.preferredTrap : defaults.preferredTrap,
+    autoPotion: typeof settingsRaw.autoPotion === "boolean" ? settingsRaw.autoPotion : defaults.autoPotion,
+    potionThreshold: isNumber(settingsRaw.potionThreshold) ? Math.min(1, Math.max(0, settingsRaw.potionThreshold)) : defaults.potionThreshold,
+    autoEvolve: typeof settingsRaw.autoEvolve === "boolean" ? settingsRaw.autoEvolve : defaults.autoEvolve,
+  };
+
+  const unlockedRoutes = isStringArray(raw.unlockedRoutes) ? raw.unlockedRoutes.filter(validRoute) : base.unlockedRoutes;
+  if (!unlockedRoutes.includes("port-3000")) unlockedRoutes.unshift("port-3000");
+
+  let activity = base.activity;
+  if (isObject(raw.activity) && raw.activity.kind === "route" && validRoute(raw.activity.routeId) && unlockedRoutes.includes(raw.activity.routeId)) {
+    activity = { kind: "route", routeId: raw.activity.routeId };
+  } else if (isObject(raw.activity) && raw.activity.kind === "boss" && validBoss(raw.activity.bossId) && validRoute(raw.activity.returnRouteId)) {
+    // Boss fights are not resumed after loading.
+    activity = { kind: "route", routeId: raw.activity.returnRouteId };
+  }
+
+  const trainerRaw = isObject(raw.trainer) ? raw.trainer : {};
+  const totalsRaw = isObject(raw.totals) ? raw.totals : {};
+  const numberMap = (v: unknown): Record<string, number> =>
+    isObject(v) ? Object.fromEntries(Object.entries(v).filter(([, n]) => isNumber(n))) as Record<string, number> : {};
+
+  const bugdex: GameState["bugdex"] = {};
+  if (isObject(raw.bugdex)) {
+    for (const [id, e] of Object.entries(raw.bugdex)) {
+      if (!hasSpecies(id) || !isObject(e)) continue;
+      bugdex[id] = {
+        seen: isNumber(e.seen) ? e.seen : 0,
+        defeated: isNumber(e.defeated) ? e.defeated : 0,
+        caught: isNumber(e.caught) ? e.caught : 0,
+        shinyCaught: e.shinyCaught === true,
+      };
+    }
+  }
+
+  const maxUid = Object.keys(bugs).reduce((max, uid) => Math.max(max, Number(uid.replace(/\D/g, "")) || 0), 0);
+
+  return {
+    version: SAVE_VERSION,
+    trainer: {
+      name: typeof trainerRaw.name === "string" ? trainerRaw.name.slice(0, 20) : base.trainer.name,
+      level: isNumber(trainerRaw.level) ? Math.max(1, Math.floor(trainerRaw.level)) : 1,
+      xp: isNumber(trainerRaw.xp) ? Math.max(0, trainerRaw.xp) : 0,
+    },
+    coins: isNumber(raw.coins) ? Math.max(0, Math.floor(raw.coins)) : base.coins,
+    bugs,
+    team,
+    inventory,
+    bugdex,
+    routeDefeats: numberMap(raw.routeDefeats),
+    unlockedRoutes,
+    badges: isStringArray(raw.badges) ? raw.badges.filter((b) => BOSSES.some((boss) => boss.badgeId === b)) : [],
+    activity,
+    settings,
+    totals: {
+      defeats: isNumber(totalsRaw.defeats) ? totalsRaw.defeats : 0,
+      captures: isNumber(totalsRaw.captures) ? totalsRaw.captures : 0,
+      playTimeMs: isNumber(totalsRaw.playTimeMs) ? totalsRaw.playTimeMs : 0,
+    },
+    nextUid: Math.max(isNumber(raw.nextUid) ? raw.nextUid : 1, maxUid + 1),
+    runtime: createRuntime(),
+  };
+}
+
+/** Minimal storage interface so tests can use an in-memory fake. */
+export interface KeyValueStorage {
+  getItem(key: string): string | null;
+  setItem(key: string, value: string): void;
+  removeItem(key: string): void;
+}
+
+export const STORAGE_KEY = "bugidle.save";
+
+export function saveToStorage(storage: KeyValueStorage, state: GameState): void {
+  storage.setItem(STORAGE_KEY, exportSave(state));
+}
+
+/** Returns null when there is no save or it is unreadable (the broken save is kept as a backup). */
+export function loadFromStorage(storage: KeyValueStorage): GameState | null {
+  const text = storage.getItem(STORAGE_KEY);
+  if (!text) return null;
+  try {
+    return importSave(text);
+  } catch {
+    storage.setItem(`${STORAGE_KEY}.corrupt`, text);
+    return null;
+  }
+}
