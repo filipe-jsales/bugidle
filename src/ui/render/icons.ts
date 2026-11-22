@@ -1,3 +1,5 @@
+import type { ItemId } from "../../game/data/items";
+import { ITEM_ART, ITEM_COLORS } from "./itemArt";
 import { pixelArtUrl } from "./pixels";
 
 /** Hand-drawn 12x12 pixel icons. k = dark outline, w = white, other letters = colors below. */
@@ -204,6 +206,10 @@ const ART = {
 } as const;
 
 export type IconName = keyof typeof ART;
+
+export function itemIconUrl(id: ItemId): string {
+  return pixelArtUrl(ITEM_ART[id], ITEM_COLORS);
+}
 
 export function iconUrl(name: IconName): string {
   return pixelArtUrl(ART[name], COLORS);

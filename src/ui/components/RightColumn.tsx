@@ -3,7 +3,7 @@ import { itemCount } from "../../game/inventory";
 import type { CaptureMode } from "../../game/state";
 import { CAPTURE_MODE_NAMES, ITEM_TEXT, UI } from "../../i18n/ptBR";
 import { store, useGame } from "../store";
-import { Icon, Panel, Toggle } from "./primitives";
+import { ItemIcon, Panel, Toggle } from "./primitives";
 
 const MODES: CaptureMode[] = ["uncaught", "all", "shiny", "off"];
 
@@ -39,7 +39,7 @@ export function AutomationPanel() {
               className={`item-slot ${settings.preferredTrap === trap.id ? "active" : ""}`}
               onClick={() => set({ preferredTrap: trap.id })}
             >
-              <Icon name="trap" size={18} />
+              <ItemIcon id={trap.id} size={22} />
               <span>{itemCount(state, trap.id)}</span>
               <small>{ITEM_TEXT[trap.id].name}</small>
             </button>
@@ -63,6 +63,7 @@ export function AutomationPanel() {
       <div className="item-slots">
         {potions.map((p) => (
           <div key={p.id} className="item-slot static" title={ITEM_TEXT[p.id as ItemId].description}>
+            <ItemIcon id={p.id} size={22} />
             <span>{itemCount(state, p.id)}</span>
             <small>{ITEM_TEXT[p.id].name}</small>
           </div>

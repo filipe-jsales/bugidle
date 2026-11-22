@@ -1,7 +1,7 @@
 /**
  * Per-type attack visuals: what flies from the attacker to the target and the
- * burst of pixel particles on impact. Pure data so it can be tested; BattleView
- * turns it into absolutely positioned elements animated with CSS.
+ * burst of pixel particles on impact. Pure data so it can be tested; the map
+ * scene places it between the two fighters and animates it with CSS.
  */
 import { getMove } from "../../game/data/moves";
 import { createSeededRng, randomInt } from "../../game/rng";
@@ -31,16 +31,10 @@ export const TYPE_FX: Readonly<Record<BugType, TypeFx>> = {
   ui: { shape: "pixels", color: "#8fb5ff", accent: "#ff9f43", count: 6, travelMs: 400 },
 };
 
-/** Anchor points (percent of the scene) where projectiles start and land. */
-export const FX_ANCHORS = {
-  player: { x: 33, y: 66 },
-  enemy: { x: 71, y: 38 },
-} as const;
-
 export interface Projectile {
   text: string | null;
   delayMs: number;
-  /** Small vertical spread so several projectiles do not overlap (percent). */
+  /** Small vertical spread so several projectiles do not overlap (px). */
   offsetY: number;
 }
 
@@ -56,8 +50,6 @@ export interface Particle {
 export interface AttackFx {
   type: BugType;
   fx: TypeFx;
-  from: { x: number; y: number };
-  to: { x: number; y: number };
   projectiles: Projectile[];
   particles: Particle[];
   shake: boolean;
@@ -77,13 +69,11 @@ export function buildAttackFx(attack: AttackInput, seed: number): AttackFx {
   const fx = TYPE_FX[type];
   const rng = createSeededRng(seed);
   const big = attack.effectiveness > 1;
-  const from = attack.side === "player" ? FX_ANCHORS.player : FX_ANCHORS.enemy;
-  const to = attack.side === "player" ? FX_ANCHORS.enemy : FX_ANCHORS.player;
 
   const projectiles: Projectile[] = Array.from({ length: fx.count }, (_, i) => ({
     text: fx.glyphs ? fx.glyphs[randomInt(rng, 0, fx.glyphs.length - 1)]! : null,
     delayMs: i * (fx.shape === "twin" ? 0 : 55),
-    offsetY: fx.count === 1 ? 0 : (i - (fx.count - 1) / 2) * (fx.shape === "twin" ? 6 : 2.5),
+    offsetY: fx.count === 1 ? 0 : (i - (fx.count - 1) / 2) * (fx.shape === "twin" ? 14 : 7),
   }));
 
   const particleCount = attack.effectiveness === 0 ? 0 : big ? 14 : attack.critical ? 11 : 7;
@@ -99,5 +89,5 @@ export function buildAttackFx(attack: AttackInput, seed: number): AttackFx {
     };
   });
 
-  return { type, fx, from, to, projectiles, particles, shake: attack.critical, big };
+  return { type, fx, projectiles, particles, shake: attack.critical, big };
 }

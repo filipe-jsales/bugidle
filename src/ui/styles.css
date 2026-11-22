@@ -483,8 +483,7 @@ button.stat-chip:hover {
   min-height: 300px;
   border: 3px solid var(--inset-border);
   border-radius: 4px;
-  background-size: cover;
-  background-position: center;
+  background: #1a1020;
   overflow: hidden;
 }
 .battle-scene::after {
@@ -513,51 +512,15 @@ button.stat-chip:hover {
   right: 10px;
   z-index: 3;
 }
-.battle-plate {
-  position: absolute;
-  z-index: 3;
-  width: 210px;
-  background: rgba(30, 18, 34, 0.88);
-  border: 2px solid var(--inset-border);
-  border-radius: 4px;
-  padding: 5px 8px;
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-}
-.plate-name {
-  display: flex;
-  justify-content: space-between;
-}
-.plate-enemy {
-  top: 58px;
-  right: 8%;
-}
-.plate-player {
-  bottom: 18px;
-  left: 8%;
-}
-.fighter {
-  position: absolute;
-  z-index: 2;
-  display: grid;
-  place-items: center;
-}
-.fighter-enemy {
-  top: 22%;
-  right: 22%;
-}
-.fighter-player {
-  bottom: 12%;
-  left: 24%;
-}
 .shadow {
   position: absolute;
-  bottom: 2px;
-  width: 70%;
-  height: 16px;
+  bottom: -3px;
+  left: 50%;
+  width: 34px;
+  height: 9px;
+  margin-left: -17px;
   border-radius: 50%;
-  background: rgba(10, 4, 14, 0.4);
+  background: rgba(10, 4, 14, 0.38);
 }
 .bob {
   animation: bob 1.1s steps(2) infinite;
@@ -570,22 +533,6 @@ button.stat-chip:hover {
     transform: translateY(-3px);
   }
 }
-.lunge-player {
-  animation: lunge-player 260ms ease-out;
-}
-.lunge-enemy {
-  animation: lunge-enemy 260ms ease-out;
-}
-@keyframes lunge-player {
-  40% {
-    transform: translate(26px, -14px);
-  }
-}
-@keyframes lunge-enemy {
-  40% {
-    transform: translate(-26px, 14px);
-  }
-}
 .hit-flash {
   animation: hit 300ms steps(3);
 }
@@ -594,33 +541,6 @@ button.stat-chip:hover {
   60% {
     filter: brightness(2.2) saturate(0);
   }
-}
-.damage-float {
-  position: absolute;
-  z-index: 4;
-  font-family: var(--font-title);
-  font-size: 18px;
-  color: #fff;
-  text-shadow:
-    2px 2px 0 #000,
-    -1px -1px 0 #000;
-  animation: float-up 900ms ease-out forwards;
-  pointer-events: none;
-}
-.damage-float.on-enemy {
-  top: 26%;
-  right: 26%;
-}
-.damage-float.on-player {
-  bottom: 34%;
-  left: 30%;
-}
-.damage-float.super {
-  color: #ffd25a;
-  font-size: 22px;
-}
-.damage-float.weak {
-  color: #b9b0c0;
 }
 @keyframes float-up {
   to {
@@ -663,8 +583,7 @@ button.stat-chip:hover {
     opacity: 0;
   }
 }
-.scene-overlay,
-.scene-hint {
+.scene-overlay {
   position: absolute;
   inset: 0;
   z-index: 5;
@@ -678,10 +597,6 @@ button.stat-chip:hover {
 }
 .scene-overlay {
   background: rgba(20, 10, 24, 0.7);
-}
-.scene-hint {
-  pointer-events: none;
-  font-size: 13px;
 }
 .overlay-bar {
   width: 220px;
@@ -1573,10 +1488,6 @@ input[type="range"] {
     transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy)));
   }
 }
-.damage-float {
-  opacity: 0;
-  animation-fill-mode: both;
-}
 .shake {
   animation: shake 360ms steps(6);
 }
@@ -1724,29 +1635,6 @@ input[type="range"] {
     height: 290px;
     flex: none;
   }
-  .fighter-enemy {
-    top: 24%;
-    right: 14%;
-    scale: 0.7;
-  }
-  .fighter-player {
-    bottom: 14%;
-    left: 14%;
-    scale: 0.7;
-  }
-  .battle-plate {
-    width: 150px;
-    padding: 4px 6px;
-    font-size: 12px;
-  }
-  .plate-enemy {
-    top: 46px;
-    right: 6px;
-  }
-  .plate-player {
-    left: 6px;
-    bottom: 6px;
-  }
   .battle-label {
     top: 6px;
     left: 6px;
@@ -1822,4 +1710,175 @@ input[type="range"] {
   .filter-bar .input {
     min-height: 40px;
   }
+}
+
+/* item previews */
+.item-preview {
+  width: 64px;
+  height: 64px;
+  display: grid;
+  place-items: center;
+  background: radial-gradient(circle at 50% 60%, #4a3150, var(--inset) 70%);
+  border: 2px solid var(--inset-border);
+  border-radius: 4px;
+}
+.shop-row {
+  grid-template-columns: auto 1fr auto auto;
+}
+.bag-item {
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+}
+.bag-item small {
+  grid-column: 2 / 4;
+}
+
+/* ---------------------------------------------------------------- explorable map */
+
+.world {
+  position: absolute;
+  left: 0;
+  top: 0;
+  background-repeat: no-repeat;
+  will-change: transform;
+}
+.entity {
+  position: absolute;
+  transform: translate(-50%, -100%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  pointer-events: none;
+}
+.entity img {
+  position: relative;
+}
+.entity.wild {
+  opacity: 0.92;
+}
+.mirror {
+  transform: scaleX(-1);
+}
+.nameplate {
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  margin-bottom: 4px;
+  width: 112px;
+  padding: 2px 5px 3px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  background: rgba(30, 18, 34, 0.86);
+  border: 2px solid var(--inset-border);
+  border-radius: 4px;
+  font-size: 11px;
+  line-height: 1.1;
+}
+.nameplate-name {
+  display: flex;
+  justify-content: space-between;
+  gap: 4px;
+  white-space: nowrap;
+}
+.nameplate .bar {
+  height: 9px;
+  border-width: 1px;
+}
+.nameplate .bar-label {
+  font-size: 8px;
+}
+.lunge {
+  animation: lunge 260ms ease-out;
+}
+@keyframes lunge {
+  40% {
+    transform: translate(var(--lx), var(--ly));
+  }
+}
+.hop {
+  animation: hop 0.32s steps(2) infinite;
+}
+@keyframes hop {
+  50% {
+    transform: translateY(-3px);
+  }
+}
+.faint-out {
+  animation: faint-out 600ms ease-in forwards;
+}
+@keyframes faint-out {
+  to {
+    opacity: 0;
+    transform: translate(-50%, -60%) scaleY(0.2);
+    filter: brightness(0.3);
+  }
+}
+.caught-out {
+  animation: caught-out 600ms ease-in forwards;
+}
+@keyframes caught-out {
+  to {
+    opacity: 0;
+    transform: translate(-50%, -100%) scale(0.1);
+    filter: brightness(3) saturate(0);
+  }
+}
+.fx-layer {
+  z-index: 5000;
+}
+.float-text {
+  position: absolute;
+  z-index: 6000;
+  transform: translate(-50%, -50%);
+  white-space: nowrap;
+  font-family: var(--font-title);
+  font-size: 15px;
+  color: #fff;
+  text-shadow:
+    2px 2px 0 #000,
+    -1px -1px 0 #000;
+  pointer-events: none;
+  animation: float-rise 1100ms ease-out both;
+}
+@keyframes float-rise {
+  0% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(0.8);
+  }
+  15% {
+    transform: translate(-50%, -60%) scale(1.1);
+  }
+  75% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, calc(-50% - 34px));
+  }
+}
+.float-super {
+  color: #ffd25a;
+  font-size: 18px;
+}
+.float-weak {
+  color: #b9b0c0;
+}
+.float-xp {
+  color: #9df2a8;
+}
+.float-bench {
+  color: #c9f0cf;
+  font-size: 11px;
+}
+.float-trainer {
+  color: #8ac4ff;
+}
+.float-coin {
+  color: #ffe08a;
+}
+.float-level {
+  color: #ffe08a;
+  font-size: 17px;
 }

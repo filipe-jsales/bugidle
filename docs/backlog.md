@@ -24,13 +24,28 @@ Status: `[x]` done, `[ ]` to do. Keep this file current when a task is finished 
 
 ## v0.2
 
-- [x] Balance pass for all 5 regions with a headless playthrough (`src/game/simulation.ts`, `npm run simulate`). Result: about 8.5-11 h to finish, each region longer than the last. Pacing is guarded by `simulation.test.ts`. Changes: XP divisor 7 -> 55, bench XP 25% -> 15%, wins to open a route 15 -> 25/80/100/150/200 per region, Legacy and Cloud routes 2-6 levels lower, Legacy and Cloud bosses lower, Root Access 5000 -> 15000, stat upgrades 300 -> 1000, battles 1.5x faster
+- [x] Balance pass for all 5 regions with a headless playthrough (`src/game/simulation.ts`, `npm run simulate`). Result then: about 8.5-11 h to finish (see v0.3 for the current pacing), each region longer than the last. Pacing is guarded by `simulation.test.ts`. Changes: XP divisor 7 -> 55, bench XP 25% -> 15%, wins to open a route 15 -> 25/80/100/150/200 per region, Legacy and Cloud routes 2-6 levels lower, Legacy and Cloud bosses lower, Root Access 5000 -> 15000, stat upgrades 300 -> 1000, battles 1.5x faster
 - [x] Sound: synthesized chiptune effects for battle events, one music loop per region plus a boss theme, volume window (master, music, effects, mute) saved per browser
 - [x] Attack animations per type: projectiles (glyphs, blocks, twin arrows, packets, shard, ring, pixels), impact particles, damage numbers on impact, screen shake on crits
 - [x] Phone layout: battle first, 5-column menu, smaller scene and sprites, 40px touch targets, full-screen windows
 - [x] **From Transistor to Cloud** (houses): 3 lots (the 2nd needs the Staging badge, the 3rd the Legacy badge), 7 eras (vacuum tube, transistor, integrated circuit, microprocessor, internet, cloud, AI), each era more expensive with more slots, a higher multiplier and more storage. Boxed bugs live there and produce coins and XP; coins pile up to the storage cap until collected
 
+## v0.3
+
+- [x] Explorable route map: 1800x1100 px procedural map per route, camera follows the trainer (`src/ui/world/worldModel.ts`, pure and tested)
+- [x] Trainer character (16x22 pixel art, 4 facings, walk cycle) walks toward wild bugs; the active bug follows behind like a pet and steps forward to fight
+- [x] Wild bugs roam the map; the engine's next encounter is drawn as the nearest one. Bugs are about half the previous size (56 px, wild 44 px)
+- [x] Nameplates (name, level, HP bar) float above the enemy and above our active bug
+- [x] Floating texts: damage on hit; on a win "+xp" over the active bug, "equipe +xp" for the bench, "+xp" over the trainer and "+coins"; "Nv N!" on level up; "CAPTURADO!"
+- [x] Pixel-art previews for all 14 items in the shop, bag and automation panel
+- [x] Harder capture: chance x0.3 (`CAPTURE_DIFFICULTY`) and at most 3 traps per encounter (`MAX_THROWS_PER_ENCOUNTER`)
+- [x] Slower leveling: `XP_DIVISOR` 55 -> 100; encounters every 2.2 s (time to walk). Simulated playthrough now about 31 h (first region 1.4-3.3 h)
+
 ## Next (core polish)
+
+- [ ] Early levels feel slow: a level-2 bug gives +1 xp. Consider a minimum XP per win or a gentler curve for levels 1-10
+- [ ] Trainer customization (avatar colors, outfits)
+- [ ] Map obstacles and paths (today the trainer walks over everything)
 
 - [ ] Offline progress: simulate the time the tab was closed (today the catch-up is capped at 60 s). Houses are the natural first step: compute their production from the save timestamp
 - [ ] Final-boss wall: benched bugs fall far behind the lead late in the game (lead 100, others about 80). Consider XP share based on level gap or a "train the weakest" automation

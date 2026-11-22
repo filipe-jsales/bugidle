@@ -237,3 +237,29 @@ describe("reboot center and manual evolution", () => {
     expect(wild.uid.startsWith("wild-")).toBe(true);
   });
 });
+
+describe("capture limits and reward split", () => {
+  it("throws at most 3 traps per encounter", () => {
+    const state = stateWith(["heapocalypse", 20]);
+    state.settings.captureMode = "all";
+    state.settings.preferredTrap = "breakpoint";
+    state.inventory = { breakpoint: 100 };
+    state.runtime.battle = createBattle("wild", [spawnWild(getRoute("dev-console"), createSeededRng(9))]);
+    // a tough wild bug that cannot faint, so the fight keeps going
+    state.runtime.battle.enemies[0]!.currentHp = 1_000_000;
+    const events = tick(state, 20_000, () => 0.99);
+    expect(events.filter((e) => e.type === "captureAttempt").length).toBe(3);
+    expect(state.inventory.breakpoint).toBe(97);
+  });
+
+  it("the fighting bug gets more XP than the bench, and the trainer gets XP too", () => {
+    const state = stateWith(["heapocalypse", 15], ["leaklet", 10]);
+    state.settings.captureMode = "off";
+    state.settings.alwaysCaptureShiny = false;
+    const events = run(state, 20_000);
+    const reward = events.find((e) => e.type === "rewards");
+    expect(reward && reward.type === "rewards" && reward.xp > reward.benchXp).toBe(true);
+    expect(reward && reward.type === "rewards" && reward.trainerXp).toBeGreaterThan(0);
+    expect(reward && reward.type === "rewards" && reward.victorUid).toBe(state.team[0]);
+  });
+});

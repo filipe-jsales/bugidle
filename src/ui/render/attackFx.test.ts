@@ -1,6 +1,6 @@
 import { MOVES } from "../../game/data/moves";
 import { BUG_TYPES } from "../../game/types";
-import { buildAttackFx, FX_ANCHORS, TYPE_FX } from "./attackFx";
+import { buildAttackFx, TYPE_FX } from "./attackFx";
 
 const base = { side: "player", moveId: "syntax-1", effectiveness: 1, critical: false } as const;
 
@@ -18,11 +18,6 @@ describe("attack visuals per type", () => {
 
   it("uses the move's type", () => {
     for (const move of MOVES) expect(buildAttackFx({ ...base, moveId: move.id }, 1).type).toBe(move.type);
-  });
-
-  it("flies from the attacker to the defender", () => {
-    expect(buildAttackFx(base, 1)).toMatchObject({ from: FX_ANCHORS.player, to: FX_ANCHORS.enemy });
-    expect(buildAttackFx({ ...base, side: "enemy" }, 1)).toMatchObject({ from: FX_ANCHORS.enemy, to: FX_ANCHORS.player });
   });
 
   it("throws glyphs for syntax and the right number of projectiles", () => {

@@ -8,6 +8,11 @@ import { createCanvas } from "./pixels";
 
 const TILE = 8;
 
+/** Decoration counts were tuned for 320x200; bigger maps get proportionally more. */
+function density(w: number, h: number): number {
+  return (w * h) / (320 * 200);
+}
+
 interface Theme {
   base: string;
   noise: readonly string[];
@@ -20,9 +25,10 @@ function rect(ctx: CanvasRenderingContext2D, color: string, x: number, y: number
 }
 
 function circuit(ctx: CanvasRenderingContext2D, rng: Rng, w: number, h: number) {
+  const d = density(w, h);
   const copper = "#c9a24a";
   const copperDark = "#8a6a2a";
-  for (let i = 0; i < 40; i++) {
+  for (let i = 0; i < 40 * d; i++) {
     let x = randomInt(rng, 0, w / TILE) * TILE + 3;
     let y = randomInt(rng, 0, h / TILE) * TILE + 3;
     rect(ctx, copperDark, x - 1, y - 1, 4, 4);
@@ -40,7 +46,7 @@ function circuit(ctx: CanvasRenderingContext2D, rng: Rng, w: number, h: number) 
     rect(ctx, copper, x - 1, y - 1, 4, 4);
     rect(ctx, "#1a3b26", x, y, 2, 2);
   }
-  for (let i = 0; i < 7; i++) {
+  for (let i = 0; i < 7 * d; i++) {
     const cw = randomInt(rng, 3, 6) * TILE;
     const ch = randomInt(rng, 2, 4) * TILE;
     const x = randomInt(rng, 0, w - cw);
@@ -56,9 +62,10 @@ function circuit(ctx: CanvasRenderingContext2D, rng: Rng, w: number, h: number) 
 }
 
 function serverRoom(ctx: CanvasRenderingContext2D, rng: Rng, w: number, h: number) {
+  const d = density(w, h);
   for (let y = 0; y < h; y += TILE * 2) rect(ctx, "#252c3a", 0, y, w, 1);
   for (let x = 0; x < w; x += TILE * 2) rect(ctx, "#252c3a", x, 0, 1, h);
-  for (let i = 0; i < 9; i++) {
+  for (let i = 0; i < 9 * d; i++) {
     const rw = TILE * 3;
     const rh = TILE * randomInt(rng, 4, 7);
     const x = randomInt(rng, 0, w - rw);
@@ -74,13 +81,14 @@ function serverRoom(ctx: CanvasRenderingContext2D, rng: Rng, w: number, h: numbe
 }
 
 function datacenter(ctx: CanvasRenderingContext2D, rng: Rng, w: number, h: number) {
+  const d = density(w, h);
   for (let y = 0; y < h; y += TILE * 2) {
     for (let x = 0; x < w; x += TILE * 2) {
       rect(ctx, "#8a8f99", x, y, TILE * 2 - 1, TILE * 2 - 1);
       if ((x / TILE + y / TILE) % 4 === 0) for (let p = 3; p < 14; p += 3) for (let q = 3; q < 14; q += 3) rect(ctx, "#6d727c", x + p, y + q, 1, 1);
     }
   }
-  for (let i = 0; i < 4; i++) {
+  for (let i = 0; i < 4 * d; i++) {
     const y = randomInt(rng, 1, h / TILE - 2) * TILE;
     rect(ctx, "#3a3d44", 0, y, w, 4);
     for (let x = 0; x < w; x += 6) rect(ctx, ["#e04a4a", "#4a8ae0", "#e0c34a"][randomInt(rng, 0, 2)]!, x, y + 1, 4, 2);
@@ -88,10 +96,11 @@ function datacenter(ctx: CanvasRenderingContext2D, rng: Rng, w: number, h: numbe
 }
 
 function mainframe(ctx: CanvasRenderingContext2D, rng: Rng, w: number, h: number) {
+  const d = density(w, h);
   for (let y = 0; y < h; y += TILE) {
     for (let x = (y / TILE) % 2 === 0 ? 0 : TILE; x < w; x += TILE * 2) rect(ctx, "#8a6f4e", x, y, TILE, TILE);
   }
-  for (let i = 0; i < 7; i++) {
+  for (let i = 0; i < 7 * d; i++) {
     const x = randomInt(rng, 0, w - 34);
     const y = randomInt(rng, 0, h - 44);
     rect(ctx, "#2a2018", x + 2, y + 2, 32, 42);
@@ -107,9 +116,10 @@ function mainframe(ctx: CanvasRenderingContext2D, rng: Rng, w: number, h: number
 }
 
 function cloud(ctx: CanvasRenderingContext2D, rng: Rng, w: number, h: number) {
+  const d = density(w, h);
   const bands = ["#7ec4ef", "#8fcdf2", "#a2d6f4"];
   bands.forEach((c, i) => rect(ctx, c, 0, (h / bands.length) * i, w, h / bands.length));
-  for (let i = 0; i < 14; i++) {
+  for (let i = 0; i < 14 * d; i++) {
     const x = randomInt(rng, -20, w);
     const y = randomInt(rng, 0, h - 20);
     const size = randomInt(rng, 2, 5);

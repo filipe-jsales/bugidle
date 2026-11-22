@@ -5,7 +5,7 @@
 import { activeEnemy, activePlayerBug, createBattle, stepBattle, type BattleEvent, type BattleOutcome } from "./battle";
 import { createBug, healFully, isFainted, maxHp, type BugInstance } from "./bug";
 import { registerCaught, registerDefeated, registerSeen } from "./bugdex";
-import { captureChance, pickTrap, shouldAttemptCapture } from "./capture";
+import { captureChance, MAX_THROWS_PER_ENCOUNTER, pickTrap, shouldAttemptCapture } from "./capture";
 import { addBug } from "./collection";
 import { ITEMS, itemsOfCategory, type ItemId, type PotionItem } from "./data/items";
 import { getBoss, getRoute, type RouteDef } from "./data/world";
@@ -18,7 +18,8 @@ import { fail, OK, type ActionResult } from "./result";
 import { chance, pickWeighted, randomInt, type Rng } from "./rng";
 import { nextUid, STARTER_IDS, teamBugs, type GameState } from "./state";
 
-export const SPAWN_DELAY_MS = 700;
+/** Time between encounters: the trainer walks the map looking for the next bug. */
+export const SPAWN_DELAY_MS = 2200;
 export const RECOVERY_MS = 3000;
 export const POTION_COOLDOWN_MS = 1200;
 export const STARTER_LEVEL = 5;
@@ -43,7 +44,17 @@ export type GameEvent =
   | { type: "captureAttempt"; itemId: ItemId; speciesId: string; success: boolean }
   | { type: "captured"; uid: string; speciesId: string; shiny: boolean; newEntry: boolean; destination: "team" | "box" }
   | { type: "outOfTraps" }
-  | { type: "rewards"; speciesId: string; coins: number; xp: number }
+  | {
+      type: "rewards";
+      speciesId: string;
+      coins: number;
+      /** XP for the bug that won the fight. */
+      xp: number;
+      victorUid: string | null;
+      /** XP each healthy benched bug got. */
+      benchXp: number;
+      trainerXp: number;
+    }
   | { type: "levelUp"; uid: string; level: number }
   | { type: "evolved"; uid: string; from: string; to: string }
   | { type: "itemDrop"; itemId: ItemId }
@@ -198,10 +209,11 @@ function tryCapture(state: GameState, rng: Rng, events: GameEvent[]): void {
   if (!battle || battle.kind !== "wild" || battle.outcome) return;
   const wild = activeEnemy(battle);
   if (!wild || isFainted(wild) || !shouldAttemptCapture(state.settings, wild, state)) return;
+  if (state.runtime.captureAttemptsThisBattle >= MAX_THROWS_PER_ENCOUNTER) return;
   const trap = pickTrap(state.inventory, state.settings.preferredTrap);
   if (!trap) {
     if (state.runtime.captureAttemptsThisBattle === 0) events.push({ type: "outOfTraps" });
-    state.runtime.captureAttemptsThisBattle += 1;
+    state.runtime.captureAttemptsThisBattle = MAX_THROWS_PER_ENCOUNTER;
     return;
   }
   consumeItem(state, trap.id);
@@ -237,11 +249,13 @@ function onEnemyDefeated(state: GameState, speciesId: string, level: number, vic
   const xp = xpReward(speciesId, level, isBoss);
   const coins = isBoss ? 0 : Math.max(1, Math.floor((4 + level * 1.5) * (0.8 + rng() * 0.4)));
   state.coins += coins;
-  events.push({ type: "rewards", speciesId, coins, xp });
+  const benchXp = Math.floor(xp * BENCH_XP_SHARE);
+  const trainerXp = Math.max(1, Math.floor(level / 2)) + (isBoss ? 20 : 0);
+  events.push({ type: "rewards", speciesId, coins, xp, victorUid, benchXp, trainerXp });
 
   const cap = levelCap(state);
   for (const bug of teamBugs(state)) {
-    const share = bug.uid === victorUid ? xp : isFainted(bug) ? 0 : Math.floor(xp * BENCH_XP_SHARE);
+    const share = bug.uid === victorUid ? xp : isFainted(bug) ? 0 : benchXp;
     const { levelsGained } = gainXp(bug, share, cap);
     if (levelsGained > 0) {
       events.push({ type: "levelUp", uid: bug.uid, level: bug.level });
@@ -252,7 +266,7 @@ function onEnemyDefeated(state: GameState, speciesId: string, level: number, vic
     }
   }
 
-  const trainerLevels = gainTrainerXp(state.trainer, Math.max(1, Math.floor(level / 2)) + (isBoss ? 20 : 0));
+  const trainerLevels = gainTrainerXp(state.trainer, trainerXp);
   if (trainerLevels > 0) events.push({ type: "trainerLevelUp", level: state.trainer.level });
 
   if (!isBoss) {

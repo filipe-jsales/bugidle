@@ -5,6 +5,10 @@ import { getSpecies } from "./data/species";
 import type { PersistentState, Settings } from "./state";
 
 export const GUARANTEED_CAPTURE = 255;
+/** Global capture difficulty: scales every non-guaranteed chance. Lower = harder. */
+export const CAPTURE_DIFFICULTY = 0.3;
+/** Traps thrown at most per encounter. */
+export const MAX_THROWS_PER_ENCOUNTER = 3;
 
 /** RF05: should a trap be thrown at this wild bug, given the player's filter? */
 export function shouldAttemptCapture(settings: Settings, bug: BugInstance, state: PersistentState): boolean {
@@ -23,14 +27,14 @@ export function shouldAttemptCapture(settings: Settings, bug: BugInstance, state
 
 /**
  * Probability of a capture. Lower HP and better traps help:
- * ((3 * max - 2 * current) * catchRate * trap) / (3 * max * 255)
+ * ((3 * max - 2 * current) * catchRate * trap) / (3 * max * 255), scaled by CAPTURE_DIFFICULTY
  */
 export function captureChance(bug: BugInstance, captureMultiplier: number): number {
   if (captureMultiplier >= GUARANTEED_CAPTURE) return 1;
   const max = maxHp(bug);
   const current = Math.max(1, bug.currentHp);
   const rate = getSpecies(bug.speciesId).catchRate;
-  const value = ((3 * max - 2 * current) * rate * captureMultiplier) / (3 * max * 255);
+  const value = (((3 * max - 2 * current) * rate * captureMultiplier) / (3 * max * 255)) * CAPTURE_DIFFICULTY;
   return Math.min(1, Math.max(0, value));
 }
 

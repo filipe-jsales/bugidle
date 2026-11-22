@@ -1,7 +1,8 @@
 import { useEffect, type ButtonHTMLAttributes, type ReactNode } from "react";
 import type { BugType } from "../../game/types";
 import { TYPE_NAMES, UI } from "../../i18n/ptBR";
-import { iconUrl, type IconName } from "../render/icons";
+import type { ItemId } from "../../game/data/items";
+import { iconUrl, itemIconUrl, type IconName } from "../render/icons";
 import { bugSpriteUrl } from "../render/pixels";
 
 export function Panel({ title, actions, className = "", children }: { title?: ReactNode; actions?: ReactNode; className?: string; children: ReactNode }) {
@@ -57,6 +58,10 @@ export function BugSprite({ speciesId, shiny = false, size = 48, silhouette = fa
 
 export function Icon({ name, size = 24 }: { name: IconName; size?: number }) {
   return <img className="pixel" src={iconUrl(name)} width={size} height={size} alt="" draggable={false} />;
+}
+
+export function ItemIcon({ id, size = 24 }: { id: ItemId; size?: number }) {
+  return <img className="pixel item-icon" src={itemIconUrl(id)} width={size} height={size} alt="" draggable={false} />;
 }
 
 export function Toggle({ checked, onChange, label, hint }: { checked: boolean; onChange: (value: boolean) => void; label: string; hint?: string }) {

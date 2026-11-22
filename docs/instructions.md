@@ -41,16 +41,22 @@ src/
     state.ts            GameState = PersistentState + RuntimeState
     engine.ts           the idle loop `tick()` and player commands
   sprites/bugSprite.ts  procedural, mirror-symmetric 24x24 bug sprites
+  sprites/trainerSprite.ts  16x22 trainer, 4 facings, walk frames
   audio/                chiptune: sounds.ts (effects as data), music.ts (procedural loops),
                         settings.ts (volumes), audioEngine.ts (Web Audio, browser only)
   i18n/ptBR.ts          every string shown to the player
   ui/
     store.ts            GameStore: clock (100 ms), autosave (10 s), event log
     format.ts           turns engine events into log lines
-    render/             canvas helpers: sprites, icons, region backgrounds, era art, attack effects data
+    render/             canvas helpers: sprites, icons, item art, region backgrounds, era art, attack effects data
+    world/worldModel.ts pure model of the explorable map: trainer walk, follower, roaming bugs, camera
     components/         layout pieces (sidebar, top nav, battle view, automations, log)
     modals/             windows (bug details, map, Bugdex, box, shop, bag, bosses, save, starter)
 ```
+
+### The battle scene
+
+The game engine decides *when* an encounter happens and resolves it; `worldModel.ts` decides *where* it is drawn. Every animation frame, `BattleView` steps the world model with the current encounter key: between fights the trainer walks toward the nearest roaming bug and the active bug follows his trail; when the engine starts a fight, the nearest roaming bug becomes the enemy and both line up in front of it. The camera centres on the trainer and is clamped to the map.
 
 ### State and the loop
 
@@ -71,12 +77,14 @@ src/
 | Defeats to unlock a route (15), base level cap (20) | `data/world.ts` |
 | Prices, trap multipliers, vitamin limit | `data/items.ts` |
 | XP speed (`XP_DIVISOR`) | `experience.ts` |
+| Capture difficulty, traps per encounter | `CAPTURE_DIFFICULTY`, `MAX_THROWS_PER_ENCOUNTER` in `capture.ts` |
+| Walk speeds, fight spacing, roaming bugs | `worldModel.ts` |
 | Wins to open a route, per region | `DEFEATS_TO_UNLOCK_BY_REGION` in `data/world.ts` |
 | House eras (cost, slots, multiplier, storage) and lots | `HOUSE_TIERS`, `HOUSE_LOTS` in `housing.ts` |
 
 ### Balancing
 
-Run `npm run simulate` (optionally with seeds: `npm run simulate -- 1 2 3`). It plays the whole game headless in about a second per seed and prints, per region, when the boss was beaten, boss tries, timeouts, wipes, team levels and coins. After changing any number above, run it and keep the pacing inside the bounds of `simulation.test.ts` (6-16 h total, first region 20-120 min, every region slower than the last). Change those bounds only on purpose.
+Run `npm run simulate` (optionally with seeds: `npm run simulate -- 1 2 3`). It plays the whole game headless in about a second per seed and prints, per region, when the boss was beaten, boss tries, timeouts, wipes, team levels and coins. After changing any number above, run it and keep the pacing inside the bounds of `simulation.test.ts` (20-45 h total, first region 45 min-5 h, every region slower than the last). Change those bounds only on purpose.
 
 ## How to add content
 
@@ -109,3 +117,5 @@ Run `npm run simulate` (optionally with seeds: `npm run simulate -- 1 2 3`). It 
 | - | Balance / pacing | `simulation.ts` | `simulation.test.ts` |
 | - | Sound and music | `src/audio` | `audio.test.ts` |
 | - | Attack effects per type | `render/attackFx.ts`, `AttackLayer.tsx` | `attackFx.test.ts` |
+| - | Explorable map, trainer and follower | `world/worldModel.ts`, `BattleView.tsx` | `worldModel.test.ts`, `trainerSprite.test.ts` |
+| - | Item pixel art | `render/itemArt.ts` | `itemArt.test.ts` |

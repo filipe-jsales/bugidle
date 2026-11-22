@@ -6,7 +6,7 @@ import { buyItem, itemCount, useItemOnBug } from "../../game/inventory";
 import { CATEGORY_NAMES, ITEM_TEXT, UI } from "../../i18n/ptBR";
 import { useApp } from "../appContext";
 import { formatNumber } from "../format";
-import { BugSprite, Button, Icon, Modal } from "../components/primitives";
+import { BugSprite, Button, Icon, ItemIcon, Modal } from "../components/primitives";
 import { store, useGame } from "../store";
 
 const CATEGORIES: ItemCategory[] = ["trap", "potion", "vitamin", "evolution"];
@@ -37,6 +37,9 @@ export function ShopModal() {
       <div className="shop-list">
         {itemsOfCategory(category).map((item) => (
           <div key={item.id} className="shop-row">
+            <div className="item-preview">
+              <ItemIcon id={item.id} size={48} />
+            </div>
             <div className="shop-row-info">
               <strong>{ITEM_TEXT[item.id].name}</strong>
               <span className="muted small">{ITEM_TEXT[item.id].description}</span>
@@ -86,6 +89,7 @@ export function BagModal() {
           <div className="bag-items">
             {owned.map((id) => (
               <button key={id} type="button" className={`bag-item ${selected === id ? "active" : ""}`} onClick={() => setSelected(id)}>
+                <ItemIcon id={id} size={32} />
                 <strong>{ITEM_TEXT[id].name}</strong>
                 <span>x{itemCount(state, id)}</span>
                 <small className="muted">{CATEGORY_NAMES[ITEMS[id].category]}</small>

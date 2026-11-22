@@ -75,3 +75,10 @@ describe("trap choice", () => {
     expect(pickTrap({}, "breakpoint")).toBeNull();
   });
 });
+
+describe("capture difficulty", () => {
+  it("a common bug at full HP is rarely caught with a basic trap", () => {
+    const bug = firstBug(stateWith(["typobit", 5]));
+    expect(captureChance(bug, 1)).toBeLessThan(0.1);
+  });
+});

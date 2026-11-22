@@ -28,7 +28,10 @@ export function describeEvent(event: GameEvent, state: GameState): { text: strin
     case "bossStart":
       return { text: `Batalha contra ${getBoss(event.bossId).name} começou!`, tone: "info" };
     case "rewards":
-      return { text: `${speciesName(event.speciesId)} derrotado! +${event.xp} xp${event.coins ? `, +${event.coins} moedas` : ""}`, tone: "info" };
+      return {
+        text: `${speciesName(event.speciesId)} derrotado! +${event.xp} xp bug, +${event.benchXp} xp equipe, +${event.trainerXp} xp caçador${event.coins ? `, +${event.coins} moedas` : ""}`,
+        tone: "info",
+      };
     case "captureAttempt":
       return event.success ? null : { text: `${ITEM_TEXT[event.itemId].name} falhou em ${speciesName(event.speciesId)}.`, tone: "info" };
     case "captured":

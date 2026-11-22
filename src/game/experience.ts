@@ -7,7 +7,7 @@ export function xpToNextLevel(level: number): number {
 }
 
 /** Larger means slower leveling. Tuned with `npm run simulate`. */
-export const XP_DIVISOR = 55;
+export const XP_DIVISOR = 100;
 
 /** XP a defeated bug gives. Boss bugs give 50% more. */
 export function xpReward(speciesId: string, level: number, isBoss: boolean): number {
