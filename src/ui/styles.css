@@ -1468,3 +1468,358 @@ input[type="range"] {
 .bar-stat {
   background: var(--green);
 }
+
+/* ---------------------------------------------------------------- attack effects */
+
+.fx-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  pointer-events: none;
+}
+.fx-projectile {
+  position: absolute;
+  left: var(--x0);
+  top: var(--y0);
+  transform: translate(-50%, -50%);
+  animation-name: fx-fly;
+  animation-timing-function: linear;
+  animation-fill-mode: both;
+  color: var(--fx-color);
+  font-family: var(--font-title);
+  font-size: 32px;
+  -webkit-text-stroke: 2px #1a1020;
+  paint-order: stroke fill;
+  text-shadow:
+    3px 3px 0 #000,
+    0 0 10px var(--fx-color);
+}
+@keyframes fx-fly {
+  0% {
+    left: var(--x0);
+    top: var(--y0);
+    opacity: 1;
+  }
+  95% {
+    opacity: 1;
+  }
+  100% {
+    left: var(--x1);
+    top: var(--y1);
+    opacity: 0;
+  }
+}
+.fx-blocks .fx-projectile,
+.fx-packets .fx-projectile,
+.fx-pixels .fx-projectile {
+  width: 12px;
+  height: 12px;
+  background: var(--fx-color);
+  box-shadow: 2px 2px 0 #000;
+}
+.fx-blocks .fx-projectile {
+  width: 16px;
+  height: 16px;
+  border: 2px solid var(--fx-accent);
+}
+.fx-packets .fx-projectile {
+  width: 9px;
+  height: 9px;
+}
+.fx-pixels .fx-projectile:nth-child(even) {
+  background: var(--fx-accent);
+}
+.fx-twin .fx-projectile {
+  width: 34px;
+  height: 8px;
+  background: linear-gradient(90deg, transparent, var(--fx-color));
+  box-shadow: 0 0 6px var(--fx-color);
+}
+.fx-shard .fx-projectile {
+  width: 20px;
+  height: 20px;
+  background: var(--fx-color);
+  border: 2px solid var(--fx-accent);
+  animation-name: fx-fly, fx-spin;
+}
+.fx-ring .fx-projectile {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 4px dashed var(--fx-color);
+  animation-name: fx-fly, fx-spin;
+}
+@keyframes fx-spin {
+  to {
+    rotate: 720deg;
+  }
+}
+.fx-big .fx-projectile {
+  scale: 1.5;
+}
+.fx-particle {
+  position: absolute;
+  opacity: 0;
+  box-shadow: 1px 1px 0 rgba(0, 0, 0, 0.6);
+  animation: fx-burst 480ms ease-out both;
+}
+@keyframes fx-burst {
+  0% {
+    opacity: 1;
+    transform: translate(-50%, -50%);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy)));
+  }
+}
+.damage-float {
+  opacity: 0;
+  animation-fill-mode: both;
+}
+.shake {
+  animation: shake 360ms steps(6);
+}
+@keyframes shake {
+  20% {
+    transform: translate(-4px, 2px);
+  }
+  40% {
+    transform: translate(4px, -2px);
+  }
+  60% {
+    transform: translate(-3px, -1px);
+  }
+  80% {
+    transform: translate(3px, 1px);
+  }
+}
+.battle-actions {
+  display: flex;
+  gap: 6px;
+}
+
+/* ---------------------------------------------------------------- sound and houses */
+
+.slider-row.wide {
+  grid-template-columns: 110px 1fr 44px;
+  font-size: 13px;
+}
+.button-row.wrap {
+  flex-wrap: wrap;
+}
+.box-cell-badge.house {
+  left: auto;
+  right: 2px;
+  background: var(--gold-dark);
+}
+.house-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.house-card {
+  background: var(--inset);
+  border: 2px solid var(--inset-border);
+  border-radius: 4px;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.house-card.empty-lot {
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+}
+.house-card.locked {
+  opacity: 0.6;
+}
+.house-head {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+}
+.house-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.house-info p {
+  margin: 0;
+}
+.era-art {
+  flex: none;
+  border: 2px solid var(--inset-border);
+  border-radius: 3px;
+  background: #1d1424;
+}
+.era-art.faded {
+  filter: grayscale(1) brightness(0.6);
+}
+.house-slots {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.house-slot {
+  width: 84px;
+  min-height: 72px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  border: 2px dashed #5a4562;
+  background: var(--inset-2);
+  cursor: pointer;
+  font-size: 10px;
+}
+.house-slot.empty {
+  font-family: var(--font-title);
+  font-size: 22px;
+  color: var(--muted);
+}
+.house-slot.filled {
+  border-style: solid;
+}
+.house-slot.filled:hover {
+  border-color: var(--red);
+}
+.house-storage {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.house-picker-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(70px, 1fr));
+  gap: 4px;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+/* ---------------------------------------------------------------- phones */
+
+@media (max-width: 760px) {
+  body {
+    font-size: 15px;
+  }
+  .layout {
+    padding: 6px;
+    gap: 6px;
+  }
+  .top-nav {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+  }
+  .nav-button {
+    min-width: 0;
+    min-height: 54px;
+    font-size: 11px;
+  }
+  .battle-scene {
+    min-height: 0;
+    height: 290px;
+    flex: none;
+  }
+  .fighter-enemy {
+    top: 24%;
+    right: 14%;
+    scale: 0.7;
+  }
+  .fighter-player {
+    bottom: 14%;
+    left: 14%;
+    scale: 0.7;
+  }
+  .battle-plate {
+    width: 150px;
+    padding: 4px 6px;
+    font-size: 12px;
+  }
+  .plate-enemy {
+    top: 46px;
+    right: 6px;
+  }
+  .plate-player {
+    left: 6px;
+    bottom: 6px;
+  }
+  .battle-label {
+    top: 6px;
+    left: 6px;
+    font-size: 12px;
+    padding: 3px 6px;
+    max-width: 58%;
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+  .battle-actions {
+    top: 6px;
+    right: 6px;
+  }
+  .btn-text {
+    display: none;
+  }
+  .btn {
+    min-height: 40px;
+  }
+  .btn-small {
+    min-height: 34px;
+  }
+  .toggle {
+    width: 46px;
+    height: 26px;
+  }
+  .toggle-knob {
+    width: 16px;
+    height: 16px;
+  }
+  .toggle.on .toggle-knob {
+    left: 24px;
+  }
+  .segmented button {
+    min-height: 38px;
+  }
+  .item-slot {
+    min-height: 52px;
+  }
+  input[type="range"] {
+    height: 28px;
+  }
+  .team-row {
+    padding: 8px;
+  }
+  .log-panel {
+    max-height: 260px;
+  }
+  .modal-backdrop {
+    padding: 0;
+  }
+  .modal,
+  .modal-wide {
+    width: 100%;
+    height: 100%;
+    max-height: 100vh;
+    border-radius: 0;
+  }
+  .map-canvas {
+    height: 340px;
+  }
+  .map-node {
+    width: 54px;
+    height: 54px;
+  }
+  .map-node-name {
+    font-size: 10px;
+  }
+  .house-card.empty-lot {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .filter-bar .input {
+    min-height: 40px;
+  }
+}

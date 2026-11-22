@@ -18,7 +18,14 @@ export type ActionError =
   | "routeLocked"
   | "bossLocked"
   | "busy"
-  | "invalidSave";
+  | "invalidSave"
+  | "housed"
+  | "notInHouse"
+  | "houseFull"
+  | "houseExists"
+  | "noHouse"
+  | "lotLocked"
+  | "maxTier";
 
 export const OK: ActionResult = { ok: true };
 export const fail = (reason: ActionError): ActionResult => ({ ok: false, reason });

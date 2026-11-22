@@ -10,10 +10,13 @@ import { TopNav } from "./components/TopNav";
 import { BoxModal } from "./modals/BoxModal";
 import { BugDetailModal } from "./modals/BugDetailModal";
 import { BugdexModal } from "./modals/BugdexModal";
+import { HousesModal } from "./modals/HousesModal";
 import { MapModal } from "./modals/MapModal";
 import { BossesModal, SaveModal, StarterModal } from "./modals/MiscModals";
 import { BagModal, ShopModal } from "./modals/ShopBagModals";
+import { SoundModal } from "./modals/SoundModal";
 import { store, useGame } from "./store";
+import { useAudio } from "./useAudio";
 
 const TOAST_MS = 2600;
 
@@ -36,6 +39,10 @@ function ModalHost({ modal }: { modal: ModalState | null }) {
       return <BossesModal />;
     case "save":
       return <SaveModal />;
+    case "sound":
+      return <SoundModal />;
+    case "houses":
+      return <HousesModal />;
   }
 }
 
@@ -46,6 +53,7 @@ export function App() {
   const toastTimer = useRef<number>();
 
   useEffect(() => store.start(), []);
+  useAudio(state);
 
   const toast = useCallback((message: string) => {
     setToastText(message);

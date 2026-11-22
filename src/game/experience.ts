@@ -6,9 +6,12 @@ export function xpToNextLevel(level: number): number {
   return Math.floor(Math.pow(level + 1, 3) * 0.8) - Math.floor(Math.pow(level, 3) * 0.8);
 }
 
+/** Larger means slower leveling. Tuned with `npm run simulate`. */
+export const XP_DIVISOR = 55;
+
 /** XP a defeated bug gives. Boss bugs give 50% more. */
 export function xpReward(speciesId: string, level: number, isBoss: boolean): number {
-  const base = Math.floor((getSpecies(speciesId).xpYield * level) / 7);
+  const base = Math.floor((getSpecies(speciesId).xpYield * level) / XP_DIVISOR);
   return Math.max(1, isBoss ? Math.floor(base * 1.5) : base);
 }
 

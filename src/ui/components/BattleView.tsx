@@ -6,12 +6,14 @@ import { forfeitBoss, RECOVERY_MS, visitRebootCenter } from "../../game/engine";
 import { teamBugs } from "../../game/state";
 import { BOSS_TITLES, ROUTE_NAMES, UI } from "../../i18n/ptBR";
 import { useApp } from "../appContext";
+import { buildAttackFx } from "../render/attackFx";
 import { formatClock } from "../format";
 import { terrainUrl } from "../render/terrain";
 import { store, useGame, type TimedEvent } from "../store";
+import { AttackLayer } from "./AttackLayer";
 import { Bar, BugSprite, Button, Icon, Tag } from "./primitives";
 
-const FLOAT_MS = 900;
+const FLOAT_MS = 1500;
 
 function Plate({ bug, side }: { bug: BugInstance; side: "player" | "enemy" }) {
   const species = getSpecies(bug.speciesId);
@@ -36,7 +38,7 @@ function lastOf(recent: TimedEvent[], predicate: (e: TimedEvent) => boolean): Ti
 
 export function BattleView() {
   const state = useGame();
-  const { report } = useApp();
+  const { report, open } = useApp();
   const now = performance.now();
   const rt = state.runtime;
   const battle = rt.battle;
@@ -58,10 +60,12 @@ export function BattleView() {
   const throwing = lastThrow && now - lastThrow.at < FLOAT_MS ? lastThrow : undefined;
   const floating = recent.filter((e) => e.event.type === "attack" && now - e.at < FLOAT_MS);
   const lastLine = store.log[0];
+  const lastCrit = lastOf(recent, (e) => e.event.type === "attack" && e.event.critical);
+  const shaking = lastCrit !== undefined && now - lastCrit.at < 420;
 
   return (
     <section className="panel battle-panel">
-      <div className="battle-scene pixel" style={{ backgroundImage: `url(${background})` }}>
+      <div className={`battle-scene pixel ${shaking ? "shake" : ""}`} style={{ backgroundImage: `url(${background})` }}>
         <div className="battle-label">
           {isBoss ? (
             <>
@@ -84,13 +88,16 @@ export function BattleView() {
         </div>
 
         <div className="battle-actions">
+          <Button variant="dark" small onClick={() => open({ kind: "sound" })} aria-label={UI.sound.title}>
+            <Icon name="sound" size={14} />
+          </Button>
           {isBoss ? (
             <Button variant="danger" onClick={() => report(store.run(forfeitBoss))}>
               {UI.forfeit}
             </Button>
           ) : (
             <Button variant="purple" onClick={() => report(store.run(visitRebootCenter))}>
-              <Icon name="reboot" size={14} /> {UI.rebootCenter}
+              <Icon name="reboot" size={14} /> <span className="btn-text">{UI.rebootCenter}</span>
             </Button>
           )}
         </div>
@@ -130,12 +137,17 @@ export function BattleView() {
 
         {floating.map((e) =>
           e.event.type === "attack" ? (
-            <span key={e.id} className={`damage-float ${e.event.side === "player" ? "on-enemy" : "on-player"} ${e.event.effectiveness > 1 ? "super" : e.event.effectiveness < 1 ? "weak" : ""}`}>
+            <span
+              key={e.id}
+              style={{ animationDelay: `${buildAttackFx(e.event, e.id).fx.travelMs}ms` }}
+              className={`damage-float ${e.event.side === "player" ? "on-enemy" : "on-player"} ${e.event.effectiveness > 1 ? "super" : e.event.effectiveness < 1 ? "weak" : ""}`}>
               {e.event.damage === 0 ? "imune" : `-${e.event.damage}`}
               {e.event.critical && "!"}
             </span>
           ) : null,
         )}
+
+        <AttackLayer recent={recent} now={now} />
 
         {rt.recoveryMs > 0 && (
           <div className="scene-overlay">

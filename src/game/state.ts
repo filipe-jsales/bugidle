@@ -2,6 +2,7 @@ import type { Battle } from "./battle";
 import type { BugInstance } from "./bug";
 import type { ItemId } from "./data/items";
 import type { Trainer } from "./experience";
+import type { House } from "./housing";
 
 export const SAVE_VERSION = 1;
 export const MAX_TEAM_SIZE = 6;
@@ -46,6 +47,8 @@ export interface PersistentState {
   activity: Activity;
   settings: Settings;
   totals: { defeats: number; captures: number; playTimeMs: number };
+  /** "From Transistor to Cloud" houses where boxed bugs farm. */
+  houses: House[];
   nextUid: number;
 }
 
@@ -56,7 +59,7 @@ export interface RuntimeState {
   /** While positive the team is rebooting after a wipe. */
   recoveryMs: number;
   potionCooldownMs: number;
-  /** Whether a capture throw already happened for the current player turn. */
+  /** Trap throws in the current encounter. */
   captureAttemptsThisBattle: number;
 }
 
@@ -96,6 +99,7 @@ export function createInitialState(trainerName = "Hunter"): GameState {
     activity: { kind: "route", routeId: "port-3000" },
     settings: defaultSettings(),
     totals: { defeats: 0, captures: 0, playTimeMs: 0 },
+    houses: [],
     nextUid: 1,
     runtime: createRuntime(),
   };

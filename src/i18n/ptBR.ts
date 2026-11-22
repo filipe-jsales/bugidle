@@ -95,6 +95,17 @@ export const CATEGORY_NAMES: Record<ItemCategory, string> = {
   evolution: "Evolução",
 };
 
+/** Eras of the "From Transistor to Cloud" houses, keyed by HOUSE_TIERS ids. */
+export const HOUSE_ERAS: Record<string, { name: string; year: string; description: string }> = {
+  vacuumTube: { name: "Laboratório de Válvulas", year: "1946", description: "Computadores do tamanho de uma sala, como o ENIAC, com cerca de 17 mil válvulas." },
+  transistor: { name: "Oficina do Transistor", year: "1947", description: "O transistor substitui a válvula: menor, mais frio e muito mais confiável." },
+  integratedCircuit: { name: "Fábrica de Circuitos Integrados", year: "1958", description: "Vários transistores num único pedaço de silício." },
+  microprocessor: { name: "Estúdio do Microprocessador", year: "1971", description: "Um processador inteiro num só chip. Começa a era do computador pessoal." },
+  internet: { name: "Provedor de Internet", year: "1991", description: "A web liga os computadores do mundo todo." },
+  cloud: { name: "Datacenter na Nuvem", year: "2006", description: "Servidores alugados por minuto, em qualquer lugar do planeta." },
+  ai: { name: "Laboratório de IA", year: "2020", description: "Modelos que aprendem com dados e ajudam a escrever código." },
+};
+
 export const CAPTURE_MODE_NAMES: Record<CaptureMode, string> = {
   off: "Não capturar",
   all: "Capturar todos",
@@ -162,6 +173,13 @@ export const ERROR_TEXT: Record<ActionError, string> = {
   bossLocked: "Libere todas as rotas da região primeiro.",
   busy: "Termine a batalha contra o chefe primeiro.",
   invalidSave: "Save inválido.",
+  housed: "Este bug está morando numa casa. Tire-o de lá primeiro.",
+  notInHouse: "Este bug não está numa casa.",
+  houseFull: "Esta casa não tem mais vagas. Evolua a era para abrir mais.",
+  houseExists: "Esta casa já foi construída.",
+  noHouse: "Construa a casa primeiro.",
+  lotLocked: "Este terreno ainda está bloqueado.",
+  maxTier: "Esta casa já está na última era.",
 };
 
 export const UI = {
@@ -175,6 +193,8 @@ export const UI = {
     bag: "Mochila",
     bosses: "Chefes",
     save: "Save",
+    houses: "Casas",
+    sound: "Som",
   },
   inField: "EM CAMPO",
   team: "EQUIPE",
@@ -278,5 +298,34 @@ export const UI = {
   },
   levelCap: "limite de nível",
   timeLeft: "tempo",
+  sound: {
+    title: "SOM",
+    mute: "Silenciar tudo",
+    master: "Volume geral",
+    music: "Música",
+    sfx: "Efeitos",
+    test: "Testar som",
+    hint: "O som começa depois do primeiro clique na página (regra dos navegadores). As preferências ficam salvas neste navegador.",
+  },
+  houses: {
+    title: "CASAS",
+    intro: "Bugs do Box podem morar numa casa e produzir moedas e XP sozinhos. Cada era da computação custa mais e rende mais.",
+    collectAll: "Coletar tudo",
+    collect: "Coletar",
+    build: "Construir",
+    upgrade: (era: string) => `Evoluir para ${era}`,
+    maxed: "Última era alcançada",
+    emptyLot: "Terreno vazio",
+    lockedLot: (badge: string) => `Bloqueado: precisa do ${badge}`,
+    lot: (n: number) => `Terreno ${n}`,
+    perMinute: "moedas/min",
+    slots: "vagas",
+    stored: "guardado",
+    addBug: "Escolha um bug do Box para morar aqui",
+    noBoxBugs: "Nenhum bug livre no Box. Bugs da equipe não podem morar em casas.",
+    remove: "Tirar da casa",
+    nextEra: (slots: number, mult: number) => `${slots} vagas, produção x${mult}`,
+    inHouse: "na casa",
+  },
   encounterLevel: (name: string, level: number) => `${name} · nível ${level}`,
 } as const;

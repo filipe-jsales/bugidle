@@ -11,6 +11,7 @@ import { ITEMS, itemsOfCategory, type ItemId, type PotionItem } from "./data/ite
 import { getBoss, getRoute, type RouteDef } from "./data/world";
 import { canEvolveByLevel, evolve } from "./evolution";
 import { gainTrainerXp, gainXp, xpReward } from "./experience";
+import { tickHousing } from "./housing";
 import { addItem, consumeItem, itemCount } from "./inventory";
 import { awardBadge, canChallengeBoss, isRouteUnlocked, levelCap, refreshRouteUnlocks } from "./progression";
 import { fail, OK, type ActionResult } from "./result";
@@ -22,7 +23,7 @@ export const RECOVERY_MS = 3000;
 export const POTION_COOLDOWN_MS = 1200;
 export const STARTER_LEVEL = 5;
 /** Share of a defeat's XP that benched (non-fighting, healthy) team members receive. */
-export const BENCH_XP_SHARE = 0.25;
+export const BENCH_XP_SHARE = 0.15;
 /** Largest simulated chunk; longer ticks are split so nothing is skipped. */
 const MAX_STEP_MS = 100;
 const DROP_TABLE: readonly { itemId: ItemId; chance: number; minLevel: number }[] = [
@@ -129,6 +130,7 @@ export function tick(state: GameState, dtMs: number, rng: Rng): GameEvent[] {
 
 function stepOnce(state: GameState, dtMs: number, rng: Rng, events: GameEvent[]): void {
   state.totals.playTimeMs += dtMs;
+  tickHousing(state, dtMs);
   const team = teamBugs(state);
   if (team.length === 0) return;
   const rt = state.runtime;

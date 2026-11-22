@@ -9,7 +9,9 @@ export type ModalState =
   | { kind: "shop" }
   | { kind: "bag" }
   | { kind: "bosses" }
-  | { kind: "save" };
+  | { kind: "save" }
+  | { kind: "sound" }
+  | { kind: "houses" };
 
 export interface AppActions {
   open: (modal: ModalState) => void;

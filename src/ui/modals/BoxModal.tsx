@@ -7,6 +7,7 @@ import { useApp } from "../appContext";
 import { BugSprite, Modal, Tag } from "../components/primitives";
 import { useGame } from "../store";
 import { ivTotal } from "../../game/bug";
+import { houseOf } from "../../game/housing";
 
 const RARITIES: Rarity[] = ["common", "uncommon", "rare", "legendary"];
 const SORTS: BoxSort[] = ["recent", "level", "dex", "power", "iv"];
@@ -72,6 +73,7 @@ export function BoxModal() {
               </span>
               <Tag tone="green">IV {ivTotal(bug)}</Tag>
               {state.team.includes(bug.uid) && <span className="box-cell-badge">{UI.box.inTeam}</span>}
+              {houseOf(state, bug.uid) && <span className="box-cell-badge house">{UI.houses.inHouse}</span>}
             </button>
           ))}
         </div>

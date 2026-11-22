@@ -13,6 +13,7 @@ import {
   visitRebootCenter,
   type GameEvent,
 } from "./engine";
+import { xpToNextLevel } from "./experience";
 import { levelCap } from "./progression";
 import { createSeededRng } from "./rng";
 import { createInitialState, type GameState } from "./state";
@@ -120,11 +121,11 @@ describe("idle loop (core loop)", () => {
 
   it("auto-evolves on level up when enabled", () => {
     const state = stateWith(["pixelmite", 14]);
-    firstBug(state).xp = 0;
+    firstBug(state).xp = xpToNextLevel(14) - 1;
     state.settings.captureMode = "off";
     state.settings.alwaysCaptureShiny = false;
     state.activity = { kind: "route", routeId: "port-3000" };
-    const events = run(state, 300_000);
+    const events = run(state, 60_000);
     expect(events.some((e) => e.type === "evolved")).toBe(true);
     expect(firstBug(state).speciesId).toBe("overflowasp");
     expect(isCaught(state, "overflowasp")).toBe(true);

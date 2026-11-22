@@ -44,6 +44,7 @@ To use another port: `npm run dev -- --port 3000`.
 | `npm run typecheck` | Checks the TypeScript types without building |
 | `npm run build` | Typechecks and builds the production version into `dist/` |
 | `npm run preview` | Serves the `dist/` build locally (run `npm run build` first) |
+| `npm run simulate` | Plays the whole game headless and prints a balance report (add seeds: `npm run simulate -- 1 2 3`) |
 
 ### Save data
 

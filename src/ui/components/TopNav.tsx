@@ -10,6 +10,8 @@ const ENTRIES: { modal: ModalState; icon: IconName; label: string }[] = [
   { modal: { kind: "shop" }, icon: "shop", label: UI.nav.shop },
   { modal: { kind: "bag" }, icon: "bag", label: UI.nav.bag },
   { modal: { kind: "bosses" }, icon: "bosses", label: UI.nav.bosses },
+  { modal: { kind: "houses" }, icon: "houses", label: UI.nav.houses },
+  { modal: { kind: "sound" }, icon: "sound", label: UI.nav.sound },
   { modal: { kind: "save" }, icon: "save", label: UI.nav.save },
 ];
 

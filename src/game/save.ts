@@ -1,5 +1,6 @@
 import { MAX_IV, type BugInstance } from "./bug";
 import { isItemId } from "./data/items";
+import { HOUSE_LOTS, HOUSE_TIERS, type House } from "./housing";
 import { hasSpecies } from "./data/species";
 import { BOSSES, ROUTES } from "./data/world";
 import { createInitialState, createRuntime, defaultSettings, SAVE_VERSION, type CaptureMode, type GameState, type PersistentState } from "./state";
@@ -129,6 +130,19 @@ export function importSave(text: string): GameState {
     }
   }
 
+  const houses: House[] = [];
+  if (Array.isArray(raw.houses)) {
+    const used = new Set(team);
+    for (const h of raw.houses) {
+      if (!isObject(h) || !isNumber(h.lot) || !HOUSE_LOTS.some((l) => l.lot === h.lot) || houses.some((x) => x.lot === h.lot)) continue;
+      const tier = isNumber(h.tier) ? Math.max(0, Math.min(HOUSE_TIERS.length - 1, Math.floor(h.tier))) : 0;
+      const residents = isStringArray(h.bugs) ? h.bugs.filter((uid) => uid in bugs && !used.has(uid)).slice(0, HOUSE_TIERS[tier]!.slots) : [];
+      residents.forEach((uid) => used.add(uid));
+      houses.push({ lot: h.lot, tier, bugs: residents, pending: isNumber(h.pending) ? Math.max(0, h.pending) : 0, xpCarry: isNumber(h.xpCarry) ? Math.max(0, h.xpCarry) : 0 });
+    }
+    houses.sort((a, b) => a.lot - b.lot);
+  }
+
   const maxUid = Object.keys(bugs).reduce((max, uid) => Math.max(max, Number(uid.replace(/\D/g, "")) || 0), 0);
 
   return {
@@ -153,6 +167,7 @@ export function importSave(text: string): GameState {
       captures: isNumber(totalsRaw.captures) ? totalsRaw.captures : 0,
       playTimeMs: isNumber(totalsRaw.playTimeMs) ? totalsRaw.playTimeMs : 0,
     },
+    houses,
     nextUid: Math.max(isNumber(raw.nextUid) ? raw.nextUid : 1, maxUid + 1),
     runtime: createRuntime(),
   };

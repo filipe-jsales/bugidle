@@ -1,5 +1,6 @@
 import { ivTotal, powerRating, type BugInstance } from "./bug";
 import { getSpecies, type Rarity } from "./data/species";
+import { houseOf } from "./housing";
 import { fail, OK, type ActionResult } from "./result";
 import { MAX_TEAM_SIZE, type GameState, type PersistentState } from "./state";
 import type { BugType } from "./types";
@@ -26,6 +27,7 @@ function battleBusy(state: GameState): boolean {
 export function moveToTeam(state: GameState, uid: string): ActionResult {
   if (!state.bugs[uid]) return fail("unknownBug");
   if (state.team.includes(uid)) return fail("alreadyInTeam");
+  if (houseOf(state, uid)) return fail("housed");
   if (state.team.length >= MAX_TEAM_SIZE) return fail("teamFull");
   if (battleBusy(state)) return fail("busy");
   state.team.push(uid);
@@ -46,6 +48,7 @@ export function swapWithBox(state: GameState, teamUid: string, boxUid: string): 
   if (index < 0) return fail("notInTeam");
   if (!state.bugs[boxUid]) return fail("unknownBug");
   if (state.team.includes(boxUid)) return fail("alreadyInTeam");
+  if (houseOf(state, boxUid)) return fail("housed");
   if (battleBusy(state)) return fail("busy");
   state.team[index] = boxUid;
   return OK;
@@ -70,6 +73,8 @@ export function releaseBug(state: GameState, uid: string): ActionResult {
   if (state.team.includes(uid) && state.team.length <= 1) return fail("lastTeamMember");
   if (state.team.includes(uid) && battleBusy(state)) return fail("busy");
   state.team = state.team.filter((id) => id !== uid);
+  const house = houseOf(state, uid);
+  if (house) house.bugs = house.bugs.filter((id) => id !== uid);
   delete state.bugs[uid];
   state.coins += bug.level * RELEASE_COINS_PER_LEVEL;
   return OK;

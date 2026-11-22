@@ -36,14 +36,18 @@ src/
     inventory.ts        shop and item use (RF09)
     progression.ts      route unlocks, badges, level cap, boss access (RF03, RF04)
     save.ts             export/import JSON with validation, local storage (RF10)
+    housing.ts          "From Transistor to Cloud" houses: eras, slots, production
+    simulation.ts       headless playthrough with a simple player policy, for balancing
     state.ts            GameState = PersistentState + RuntimeState
     engine.ts           the idle loop `tick()` and player commands
   sprites/bugSprite.ts  procedural, mirror-symmetric 24x24 bug sprites
+  audio/                chiptune: sounds.ts (effects as data), music.ts (procedural loops),
+                        settings.ts (volumes), audioEngine.ts (Web Audio, browser only)
   i18n/ptBR.ts          every string shown to the player
   ui/
     store.ts            GameStore: clock (100 ms), autosave (10 s), event log
     format.ts           turns engine events into log lines
-    render/             canvas helpers: sprites, icons, region backgrounds
+    render/             canvas helpers: sprites, icons, region backgrounds, era art, attack effects data
     components/         layout pieces (sidebar, top nav, battle view, automations, log)
     modals/             windows (bug details, map, Bugdex, box, shop, bag, bosses, save, starter)
 ```
@@ -66,6 +70,13 @@ src/
 | Spawn delay, reboot time, drops | `engine.ts` |
 | Defeats to unlock a route (15), base level cap (20) | `data/world.ts` |
 | Prices, trap multipliers, vitamin limit | `data/items.ts` |
+| XP speed (`XP_DIVISOR`) | `experience.ts` |
+| Wins to open a route, per region | `DEFEATS_TO_UNLOCK_BY_REGION` in `data/world.ts` |
+| House eras (cost, slots, multiplier, storage) and lots | `HOUSE_TIERS`, `HOUSE_LOTS` in `housing.ts` |
+
+### Balancing
+
+Run `npm run simulate` (optionally with seeds: `npm run simulate -- 1 2 3`). It plays the whole game headless in about a second per seed and prints, per region, when the boss was beaten, boss tries, timeouts, wipes, team levels and coins. After changing any number above, run it and keep the pacing inside the bounds of `simulation.test.ts` (6-16 h total, first region 20-120 min, every region slower than the last). Change those bounds only on purpose.
 
 ## How to add content
 
@@ -77,7 +88,7 @@ src/
 
 1. `npm test` passes (all suites) and `npm run typecheck` is clean.
 2. Write or update the test file next to the module (`foo.ts` -> `foo.test.ts`). Test the rule, its edge cases and the failure reasons.
-3. Run `npm run dev` and check the feature in the browser: no console errors, text in pt-BR, no emojis, the layout still works at 1500px wide and when stacked (under 1100px).
+3. Run `npm run dev` and check the feature in the browser: no console errors, text in pt-BR, no emojis, the layout still works at 1500px wide, stacked (under 1100px) and on a phone (375px).
 4. Update `docs/backlog.md`.
 
 ### Feature checklist (core requirements)
@@ -94,3 +105,7 @@ src/
 | RF08 | Bugdex: seen/caught/shiny, stats, locations | `bugdex.ts`, `BugdexModal.tsx` | `progression.test.ts` |
 | RF09 | Shop and inventory | `inventory.ts` | `inventory.test.ts` |
 | RF10 | Autosave in the browser, JSON export/import | `save.ts`, `store.ts` | `save.test.ts`, `store.test.ts` |
+| - | Houses (From Transistor to Cloud) | `housing.ts`, `HousesModal.tsx` | `housing.test.ts` |
+| - | Balance / pacing | `simulation.ts` | `simulation.test.ts` |
+| - | Sound and music | `src/audio` | `audio.test.ts` |
+| - | Attack effects per type | `render/attackFx.ts`, `AttackLayer.tsx` | `attackFx.test.ts` |

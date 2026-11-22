@@ -31,6 +31,7 @@ export class GameStore {
   private version = 0;
   private nextId = 1;
   private listeners = new Set<() => void>();
+  private eventListeners = new Set<(events: GameEvent[]) => void>();
 
   constructor(
     private readonly storage: KeyValueStorage | null,
@@ -45,6 +46,12 @@ export class GameStore {
   };
 
   getVersion = (): number => this.version;
+
+  /** Listens to every batch of engine events (used for sound). */
+  onEvents(listener: (events: GameEvent[]) => void): () => void {
+    this.eventListeners.add(listener);
+    return () => this.eventListeners.delete(listener);
+  }
 
   private emit(): void {
     this.version += 1;
@@ -66,7 +73,10 @@ export class GameStore {
 
   advance(dtMs: number): void {
     const events = tick(this.state, Math.min(dtMs, MAX_CATCH_UP_MS), this.rng);
-    if (events.length > 0) this.record(events);
+    if (events.length > 0) {
+      this.record(events);
+      this.eventListeners.forEach((l) => l(events));
+    }
     this.emit();
   }
 
