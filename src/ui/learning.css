@@ -262,32 +262,6 @@ button.code-line:hover {
   }
 }
 
-.museum-timeline {
-  display: grid;
-  grid-auto-flow: column;
-  grid-auto-columns: minmax(150px, 1fr);
-  gap: 6px;
-  overflow-x: auto;
-  padding-bottom: 4px;
-}
-.museum-room {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 3px;
-  padding: 8px;
-  text-align: center;
-  background: var(--inset);
-  border: 2px solid var(--inset-border);
-  border-radius: 4px;
-}
-.museum-room.open {
-  border-color: var(--gold-dark);
-}
-.museum-room.locked .era-art {
-  filter: grayscale(1) brightness(0.4);
-}
-
 .champion-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));

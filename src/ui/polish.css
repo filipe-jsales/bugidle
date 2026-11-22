@@ -1,0 +1,554 @@
+/*
+ * Polish layer, loaded last: battle overlay, layout limits, themed scrollbars,
+ * hover/press states, spacing. Same palette and pixel style as styles.css:
+ * hard 2px borders, no blur, motion in small steps.
+ */
+
+/* ---------------------------------------------------------------- layout limits */
+
+/* The single grid row must not grow past the screen, or the right column (log) runs off it. */
+.layout {
+  grid-template-rows: minmax(0, 1fr);
+}
+.column {
+  overflow: hidden;
+}
+.right-column .automation-panel {
+  flex: 0 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+}
+.right-column .log-panel {
+  flex: 1 1 180px;
+  min-height: 180px;
+}
+.log-list {
+  min-height: 0;
+}
+@media (max-width: 1100px) {
+  .layout {
+    grid-template-rows: none;
+  }
+  .column {
+    overflow: visible;
+  }
+  .right-column .automation-panel {
+    overflow: visible;
+  }
+}
+
+/* ---------------------------------------------------------------- battle map */
+
+/* The battle map follows the trainer: no dragging, no wheel zoom, page scroll works on phones. */
+.battle-scene {
+  cursor: default;
+  touch-action: auto;
+}
+.battle-scene:active {
+  cursor: default;
+}
+.map-controls {
+  flex-direction: column;
+}
+
+.proximity-overlay {
+  position: absolute;
+  right: 10px;
+  bottom: 92px;
+  z-index: 7000;
+  width: 236px;
+  max-height: calc(100% - 150px);
+  display: flex;
+  flex-direction: column;
+  background: rgba(30, 18, 34, 0.9);
+  border: 2px solid var(--inset-border);
+  border-radius: 4px;
+  box-shadow:
+    inset 0 2px 0 #574062,
+    0 3px 0 var(--shadow);
+}
+.proximity-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 8px;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  text-align: left;
+}
+.proximity-overlay.open .proximity-head {
+  border-bottom-color: var(--inset-border);
+}
+.proximity-head:hover {
+  background: rgba(181, 95, 217, 0.18);
+}
+.proximity-title {
+  flex: 1;
+  font-family: var(--font-title);
+  font-size: 10px;
+  letter-spacing: 0.5px;
+}
+/* pixel caret drawn with borders */
+.proximity-caret {
+  width: 0;
+  height: 0;
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-top: 6px solid var(--gold);
+}
+.proximity-caret.up {
+  border-top: none;
+  border-bottom: 6px solid var(--gold);
+}
+.proximity-overlay .proximity-list {
+  padding: 6px;
+  min-height: 0;
+  overflow-y: auto;
+}
+.proximity-overlay .proximity-row {
+  background: var(--inset-2);
+  padding: 3px 5px;
+}
+@media (max-width: 760px) {
+  .proximity-overlay {
+    right: 6px;
+    bottom: 84px;
+    width: min(210px, 62%);
+    max-height: calc(100% - 130px);
+  }
+  .proximity-overlay .proximity-row .muted {
+    display: none;
+  }
+}
+
+/* ---------------------------------------------------------------- scrollbars */
+
+/* Chunky pixel scrollbars: dark inset track, purple thumb with a light top edge, gold on hover. */
+::-webkit-scrollbar {
+  width: 12px;
+  height: 12px;
+}
+::-webkit-scrollbar-track {
+  background: var(--inset);
+  border: 2px solid var(--inset-border);
+  border-radius: 0;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--purple-dark);
+  border: 2px solid var(--purple-border);
+  border-radius: 0;
+  box-shadow: inset 2px 2px 0 var(--purple);
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--gold-dark);
+  border-color: #6b4512;
+  box-shadow: inset 2px 2px 0 var(--gold);
+}
+::-webkit-scrollbar-thumb:active {
+  background: var(--gold);
+}
+::-webkit-scrollbar-corner {
+  background: var(--inset-border);
+}
+::-webkit-scrollbar-button {
+  display: none;
+}
+/* Firefox has no shape control; at least use the palette. */
+@supports not selector(::-webkit-scrollbar) {
+  * {
+    scrollbar-color: var(--purple-dark) var(--inset);
+    scrollbar-width: thin;
+  }
+}
+
+/* ---------------------------------------------------------------- buttons and hover */
+
+.btn {
+  transition:
+    transform 80ms steps(2),
+    filter 80ms steps(2),
+    box-shadow 80ms steps(2);
+}
+.btn:hover:not(:disabled) {
+  filter: brightness(1.12);
+  transform: translateY(-1px);
+}
+.btn-purple:hover:not(:disabled) {
+  box-shadow:
+    inset 0 2px 0 #e19af5,
+    0 3px 0 var(--purple-border),
+    0 0 0 2px rgba(225, 154, 245, 0.35);
+}
+.btn-gold:hover:not(:disabled) {
+  box-shadow:
+    inset 0 2px 0 #ffe7a1,
+    0 3px 0 #6b4512,
+    0 0 0 2px rgba(255, 231, 161, 0.4);
+}
+.btn-dark:hover:not(:disabled) {
+  background: #47324f;
+  box-shadow:
+    inset 0 2px 0 #6b5078,
+    0 0 0 2px rgba(181, 95, 217, 0.35);
+}
+.btn-danger:hover:not(:disabled) {
+  box-shadow:
+    inset 0 2px 0 #ff8f84,
+    0 3px 0 #5a1612,
+    0 0 0 2px rgba(255, 143, 132, 0.35);
+}
+.btn:active:not(:disabled),
+.nav-button:active {
+  transform: translateY(2px);
+  filter: brightness(0.95);
+  box-shadow: inset 0 2px 0 rgba(0, 0, 0, 0.3);
+}
+
+.btn:focus-visible,
+.nav-button:focus-visible,
+.segmented button:focus-visible,
+.item-slot:focus-visible,
+.box-cell:focus-visible,
+.team-row:focus-visible,
+.proximity-head:focus-visible,
+.house-tab:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 2px;
+}
+
+.nav-button {
+  transition:
+    transform 80ms steps(2),
+    filter 80ms steps(2);
+}
+.nav-button:hover {
+  transform: translateY(-2px);
+  box-shadow:
+    inset 0 2px 0 #e19af5,
+    0 4px 0 var(--purple-border),
+    0 0 0 2px rgba(225, 154, 245, 0.35);
+}
+.nav-button:hover img,
+.nav-button:hover svg,
+.nav-button:hover canvas {
+  animation: icon-hop 360ms steps(3) 1;
+}
+@keyframes icon-hop {
+  50% {
+    transform: translateY(-3px);
+  }
+}
+
+.segmented button {
+  transition: background 80ms steps(2);
+}
+.segmented button:hover:not(.active) {
+  background: var(--inset-2);
+  color: var(--gold);
+}
+
+.item-slot,
+.box-cell,
+.team-row,
+.house-slot,
+.bag-item,
+.bag-bug,
+.map-node {
+  transition:
+    transform 80ms steps(2),
+    border-color 80ms steps(2),
+    background 80ms steps(2);
+}
+.item-slot:not(.static):hover,
+.box-cell:hover,
+.bag-item:hover,
+.bag-bug:hover {
+  border-color: var(--purple);
+  transform: translateY(-1px);
+}
+.team-row:hover {
+  border-color: var(--purple);
+}
+.house-slot.empty:hover {
+  border-color: var(--gold);
+  color: var(--gold);
+}
+
+.toggle {
+  transition: filter 80ms steps(2);
+}
+.toggle:hover {
+  filter: brightness(1.15);
+}
+
+input[type="range"] {
+  cursor: pointer;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .btn:hover:not(:disabled),
+  .nav-button:hover,
+  .item-slot:hover,
+  .box-cell:hover {
+    transform: none;
+  }
+  .nav-button:hover img,
+  .nav-button:hover svg,
+  .nav-button:hover canvas {
+    animation: none;
+  }
+}
+
+/* ---------------------------------------------------------------- study screen spacing */
+
+.modal-body .subpanel {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px 14px;
+}
+.modal-body .subpanel h4 {
+  margin: 0;
+}
+.modal-body .subpanel > p {
+  margin: 0;
+  line-height: 1.45;
+}
+.quiz {
+  gap: 12px;
+}
+.quiz-head {
+  gap: 12px;
+}
+.box-columns {
+  gap: 8px;
+}
+.box-column {
+  gap: 4px;
+  padding: 10px 6px;
+}
+.subpanel .tag-row {
+  gap: 6px;
+}
+.knowledge-chip {
+  padding: 3px 8px 3px 3px;
+  gap: 6px;
+}
+
+/* ---------------------------------------------------------------- houses by category */
+
+.house-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.house-tab {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 9px;
+  background: var(--panel-dark);
+  border: 2px solid var(--panel-border);
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 700;
+  font-size: 12px;
+  transition:
+    transform 80ms steps(2),
+    background 80ms steps(2);
+}
+.house-tab:hover:not(.active) {
+  background: var(--panel-light);
+  transform: translateY(-1px);
+}
+.house-tab.active {
+  background: var(--inset);
+  border-color: var(--gold-dark);
+  color: var(--gold);
+}
+.house-tab.locked {
+  opacity: 0.6;
+}
+.house-tab .era-art {
+  width: 24px;
+  height: 18px;
+}
+.house-tab small {
+  font-weight: 400;
+  opacity: 0.8;
+}
+.house-category-head {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+}
+.house-category-head p {
+  margin: 0;
+}
+.house-perks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.era-timeline {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.era-step {
+  display: grid;
+  grid-template-columns: 64px 1fr auto;
+  gap: 10px;
+  align-items: center;
+  padding: 8px;
+  background: var(--inset);
+  border: 2px solid var(--inset-border);
+  border-left-width: 6px;
+  border-radius: 4px;
+}
+.era-step.reached {
+  border-left-color: var(--gold);
+}
+.era-step.current {
+  border-color: var(--gold-dark);
+  border-left-color: var(--gold);
+  box-shadow: 0 0 0 2px rgba(242, 193, 78, 0.25);
+}
+.era-step.next {
+  border-left-color: var(--purple);
+}
+.era-step.locked .era-art {
+  filter: grayscale(1) brightness(0.4);
+}
+.era-step p {
+  margin: 2px 0 0;
+  line-height: 1.4;
+}
+.era-step-title {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+@media (max-width: 760px) {
+  .era-step {
+    grid-template-columns: 48px 1fr;
+  }
+  .era-step > .tag {
+    grid-column: 2;
+    justify-self: start;
+  }
+  .era-step .era-art {
+    width: 48px;
+    height: 36px;
+  }
+}
+
+/* ---------------------------------------------------------------- map animations */
+
+/* a new enemy pops out of the grass in pixel steps; starts visible so a paused clock never hides it */
+.spawn-pop {
+  animation: spawn-pop 360ms steps(4) both;
+  transform-origin: 50% 100%;
+}
+@keyframes spawn-pop {
+  0% {
+    transform: scale(0.6, 0.4);
+  }
+  50% {
+    transform: scale(1.15, 0.85);
+  }
+  75% {
+    transform: scale(0.95, 1.08);
+  }
+  100% {
+    transform: none;
+  }
+}
+
+/* level up: a square pixel ring grows from the bug's feet */
+.levelup-ring {
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  width: 20px;
+  height: 8px;
+  border: 3px solid var(--gold);
+  box-shadow: 0 0 0 2px #6b4512;
+  transform: translateX(-50%);
+  animation: levelup-ring 900ms steps(6) forwards;
+  pointer-events: none;
+}
+@keyframes levelup-ring {
+  0% {
+    width: 20px;
+    height: 8px;
+    opacity: 1;
+  }
+  100% {
+    width: 96px;
+    height: 34px;
+    opacity: 0;
+  }
+}
+
+/* shiny: four pixel stars turning around the sprite */
+.shiny-sparkles {
+  position: absolute;
+  left: 50%;
+  bottom: 26px;
+  width: 0;
+  height: 0;
+  animation: sparkle-turn 2.4s steps(12) infinite;
+  pointer-events: none;
+}
+.shiny-sparkles i {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  background: #fff7c2;
+  box-shadow:
+    0 -4px 0 -1px #fff7c2,
+    0 4px 0 -1px #fff7c2,
+    -4px 0 0 -1px #fff7c2,
+    4px 0 0 -1px #fff7c2;
+  animation: sparkle-blink 600ms steps(2) infinite;
+}
+.shiny-sparkles i:nth-child(1) {
+  transform: translate(-36px, -6px);
+}
+.shiny-sparkles i:nth-child(2) {
+  transform: translate(32px, -20px);
+  animation-delay: 150ms;
+}
+.shiny-sparkles i:nth-child(3) {
+  transform: translate(-22px, 18px);
+  animation-delay: 300ms;
+}
+.shiny-sparkles i:nth-child(4) {
+  transform: translate(26px, 14px);
+  animation-delay: 450ms;
+}
+@keyframes sparkle-turn {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@keyframes sparkle-blink {
+  50% {
+    opacity: 0.2;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .spawn-pop,
+  .levelup-ring,
+  .shiny-sparkles,
+  .shiny-sparkles i {
+    animation: none;
+  }
+}

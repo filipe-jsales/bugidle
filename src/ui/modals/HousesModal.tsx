@@ -5,12 +5,13 @@ import {
   buildHouse,
   collectAll,
   collectHouse,
+  eraOf,
   getHouse,
-  highestEra,
   HOUSE_LOTS,
   HOUSE_TIERS,
   houseCoinRate,
   houseOf,
+  houseXpRate,
   isLotUnlocked,
   nextCost,
   removeFromHouse,
@@ -18,14 +19,15 @@ import {
   tierOf,
   upgradeHouse,
   type House,
+  type HouseLot,
 } from "../../game/housing";
-import { BADGE_NAMES, HOUSE_ERAS, UI } from "../../i18n/ptBR";
+import { HOUSE_CATEGORY_TEXT, HOUSES_UI } from "../../i18n/houses.ptBR";
+import { BADGE_NAMES, UI } from "../../i18n/ptBR";
 import { useApp } from "../appContext";
 import { formatNumber } from "../format";
 import { Bar, BugSprite, Button, Icon, Modal, Tag } from "../components/primitives";
-import { eraUrl } from "../render/eras";
+import { houseArtUrl } from "../render/houseArt";
 import { store, useGame } from "../store";
-import { LEARN_UI } from "../../i18n/learning.ptBR";
 
 function BugPicker({ lot, onDone }: { lot: number; onDone: () => void }) {
   const state = useGame();
@@ -58,12 +60,25 @@ function BugPicker({ lot, onDone }: { lot: number; onDone: () => void }) {
   );
 }
 
-function HouseCard({ house }: { house: House }) {
+function Perks({ def }: { def: HouseLot }) {
+  const P = HOUSES_UI.perks;
+  return (
+    <div className="house-perks">
+      {def.coinMult !== 1 && <Tag tone={def.coinMult > 1 ? "gold" : "dark"}>{P.coins(def.coinMult)}</Tag>}
+      {def.xpMult !== 1 && <Tag tone={def.xpMult > 1 ? "blue" : "dark"}>{P.xp(def.xpMult)}</Tag>}
+      {def.storageMult !== 1 && <Tag tone="green">{P.storage(def.storageMult)}</Tag>}
+    </div>
+  );
+}
+
+function HouseCard({ house, def }: { house: House; def: HouseLot }) {
   const state = useGame();
   const { report, toast } = useApp();
   const [picking, setPicking] = useState(false);
+  const text = HOUSE_CATEGORY_TEXT[def.category];
   const tier = tierOf(house);
-  const era = HOUSE_ERAS[tier.id]!;
+  const era = text.eras[eraOf(house)]!;
+  const nextEra = def.eras[house.tier + 1];
   const next = HOUSE_TIERS[house.tier + 1];
   const cost = nextCost(state, house.lot);
   const rate = houseCoinRate(state, house);
@@ -72,7 +87,7 @@ function HouseCard({ house }: { house: House }) {
   return (
     <div className="house-card">
       <div className="house-head">
-        <img className="pixel era-art" src={eraUrl(house.tier)} width={96} height={72} alt="" />
+        <img className="pixel era-art" src={houseArtUrl(def.category, house.tier)} width={96} height={72} alt="" />
         <div className="house-info">
           <div className="tag-row">
             <strong>{era.name}</strong>
@@ -86,7 +101,10 @@ function HouseCard({ house }: { house: House }) {
             <Tag tone="green">
               {formatNumber(rate)} {UI.houses.perMinute}
             </Tag>
-            <Tag tone="blue">x{tier.multiplier}</Tag>
+            <Tag tone="blue">
+              {formatNumber(houseXpRate(state, house))} {HOUSES_UI.xpPerMinute}
+            </Tag>
+            <Tag>{HOUSES_UI.production(tier.multiplier)}</Tag>
           </div>
         </div>
       </div>
@@ -118,16 +136,12 @@ function HouseCard({ house }: { house: House }) {
         <Bar kind="xp" value={house.pending} max={Math.max(1, cap)} />
       </div>
       <div className="button-row wrap">
-        <Button
-          variant="gold"
-          disabled={house.pending < 1}
-          onClick={() => store.update((s) => toast(`+${formatNumber(collectHouse(s, house.lot))} moedas`))}
-        >
+        <Button variant="gold" disabled={house.pending < 1} onClick={() => store.update((s) => toast(`+${formatNumber(collectHouse(s, house.lot))} moedas`))}>
           <Icon name="coin" size={14} /> {UI.houses.collect}
         </Button>
-        {next && cost !== null ? (
+        {next && nextEra && cost !== null ? (
           <Button disabled={state.coins < cost} onClick={() => report(store.run((s) => upgradeHouse(s, house.lot)))} title={UI.houses.nextEra(next.slots, next.multiplier)}>
-            {UI.houses.upgrade(HOUSE_ERAS[next.id]!.name)} · {formatNumber(cost)}
+            {UI.houses.upgrade(text.eras[nextEra]!.name)} · {formatNumber(cost)}
           </Button>
         ) : (
           <Tag tone="green">{UI.houses.maxed}</Tag>
@@ -137,75 +151,114 @@ function HouseCard({ house }: { house: House }) {
   );
 }
 
-function Museum({ reached }: { reached: number }) {
-  const M = LEARN_UI.museum;
+/** Every milestone of the category, oldest first, always explained; future ones are greyed out. */
+function Timeline({ def, reached }: { def: HouseLot; reached: number }) {
+  const text = HOUSE_CATEGORY_TEXT[def.category];
   return (
-    <section className="subpanel museum">
-      <h4>{M.title}</h4>
-      <p className="muted small">{M.intro}</p>
-      <div className="museum-timeline">
-        {HOUSE_TIERS.map((tier, i) => {
-          const era = HOUSE_ERAS[tier.id]!;
-          const open = i <= reached;
+    <section className="subpanel">
+      <h4>{HOUSES_UI.timeline}</h4>
+      <p className="muted small">{HOUSES_UI.timelineHint}</p>
+      <ol className="era-timeline">
+        {def.eras.map((id, i) => {
+          const era = text.eras[id]!;
+          const status = i < reached ? "reached" : i === reached ? "current" : i === reached + 1 ? "next" : "locked";
           return (
-            <div key={tier.id} className={`museum-room ${open ? "open" : "locked"}`}>
-              <img className="pixel era-art" src={eraUrl(i)} width={64} height={48} alt="" />
-              <strong>{era.year}</strong>
-              <span className="small">{open ? era.name : "???"}</span>
-              <small className="muted">{open ? era.description : M.locked}</small>
-              <Tag tone={open ? "gold" : "dark"}>{M.multiplier(tier.multiplier)}</Tag>
-            </div>
+            <li key={id} className={`era-step ${status}`}>
+              <img className="pixel era-art" src={houseArtUrl(def.category, i)} width={64} height={48} alt="" />
+              <div>
+                <div className="era-step-title">
+                  <strong>{era.name}</strong>
+                  <Tag tone="gold">{era.year}</Tag>
+                  {status === "current" && <Tag tone="green">{HOUSES_UI.current}</Tag>}
+                  {status === "next" && <Tag tone="pink">{HOUSES_UI.next}</Tag>}
+                </div>
+                <p className="small muted">{era.description}</p>
+              </div>
+              <Tag tone={status === "locked" ? "dark" : "blue"}>{HOUSES_UI.production(HOUSE_TIERS[i]!.multiplier)}</Tag>
+            </li>
           );
         })}
-      </div>
+      </ol>
     </section>
+  );
+}
+
+function EmptyLot({ def }: { def: HouseLot }) {
+  const state = useGame();
+  const { report } = useApp();
+  const unlocked = isLotUnlocked(state, def.lot);
+  const cost = nextCost(state, def.lot) ?? 0;
+  return (
+    <div className={`house-card empty-lot ${unlocked ? "" : "locked"}`}>
+      <img className="pixel era-art faded" src={houseArtUrl(def.category, 0)} width={96} height={72} alt="" />
+      <div className="house-info">
+        <strong>{UI.houses.emptyLot}</strong>
+        <span className="muted small">{unlocked ? HOUSE_CATEGORY_TEXT[def.category].short : UI.houses.lockedLot(BADGE_NAMES[def.requiredBadge ?? ""] ?? "")}</span>
+      </div>
+      {unlocked && (
+        <Button variant="gold" disabled={state.coins < cost} onClick={() => report(store.run((s) => buildHouse(s, def.lot)))}>
+          {UI.houses.build} · {formatNumber(cost)}
+        </Button>
+      )}
+    </div>
   );
 }
 
 export function HousesModal() {
   const state = useGame();
-  const { close, report, toast } = useApp();
+  const { close, toast } = useApp();
+  const [lot, setLot] = useState(0);
   const pending = state.houses.reduce((sum, h) => sum + Math.floor(h.pending), 0);
+  const def = HOUSE_LOTS.find((l) => l.lot === lot) ?? HOUSE_LOTS[0]!;
+  const house = getHouse(state, def.lot);
+  const text = HOUSE_CATEGORY_TEXT[def.category];
+
   return (
     <Modal
       title={UI.houses.title}
       onClose={close}
       wide
       headerExtra={
-        <Button
-          variant="gold"
-          small
-          disabled={pending < 1}
-          onClick={() => store.update((s) => toast(`+${formatNumber(collectAll(s))} moedas`))}
-        >
+        <Button variant="gold" small disabled={pending < 1} onClick={() => store.update((s) => toast(`+${formatNumber(collectAll(s))} moedas`))}>
           {UI.houses.collectAll} ({formatNumber(pending)})
         </Button>
       }
     >
       <p className="muted small">{UI.houses.intro}</p>
-      <Museum reached={highestEra(state)} />
-      <div className="house-list">
-        {HOUSE_LOTS.map((lot) => {
-          const house = getHouse(state, lot.lot);
-          if (house) return <HouseCard key={lot.lot} house={house} />;
-          const unlocked = isLotUnlocked(state, lot.lot);
-          const cost = nextCost(state, lot.lot) ?? 0;
+      <div className="house-tabs" role="tablist">
+        {HOUSE_LOTS.map((l) => {
+          const built = getHouse(state, l.lot);
+          const unlocked = isLotUnlocked(state, l.lot);
           return (
-            <div key={lot.lot} className={`house-card empty-lot ${unlocked ? "" : "locked"}`}>
-              <img className="pixel era-art faded" src={eraUrl(0)} width={96} height={72} alt="" />
-              <div className="house-info">
-                <strong>{UI.houses.lot(lot.lot + 1)}</strong>
-                <span className="muted small">{unlocked ? UI.houses.emptyLot : UI.houses.lockedLot(BADGE_NAMES[lot.requiredBadge ?? ""] ?? "")}</span>
-              </div>
-              {unlocked && (
-                <Button variant="gold" disabled={state.coins < cost} onClick={() => report(store.run((s) => buildHouse(s, lot.lot)))}>
-                  {UI.houses.build} · {formatNumber(cost)}
-                </Button>
-              )}
-            </div>
+            <button
+              key={l.lot}
+              type="button"
+              role="tab"
+              aria-selected={l.lot === def.lot}
+              className={`house-tab ${l.lot === def.lot ? "active" : ""} ${unlocked ? "" : "locked"}`}
+              onClick={() => setLot(l.lot)}
+              title={unlocked ? HOUSE_CATEGORY_TEXT[l.category].short : HOUSES_UI.tabLocked(BADGE_NAMES[l.requiredBadge ?? ""] ?? "")}
+            >
+              <img className="pixel era-art" src={houseArtUrl(l.category, built?.tier ?? 0)} width={24} height={18} alt="" />
+              {HOUSE_CATEGORY_TEXT[l.category].name}
+              {built && <small>{built.tier + 1}/7</small>}
+            </button>
           );
         })}
       </div>
+
+      <section className="subpanel">
+        <div className="house-category-head">
+          <div>
+            <h4>{text.name.toUpperCase()}</h4>
+            <p className="small">{text.intro}</p>
+          </div>
+        </div>
+        <Perks def={def} />
+      </section>
+
+      {house ? <HouseCard house={house} def={def} /> : <EmptyLot def={def} />}
+      <Timeline def={def} reached={house ? house.tier : -1} />
     </Modal>
   );
 }

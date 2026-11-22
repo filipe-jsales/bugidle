@@ -7,10 +7,11 @@ import {
   collectAll,
   collectHouse,
   getHouse,
-  highestEra,
+  eraOf,
   HOUSE_LOTS,
   HOUSE_TIERS,
   houseCoinRate,
+  houseXpRate,
   houseOf,
   isLotUnlocked,
   nextCost,
@@ -23,6 +24,7 @@ import { createSeededRng } from "./rng";
 import { exportSave, importSave } from "./save";
 import type { GameState } from "./state";
 import { stateWith } from "./testUtils";
+import { HOUSE_CATEGORY_TEXT } from "../i18n/houses.ptBR";
 
 const MINUTE = 60_000;
 
@@ -51,17 +53,65 @@ describe("house eras", () => {
     for (let i = 1; i < HOUSE_TIERS.length; i++) expect(HOUSE_TIERS[i]!.multiplier).toBe(HOUSE_TIERS[i - 1]!.multiplier * 2);
   });
 
-  it("the museum shows the highest era reached", () => {
-    const state = stateWith(["leaklet", 10]);
-    expect(highestEra(state)).toBe(-1);
-    state.coins = 10_000_000;
-    buildHouse(state, 0);
-    upgradeHouse(state, 0);
-    expect(highestEra(state)).toBe(1);
+  it("later lots never cost less", () => {
+    for (let i = 1; i < HOUSE_LOTS.length; i++) expect(HOUSE_LOTS[i]!.costFactor).toBeGreaterThanOrEqual(HOUSE_LOTS[i - 1]!.costFactor);
+  });
+});
+
+describe("house categories", () => {
+  it("one house per category, history first and free, each with one milestone per tier", () => {
+    const categories = HOUSE_LOTS.map((l) => l.category);
+    expect(new Set(categories).size).toBe(categories.length);
+    expect(categories).toEqual(["history", "languages", "cloud", "databases", "networks", "security", "ai"]);
+    expect(HOUSE_LOTS[0]!.requiredBadge).toBeNull();
+    for (const lot of HOUSE_LOTS) expect(lot.eras, lot.category).toHaveLength(HOUSE_TIERS.length);
   });
 
-  it("later lots cost more", () => {
-    for (let i = 1; i < HOUSE_LOTS.length; i++) expect(HOUSE_LOTS[i]!.costFactor).toBeGreaterThan(HOUSE_LOTS[i - 1]!.costFactor);
+  it("every milestone has a name, a year and an explanation, in history order", () => {
+    for (const lot of HOUSE_LOTS) {
+      const text = HOUSE_CATEGORY_TEXT[lot.category];
+      expect(text.intro.length).toBeGreaterThan(20);
+      let lastYear = 0;
+      for (const id of lot.eras) {
+        const era = text.eras[id];
+        expect(era, `${lot.category}.${id}`).toBeDefined();
+        expect(era!.description.length).toBeGreaterThan(30);
+        const year = Number(era!.year.match(/\d{4}/)?.[0] ?? era!.year.match(/\d{2}/)?.[0] ?? 0);
+        const fullYear = year < 100 ? 1900 + year : year;
+        expect(fullYear, `${lot.category}.${id}`).toBeGreaterThanOrEqual(lastYear);
+        lastYear = fullYear;
+      }
+      expect(Object.keys(text.eras)).toHaveLength(lot.eras.length);
+    }
+  });
+
+  it("eraOf follows the house tier", () => {
+    const { state } = setup();
+    const house = getHouse(state, 0)!;
+    expect(eraOf(house)).toBe("vacuumTube");
+    upgradeHouse(state, 0);
+    expect(eraOf(house)).toBe("transistor");
+  });
+
+  it("categories change coins, XP and storage", () => {
+    const state = stateWith(["leaklet", 10], ["nullit", 20], ["nullit", 20]);
+    state.team = [state.team[0]!];
+    state.coins = 1e9;
+    state.badges.push("badge-localhost", "badge-staging");
+    const [a, b] = Object.keys(state.bugs).filter((uid) => !state.team.includes(uid));
+    buildHouse(state, 0);
+    buildHouse(state, 1);
+    buildHouse(state, 2);
+    assignToHouse(state, 0, a!);
+    assignToHouse(state, 1, b!);
+    const history = getHouse(state, 0)!;
+    const languages = getHouse(state, 1)!;
+    expect(houseCoinRate(state, languages)).toBeLessThan(houseCoinRate(state, history));
+    expect(houseXpRate(state, languages)).toBeGreaterThan(houseXpRate(state, history));
+    removeFromHouse(state, b!);
+    assignToHouse(state, 2, b!);
+    const cloud = getHouse(state, 2)!;
+    expect(storageCap(state, cloud)).toBeCloseTo(storageCap(state, history) * 2);
   });
 });
 
@@ -79,11 +129,11 @@ describe("building and upgrading", () => {
     state.coins = 10;
     expect(buildHouse(state, 0)).toEqual({ ok: false, reason: "notEnoughCoins" });
     state.coins = 1_000_000;
-    expect(isLotUnlocked(state, 1)).toBe(false);
-    expect(buildHouse(state, 1)).toEqual({ ok: false, reason: "lotLocked" });
+    expect(isLotUnlocked(state, 2)).toBe(false);
+    expect(buildHouse(state, 2)).toEqual({ ok: false, reason: "lotLocked" });
     state.badges.push("badge-staging");
-    expect(buildHouse(state, 1).ok).toBe(true);
-    expect(state.coins).toBe(1_000_000 - HOUSE_TIERS[0]!.cost * 3);
+    expect(buildHouse(state, 2).ok).toBe(true);
+    expect(state.coins).toBe(1_000_000 - HOUSE_TIERS[0]!.cost * HOUSE_LOTS[2]!.costFactor);
   });
 
   it("upgrades through every era, each one costing more, then stops", () => {

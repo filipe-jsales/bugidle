@@ -16,14 +16,15 @@ import { terrainUrl } from "../render/terrain";
 import { store, useGame, type TimedEvent } from "../store";
 import { createWorld, stepWorld, type Vec, type WorldModel } from "../world/worldModel";
 import { worldFor } from "../world/worldRegistry";
-import { usePanZoom } from "../world/usePanZoom";
+import { centerOn, followZoom, MIN_ZOOM, ZOOM_STEP } from "../world/viewport";
+import { ProximityPanel } from "./ProximityPanel";
 import { AttackLayer } from "./AttackLayer";
 import { DebugPanel } from "./DebugPanel";
 import { Bar, BugSprite, Button, Icon, ItemIcon, Tag } from "./primitives";
 
-/** Map size in screen pixels; the terrain is generated at half and scaled 2x. */
-const MAP_W = 1800;
-const MAP_H = 1100;
+/** Map size in screen pixels; the terrain is generated at half and scaled 2x. Big enough to fill a wide screen zoomed out. */
+const MAP_W = 2800;
+const MAP_H = 1700;
 const MAP_SIZE = { width: MAP_W, height: MAP_H };
 const BUG_PX = 56;
 const WILD_PX = 44;
@@ -73,6 +74,18 @@ function Nameplate({ bug, showHp }: { bug: BugInstance; showHp: boolean }) {
   );
 }
 
+/** Four pixel sparkles turning around a shiny bug. */
+function ShinySparkles() {
+  return (
+    <div className="shiny-sparkles" aria-hidden>
+      <i />
+      <i />
+      <i />
+      <i />
+    </div>
+  );
+}
+
 interface FloatText {
   id: string;
   text: string;
@@ -92,7 +105,8 @@ export function BattleView() {
 
   const world = useMemo<WorldModel>(() => worldFor(scene.key, () => createWorld(MAP_W, MAP_H, scene.pool, defaultRng)), [scene.key]);
   const lastEnemy = useRef<{ bug: BugInstance; pos: Vec; endedAt: number | null } | null>(null);
-  const view = usePanZoom(MAP_SIZE, true);
+  // The battle camera always follows the trainer; the player only picks the zoom, with the buttons.
+  const [zoomChoice, setZoomChoice] = useState(1);
 
   useEffect(() => {
     const el = viewportRef.current;
@@ -146,6 +160,8 @@ export function BattleView() {
   const lastCrit = lastOf(recent, (e) => e.event.type === "attack" && e.event.critical);
   const shaking = lastCrit !== undefined && now - lastCrit.at < 420;
   const lastLine = store.log[0];
+  const lastLevelUp = lastOf(recent, (e) => e.event.type === "levelUp" && e.event.uid === player?.uid);
+  const levelUp = lastLevelUp && now - lastLevelUp.at < 900 ? lastLevelUp : undefined;
 
   const floats: FloatText[] = [];
   for (const { id, at: time, event } of recent) {
@@ -169,17 +185,19 @@ export function BattleView() {
   const activity = state.activity;
   const isBoss = activity.kind === "boss";
   const trainerFacing = world.trainer.facing;
-  const camera = view.cameraFor(world.trainer.pos, viewport);
+  const zoom = followZoom(zoomChoice, viewport, MAP_SIZE);
+  const camera = centerOn(world.trainer.pos, zoom, viewport, MAP_SIZE);
+  const changeZoom = (factor: number) => setZoomChoice(Math.max(MIN_ZOOM, followZoom(zoom * factor, viewport, MAP_SIZE)));
 
   return (
     <section className="panel battle-panel">
-      <div ref={viewportRef} className={`battle-scene ${shaking ? "shake" : ""}`} {...view.bind(viewport)}>
+      <div ref={viewportRef} className={`battle-scene ${shaking ? "shake" : ""}`}>
         <div
           className="world pixel"
           style={{
             width: MAP_W,
             height: MAP_H,
-            transform: `translate(${-Math.round(camera.x * view.zoom)}px, ${-Math.round(camera.y * view.zoom)}px) scale(${view.zoom})`,
+            transform: `translate(${-Math.round(camera.x * zoom)}px, ${-Math.round(camera.y * zoom)}px) scale(${zoom})`,
             backgroundImage: `url(${terrainUrl(region.terrain, scene.key, MAP_W / 2, MAP_H / 2)})`,
             backgroundSize: `${MAP_W}px ${MAP_H}px`,
           }}
@@ -197,8 +215,11 @@ export function BattleView() {
               <div className="shadow" />
               <div key={lastEnemyHit?.id ?? 0} className="lunge" style={{ "--lx": `${Math.sign(playerPos.x - enemyPos.x) * 14}px`, "--ly": `${Math.sign(playerPos.y - enemyPos.y) * 8}px` } as CSSProperties}>
                 <div key={lastPlayerHit?.id ?? 0} className="hit-flash">
-                  <BugSprite speciesId={enemy.speciesId} shiny={enemy.shiny} size={BUG_PX} animate phase={0.5} />
+                  <div key={world.encounter.key} className="spawn-pop">
+                    <BugSprite speciesId={enemy.speciesId} shiny={enemy.shiny} size={BUG_PX} animate phase={0.5} />
+                  </div>
                 </div>
+                {enemy.shiny && <ShinySparkles />}
               </div>
               {throwing && (
                 <div key={throwing.id} className={`trap-throw ${throwing.event.type === "captureAttempt" && throwing.event.success ? "success" : "fail"}`}>
@@ -230,6 +251,7 @@ export function BattleView() {
             <div className="entity" style={at(playerPos)}>
               <Nameplate bug={player} showHp />
               <div className="shadow" />
+              {levelUp && <div key={levelUp.id} className="levelup-ring" />}
               <div key={lastPlayerHit?.id ?? 0} className="lunge" style={{ "--lx": `${Math.sign(enemyPos.x - playerPos.x) * 14}px`, "--ly": `${Math.sign(enemyPos.y - playerPos.y) * 8}px` } as CSSProperties}>
                 <div key={lastEnemyHit?.id ?? 0} className="hit-flash">
                   <BugSprite speciesId={player.speciesId} shiny={player.shiny} size={BUG_PX} className={world.follower.moving ? "hop" : ""} animate />
@@ -284,19 +306,15 @@ export function BattleView() {
         </div>
 
         <div className="map-controls" onPointerDown={(e) => e.stopPropagation()}>
-          <Button variant="dark" small aria-label={UI.mapControls.zoomIn} title={UI.mapControls.zoomIn} onClick={() => view.zoomIn(viewport)}>
+          <Button variant="dark" small aria-label={UI.mapControls.zoomIn} title={UI.mapControls.zoomIn} onClick={() => changeZoom(ZOOM_STEP)}>
             +
           </Button>
-          <Button variant="dark" small aria-label={UI.mapControls.zoomOut} title={UI.mapControls.zoomOut} onClick={() => view.zoomOut(viewport)}>
+          <Button variant="dark" small aria-label={UI.mapControls.zoomOut} title={UI.mapControls.zoomOut} disabled={zoom <= followZoom(MIN_ZOOM, viewport, MAP_SIZE) + 0.001} onClick={() => changeZoom(1 / ZOOM_STEP)}>
             -
           </Button>
-          {!view.following && (
-            <Button variant="purple" small onClick={view.recenter}>
-              {UI.mapControls.recenter}
-            </Button>
-          )}
         </div>
 
+        <ProximityPanel />
         <DebugPanel />
 
         {rt.atCenter && rt.recoveryMs <= 0 && (

@@ -19,7 +19,7 @@ describe("trainer sprite", () => {
   it("shows the face from the front and the backpack from behind", () => {
     expect(trainerPixels("down", 0).includes(Tp.Eye)).toBe(true);
     expect(trainerPixels("up", 0).includes(Tp.Eye)).toBe(false);
-    expect(trainerPixels("up", 0).filter((p) => p === Tp.Backpack).length).toBeGreaterThan(20);
+    expect(trainerPixels("up", 0).filter((p) => p === Tp.Backpack || p === Tp.BackpackDark).length).toBeGreaterThan(20);
   });
 
   it("walk frames move the legs", () => {

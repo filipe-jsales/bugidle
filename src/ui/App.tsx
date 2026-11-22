@@ -17,7 +17,6 @@ import { GuildModal } from "./modals/GuildModal";
 import { TerminalModal } from "./modals/TerminalModal";
 import { BossReviewModal, StudyModal } from "./modals/StudyModals";
 import { HousesModal } from "./modals/HousesModal";
-import { ProximityPanel } from "./components/ProximityPanel";
 import { MapModal } from "./modals/MapModal";
 import { BossesModal, SaveModal, StarterModal } from "./modals/MiscModals";
 import { BagModal, ShopModal } from "./modals/ShopBagModals";
@@ -133,7 +132,6 @@ export function App() {
         </main>
         <aside className="column right-column">
           <AutomationPanel />
-          <ProximityPanel />
           <LogPanel />
         </aside>
       </div>

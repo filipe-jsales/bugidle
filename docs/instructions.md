@@ -16,6 +16,7 @@
 6. Player commands return `ActionResult` (`{ ok: true }` or `{ ok: false, reason }`); they never throw for expected failures. The UI translates `reason` through `ERROR_TEXT`.
 7. Keep it plain: small functions, no premature abstractions, no filler comments, no placeholder content. Comments explain *why*, not *what*.
 8. When you finish or discover a task, update `docs/backlog.md`.
+9. **Stay inside the visual theme.** Terracotta panels, plum checkerboard, purple/gold pixel buttons, the palette tokens in `styles.css :root`, the two pixel fonts. Hard 2-3px borders, square corners on pixel parts, no blur, no gradients beyond the existing two-tone buttons, motion in `steps()`. Every interactive element has a hover, a pressed and a `:focus-visible` state. Scrollbars use the themed style in `polish.css`; never leave browser defaults. Respect `prefers-reduced-motion`.
 
 ## Architecture
 
@@ -36,7 +37,7 @@ src/
     inventory.ts        shop and item use (RF09)
     progression.ts      route unlocks, badges, level cap, boss access (RF03, RF04)
     save.ts             export/import JSON with validation, local storage (RF10)
-    housing.ts          "From Transistor to Cloud" houses: eras, slots, production
+    housing.ts          houses by category (history, languages, cloud, databases, networks, security, AI): 7 milestones each, slots, production
     stones.ts           type stones: drops, evolution cost, refine
     hatchery.ts         mystery eggs: incubation and hatching
     simulation.ts       headless playthrough with a simple player policy, for balancing
@@ -54,7 +55,8 @@ src/
   ui/
     store.ts            GameStore: clock (100 ms), autosave (10 s), event log
     format.ts           turns engine events into log lines
-    render/             canvas helpers: sprites, icons, item art, region backgrounds, era art, attack effects data
+    render/             canvas helpers: sprites, icons, item art, region backgrounds, era art, house art, attack effects data
+    polish.css          loaded last: layout limits, battle overlay, themed scrollbars, hover/press states, spacing
     world/worldModel.ts pure model of the explorable map: trainer walk, follower, roaming bugs, camera
     terminal.ts         the optional shell: parses a line and calls the same commands as the buttons
     components/         layout pieces (sidebar, top nav, battle view, automations, log)
@@ -64,6 +66,12 @@ src/
 ### The battle scene
 
 The game engine decides *when* an encounter happens and resolves it; `worldModel.ts` decides *where* it is drawn. Every animation frame, `BattleView` steps the world model with the current encounter key: between fights the trainer walks toward the nearest roaming bug and the active bug follows his trail; when the engine starts a fight, the nearest roaming bug becomes the enemy and both line up in front of it. The camera centres on the trainer and is clamped to the map.
+
+Battle map rules (keep them):
+- The camera **always follows the trainer**. There is no dragging and no mouse-wheel zoom on the battle map; the only control is the zoom **+ / -** buttons (bottom right). Pan and wheel zoom exist only in the region map (Mapa button, `usePanZoom`).
+- The zoom can never go below `coverZoom` (`world/viewport.ts`): the map always fills the screen, so no dark border shows. The map is 2800x1700 so even a wide screen zoomed out stays inside it.
+- The "Proximidade para captura" panel is an overlay inside the map, bottom right, above the zoom buttons. It folds to its title (starts folded on phones).
+- Map animations: `spawn-pop` when an enemy appears, `levelup-ring`, `shiny-sparkles`, plus the attack effects. Never start an animation at opacity 0 for something that must stay visible (a paused animation clock would hide it).
 
 ### State and the loop
 
@@ -91,7 +99,7 @@ The game engine decides *when* an encounter happens and resolves it; `worldModel
 | Walk speeds, fight spacing, roaming bugs | `worldModel.ts` |
 | Zoom limits and step | `MIN_ZOOM`, `MAX_ZOOM`, `ZOOM_STEP` in `world/viewport.ts` |
 | Wins to open a route, per region | `DEFEATS_TO_UNLOCK_BY_REGION` in `data/world.ts` |
-| House eras (cost, slots, multiplier, storage) and lots | `HOUSE_TIERS`, `HOUSE_LOTS` in `housing.ts` |
+| House tiers (cost, slots, multiplier, storage) and categories (badge, cost factor, coin/XP/storage perks, milestones) | `HOUSE_TIERS`, `HOUSE_LOTS` in `housing.ts` |
 
 ### Balancing
 
@@ -107,7 +115,11 @@ Rule: learning is optional, short and rewarded. It never blocks progress, and a 
 
 ## Art pipeline
 
-All art is code today: procedural bug sprites (`sprites/bugSprite.ts`), hand-drawn halves for the strongest bugs (`sprites/handDrawn.ts`: write 12 columns, the code mirrors them), the trainer (`sprites/trainerSprite.ts`) and item art (`render/itemArt.ts`). Colors always come from the type palette, so shiny and dual types keep working.
+All art is code. **Every species is hand-drawn**: `sprites/handDrawn.ts` (final forms and legendaries) and `sprites/handDrawnMore.ts` (the rest). Write only the left 12 columns of the 24x24 sprite; the code mirrors them. Codes: `k` outline, `b` body, `s` shade, `l` light, `a` accent, `e` eye, `p` pupil, `w` wing. Draw legs with `s`, not `k`, so they stay visible on the dark map. Stage 1 is small (about 14 rows), stage 3 fills the box; `bugSprite.test.ts` checks that each evolution line grows. The procedural generator in `bugSprite.ts` is only the fallback for a new species with no drawing yet.
+
+The trainer (`sprites/trainerSprite.ts`) is hand-drawn too: one 16x22 grid per view (front, back, side; right is the side mirrored), with leg rows swapped for the steps and the arms slid one pixel opposite to the legs. Item art is `render/itemArt.ts`, house art `render/houseArt.ts` (history keeps one drawing per era in `render/eras.ts`; other categories get a building that grows with the tier and carries the category emblem). Colors always come from the palettes, so shiny and dual types keep working.
+
+To review sprites, open the game in the browser and import `/src/sprites/bugSprite.ts` from the console to draw a sheet at 4x.
 
 To go further:
 - **Aseprite** (desktop pixel editor) or **Piskel** (free, in the browser) for drawing sprites and animation frames by hand; export PNG sprite sheets into `public/sprites/` and load them in `render/pixels.ts` instead of the generated ones.
@@ -141,7 +153,7 @@ To go further:
 | RF08 | Bugdex: seen/caught/shiny, stats, locations | `bugdex.ts`, `BugdexModal.tsx` | `progression.test.ts` |
 | RF09 | Shop and inventory | `inventory.ts` | `inventory.test.ts` |
 | RF10 | Autosave in the browser, JSON export/import | `save.ts`, `store.ts` | `save.test.ts`, `store.test.ts` |
-| - | Houses (From Transistor to Cloud) | `housing.ts`, `HousesModal.tsx` | `housing.test.ts` |
+| - | Houses by category with milestone timelines | `housing.ts`, `HousesModal.tsx`, `i18n/houses.ptBR.ts`, `render/houseArt.ts` | `housing.test.ts` |
 | - | Balance / pacing | `simulation.ts` | `simulation.test.ts` |
 | - | Sound and music | `src/audio` | `audio.test.ts` |
 | - | Attack effects per type | `render/attackFx.ts`, `AttackLayer.tsx` | `attackFx.test.ts` |
@@ -153,7 +165,7 @@ To go further:
 | - | Daily challenge, Leitner boxes, boss review | `learning.ts`, `StudyModals.tsx` | `learning.test.ts` |
 | - | Guild of Algorithms | `guild.ts`, `GuildModal.tsx` | `guild.test.ts` |
 | - | Terminal | `ui/terminal.ts`, `TerminalModal.tsx` | `terminal.test.ts` |
-| - | Map pan and zoom | `world/viewport.ts`, `world/usePanZoom.ts` | `viewport.test.ts` |
+| - | Region map pan and zoom; battle map follow + zoom buttons | `world/viewport.ts`, `world/usePanZoom.ts`, `BattleView.tsx` | `viewport.test.ts` |
 | - | Automations (throw until caught, auto revive, return to hunt) | `engine.ts` | `automation.test.ts` |
-| - | Hand-drawn sprites and idle frames | `sprites/handDrawn.ts`, `sprites/bugSprite.ts` | `bugSprite.test.ts` |
+| - | Hand-drawn sprites (all species, trainer) and idle frames | `sprites/handDrawn.ts`, `sprites/handDrawnMore.ts`, `sprites/trainerSprite.ts` | `bugSprite.test.ts`, `trainerSprite.test.ts` |
 | - | Bug screen, compare, proximity panel | `BugDetailModal.tsx`, `CompareModal.tsx`, `ProximityPanel.tsx` | manual check in the browser |

@@ -74,6 +74,17 @@ Principle: learning is optional, short and rewarded; it never blocks progress.
 - [x] 7. Guild of Algorithms: 9 champions (sorting and searching), 9 raids; raid time = real operation count, so Big-O, best/worst case and memory decide (`game/guild.ts`, `GuildModal`)
 - [x] 8. Optional terminal (F2 or the menu): help, ls, cd, pwd, status, man, dex, catch, trap, buy, use, lead, rules, raid, egg, collect, history, Tab completion (`ui/terminal.ts`, `TerminalModal`)
 
+## v0.7 - houses by category, battle map, art and UI polish
+
+- [x] Houses split by category: Histórica (hardware history), Linguagens, Nuvem, Bancos de Dados, Redes, Cibersegurança, IA. One house each, 7 milestones each with year and a short explanation, a timeline per category, small perks (coins, XP, storage). Replaces the old museum
+- [x] Battle map: camera always follows the trainer; only the + / - buttons zoom (no drag, no wheel); zoom never shows the map edge; bigger map (2800x1700)
+- [x] "Proximidade para captura" moved inside the battle map (bottom right, above zoom, foldable); "Seguir caçador" removed
+- [x] Fixed the log running off the screen (grid row limit, right column scrolls)
+- [x] Themed pixel scrollbars; hover, pressed and focus states on buttons, tabs, slots and cards; study screen spacing
+- [x] All 38 species hand-drawn (`handDrawnMore.ts`), trainer redrawn by hand (front, back, side, walk cycle)
+- [x] Map animations: enemy spawn pop, level-up ring, shiny sparkles
+- [x] Simulation player moves strong bugs out of houses into the team (7 houses kept too many good bugs locked)
+
 ## Next (core polish)
 
 - [ ] More lessons per bug (today one each) so reviews do not repeat
@@ -90,7 +101,6 @@ Principle: learning is optional, short and rewarded; it never blocks progress.
 - [ ] Offline progress: simulate the time the tab was closed (today the catch-up is capped at 60 s). Houses are the natural first step: compute their production from the save timestamp
 - [ ] Final-boss wall: benched bugs fall far behind the lead late in the game (lead 100, others about 80). Consider XP share based on level gap or a "train the weakest" automation
 - [ ] Tune house prices with real play (the simulation only builds when it has 4x the cost)
-- [ ] Hand-drawn sprites for the remaining 32 species (today only the 6 stage-3/legendary bugs are hand-drawn)
 - [ ] Achievements (catch N, shinies, defeat all bosses)
 - [ ] Held items / equipment for bugs
 - [ ] Rematch bosses at higher levels (daily)

@@ -8,7 +8,7 @@ import { ITEMS, type ItemId } from "./data/items";
 import { getSpecies } from "./data/species";
 import { BOSSES, getRoute, REGIONS, ROUTES, routesOfRegion } from "./data/world";
 import { challengeBoss, chooseStarter, selectRoute, tick, type GameEvent } from "./engine";
-import { assignToHouse, buildHouse, collectAll, getHouse, HOUSE_LOTS, houseOf, isLotUnlocked, nextCost, tierOf, upgradeHouse } from "./housing";
+import { assignToHouse, buildHouse, collectAll, getHouse, HOUSE_LOTS, houseOf, isLotUnlocked, nextCost, removeFromHouse, tierOf, upgradeHouse } from "./housing";
 import { buyItem, itemCount, useItemOnBug } from "./inventory";
 import { canChallengeBoss, levelCap } from "./progression";
 import { createSeededRng } from "./rng";
@@ -48,13 +48,14 @@ function regionOfActivity(state: GameState): string {
   return getRoute(routeId).regionId;
 }
 
-/** Keep the six strongest bugs that are not living in a house. */
+/** Keep the six strongest bugs; a strong bug living in a house moves out to join the team. */
 function arrangeTeam(state: GameState): void {
   if (state.activity.kind === "boss") return;
-  const candidates = Object.values(state.bugs)
-    .filter((b) => !houseOf(state, b.uid))
-    .sort((a, b) => powerRating(b) - powerRating(a));
-  state.team = candidates.slice(0, MAX_TEAM_SIZE).map((b) => b.uid);
+  const best = Object.values(state.bugs)
+    .sort((a, b) => powerRating(b) - powerRating(a))
+    .slice(0, MAX_TEAM_SIZE);
+  for (const bug of best) if (houseOf(state, bug.uid)) removeFromHouse(state, bug.uid);
+  state.team = best.map((b) => b.uid);
 }
 
 function shop(state: GameState, regionOrder: number): void {

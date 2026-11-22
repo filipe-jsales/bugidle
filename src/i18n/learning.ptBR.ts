@@ -115,12 +115,6 @@ export const LEARN_UI = {
     reviewButton: "Revisão de código",
     reviewStored: (pct: number) => `bônus de revisão: +${pct}%`,
   },
-  museum: {
-    title: "MUSEU DA COMPUTAÇÃO",
-    intro: "Cada era que suas casas alcançam abre uma sala do museu. A produção dobra a cada era, como na Lei de Moore: por décadas, a quantidade de transistores num chip dobrou mais ou menos a cada dois anos.",
-    locked: "Evolua uma casa até esta era para abrir a sala.",
-    multiplier: (m: number) => `produção x${m}`,
-  },
   howToFix: "COMO CORRIGIR",
   lockedFix: "Capture este bug para ver como corrigir o código.",
   buggyCode: "Com o bug",

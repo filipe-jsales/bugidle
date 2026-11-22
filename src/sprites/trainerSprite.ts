@@ -1,5 +1,5 @@
 /**
- * The bug hunter: a 16x22 pixel trainer with a cap, jacket and backpack.
+ * The bug hunter: a hand-drawn 16x22 trainer with a cap, jacket and backpack.
  * Three facings (down, up, side; "right" is the side sprite mirrored) and
  * three frames each (stand, step A, step B). Pure data, rendered by the UI.
  */
@@ -23,6 +23,9 @@ export enum Tp {
   Eye,
   Logo,
   Backpack,
+  SkinShade,
+  Shirt,
+  BackpackDark,
 }
 
 export const TRAINER_PALETTE: Readonly<Record<Exclude<Tp, Tp.Empty>, string>> = {
@@ -37,101 +40,191 @@ export const TRAINER_PALETTE: Readonly<Record<Exclude<Tp, Tp.Empty>, string>> = 
   [Tp.Shoes]: "#5a3a2a",
   [Tp.Eye]: "#1a1020",
   [Tp.Logo]: "#fbf4e4",
-  [Tp.Backpack]: "#8a5a34",
+  [Tp.Backpack]: "#a8703e",
+  [Tp.SkinShade]: "#c98f62",
+  [Tp.Shirt]: "#fbf4e4",
+  [Tp.BackpackDark]: "#6b4423",
 };
 
-class Grid {
-  readonly pixels = new Uint8Array(TRAINER_WIDTH * TRAINER_HEIGHT);
-  rect(x: number, y: number, w: number, h: number, value: Tp): void {
-    for (let yy = y; yy < y + h; yy++) {
-      for (let xx = x; xx < x + w; xx++) {
-        if (xx >= 0 && yy >= 0 && xx < TRAINER_WIDTH && yy < TRAINER_HEIGHT) this.pixels[yy * TRAINER_WIDTH + xx] = value;
-      }
+/**
+ * Hand-drawn 16x22 grids. k outline, c cap, C cap shade, L logo, h hair, s skin,
+ * S skin shade, e eye, j jacket, J jacket shade, w shirt, b backpack, B backpack
+ * shade, p pants, o shoes, . empty.
+ */
+const CODES: Readonly<Record<string, Tp>> = {
+  ".": Tp.Empty,
+  k: Tp.Outline,
+  c: Tp.Cap,
+  C: Tp.CapDark,
+  L: Tp.Logo,
+  h: Tp.Hair,
+  s: Tp.Skin,
+  S: Tp.SkinShade,
+  e: Tp.Eye,
+  j: Tp.Jacket,
+  J: Tp.JacketDark,
+  w: Tp.Shirt,
+  b: Tp.Backpack,
+  B: Tp.BackpackDark,
+  p: Tp.Pants,
+  o: Tp.Shoes,
+};
+
+// prettier-ignore
+const FRONT: readonly string[] = [
+  "....kkkkkkkk....",
+  "...kcccccccck...",
+  "...kcccLLccck...",
+  "..kcccccccccck..",
+  ".kCCCCCCCCCCCCk.",
+  "..khsssssssshk..",
+  "..khsesssseshk..",
+  "..khsesssseshk..",
+  "...kSsskkssSk...",
+  "....kSSSSSSk....",
+  "..kjjjjwwjjjjk..",
+  ".kjkbjjwwjjbkjk.",
+  ".kjkbjjJJjjbkjk.",
+  ".kjkjjjJJjjjkjk.",
+  ".kskjjjJJjjjksk.",
+  "..kkJJJJJJJJkk..",
+  "...kppppppppk...",
+  "...kpppkkpppk...",
+  "...kpppkkpppk...",
+  "...kpppkkpppk...",
+  "..kookkkkkkook..",
+  "...kkk....kkk...",
+];
+
+// prettier-ignore
+const BACK: readonly string[] = [
+  "....kkkkkkkk....",
+  "...kcccccccck...",
+  "...kcccccccck...",
+  "..kcccccccccck..",
+  "..kCCCCCCCCCCk..",
+  "..khhhhhhhhhhk..",
+  "..khhhhhhhhhhk..",
+  "..khhhhhhhhhhk..",
+  "...khhhhhhhhk...",
+  "....kSSSSSSk....",
+  "..kjjBBBBBBjjk..",
+  ".kjkBbbbbbbBkjk.",
+  ".kjkBbbLLbbBkjk.",
+  ".kjkBbbbbbbBkjk.",
+  ".kskBBBBBBBBksk.",
+  "..kkJJJJJJJJkk..",
+  "...kppppppppk...",
+  "...kpppkkpppk...",
+  "...kpppkkpppk...",
+  "...kpppkkpppk...",
+  "..kookkkkkkook..",
+  "...kkk....kkk...",
+];
+
+// prettier-ignore
+const SIDE: readonly string[] = [
+  ".....kkkkkk.....",
+  "....kcccccck....",
+  "...kcLcccccck...",
+  "...kcccccccck...",
+  ".kCCCCCChhhhk...",
+  "..kssssshhhhk...",
+  "..ksesshhhhhk...",
+  "..kssssshhhhk...",
+  "...kSsssShhk....",
+  "....kSSSk.......",
+  "...kjjjjjjkBBk..",
+  "...kjjjjjjkBbBk.",
+  "...kjjJJjjkBbBk.",
+  "...kjjJJjjkBbBk.",
+  "...kjjssjjkBBBk.",
+  "...kkJJJJJJkkk..",
+  "....kppppk......",
+  "....kppppk......",
+  "....kppppk......",
+  "....kppppk......",
+  "...koooook......",
+  "....kkkkkk......",
+];
+
+/** Rows 16-21 for a step; the other step of the front/back view is this mirrored. */
+// prettier-ignore
+const FRONT_STEP_LEGS: readonly string[] = [
+  "...kppppppppk...",
+  "...kpppkkpppk...",
+  "...kpppkkpppk...",
+  "..kookkkkpppk...",
+  "...kkk..kook....",
+  "........kkk.....",
+];
+
+// prettier-ignore
+const SIDE_STEP_A: readonly string[] = [
+  "....kppppk......",
+  "...kppkkppk.....",
+  "..kppk..kppk....",
+  "..kppk..kppk....",
+  ".koook..koook...",
+  "..kkk....kkk....",
+];
+
+// prettier-ignore
+const SIDE_STEP_B: readonly string[] = [
+  "....kppppk......",
+  "....kpkkpk......",
+  "...kpk.kppk.....",
+  "...kpk..kppk....",
+  "..kook..kooook..",
+  "...kk....kkkk...",
+];
+
+const LEG_ROW = 16;
+/** Front/back arms: columns of each arm and the rows they can slide in. */
+const LEFT_ARM = [1, 2];
+const RIGHT_ARM = [13, 14];
+const ARM_ROWS = [11, 15];
+
+const mirror = (row: string) => [...row].reverse().join("");
+
+function toPixels(rows: readonly string[]): Uint8Array {
+  const pixels = new Uint8Array(TRAINER_WIDTH * TRAINER_HEIGHT);
+  rows.forEach((row, y) => {
+    for (let x = 0; x < TRAINER_WIDTH; x++) pixels[y * TRAINER_WIDTH + x] = CODES[row[x] ?? "."] ?? Tp.Empty;
+  });
+  return pixels;
+}
+
+/** Slides one arm up (dy -1) or down (dy 1) inside its rows. */
+function slideArm(rows: string[], cols: readonly number[], dy: number): void {
+  const [top, bottom] = ARM_ROWS as [number, number];
+  const original = rows.map((r) => [...r]);
+  for (let y = top; y <= bottom; y++) {
+    for (const x of cols) {
+      const from = y - dy;
+      const value = from >= top && from <= bottom ? original[from]![x]! : ".";
+      const chars = [...rows[y]!];
+      chars[x] = value;
+      rows[y] = chars.join("");
     }
   }
-  get(x: number, y: number): number {
-    if (x < 0 || y < 0 || x >= TRAINER_WIDTH || y >= TRAINER_HEIGHT) return Tp.Empty;
-    return this.pixels[y * TRAINER_WIDTH + x]!;
-  }
 }
 
-/** Front and back views share the legs and arms; `step` is -1, 0 or 1. */
-function frontBack(g: Grid, back: boolean, step: number): void {
-  g.rect(5, 0, 6, 1, Tp.Cap);
-  g.rect(4, 1, 8, 3, Tp.Cap);
-  if (back) {
-    g.rect(4, 4, 8, 1, Tp.CapDark);
-    g.rect(5, 5, 6, 4, Tp.Hair);
-  } else {
-    g.rect(7, 2, 2, 1, Tp.Logo);
-    g.rect(3, 4, 10, 1, Tp.CapDark);
-    g.rect(4, 5, 1, 2, Tp.Hair);
-    g.rect(11, 5, 1, 2, Tp.Hair);
-    g.rect(5, 5, 6, 4, Tp.Skin);
-    g.rect(6, 6, 1, 1, Tp.Eye);
-    g.rect(9, 6, 1, 1, Tp.Eye);
+/** Grid rows for a view and a step (-1, 0 or 1). */
+function viewRows(view: "down" | "up" | "left", step: number): string[] {
+  if (view === "left") {
+    const rows = [...SIDE];
+    if (step !== 0) rows.splice(LEG_ROW, 6, ...(step === 1 ? SIDE_STEP_A : SIDE_STEP_B));
+    return rows;
   }
-  g.rect(4, 9, 8, 6, Tp.Jacket);
-  if (back) {
-    g.rect(5, 9, 6, 5, Tp.Backpack);
-    g.rect(5, 9, 6, 1, Tp.CapDark);
-  } else {
-    g.rect(5, 9, 1, 3, Tp.Backpack);
-    g.rect(10, 9, 1, 3, Tp.Backpack);
-    g.rect(7, 10, 2, 4, Tp.JacketDark);
+  const rows = [...(view === "down" ? FRONT : BACK)];
+  if (step !== 0) {
+    rows.splice(LEG_ROW, 6, ...(step === 1 ? FRONT_STEP_LEGS : FRONT_STEP_LEGS.map(mirror)));
+    // arms swing opposite to the legs
+    slideArm(rows, LEFT_ARM, -step);
+    slideArm(rows, RIGHT_ARM, step);
   }
-  // arms swing opposite to the legs
-  g.rect(3, 9 - step, 1, 5, Tp.Jacket);
-  g.rect(3, 14 - step, 1, 1, Tp.Skin);
-  g.rect(12, 9 + step, 1, 5, Tp.Jacket);
-  g.rect(12, 14 + step, 1, 1, Tp.Skin);
-  g.rect(4, 15, 8, 1, Tp.JacketDark);
-  const leftLen = step === 1 ? 3 : 4;
-  const rightLen = step === -1 ? 3 : 4;
-  g.rect(5, 16, 2, leftLen, Tp.Pants);
-  g.rect(4, 16 + leftLen, 3, 1, Tp.Shoes);
-  g.rect(9, 16, 2, rightLen, Tp.Pants);
-  g.rect(9, 16 + rightLen, 3, 1, Tp.Shoes);
-}
-
-/** Facing left. */
-function side(g: Grid, step: number): void {
-  g.rect(5, 0, 6, 1, Tp.Cap);
-  g.rect(5, 1, 7, 3, Tp.Cap);
-  g.rect(2, 4, 7, 1, Tp.CapDark);
-  g.rect(9, 4, 3, 4, Tp.Hair);
-  g.rect(5, 5, 5, 4, Tp.Skin);
-  g.rect(6, 6, 1, 1, Tp.Eye);
-  g.rect(5, 9, 6, 6, Tp.Jacket);
-  g.rect(10, 9, 3, 5, Tp.Backpack);
-  g.rect(5, 15, 6, 1, Tp.JacketDark);
-  if (step === 0) {
-    g.rect(6, 16, 3, 4, Tp.Pants);
-    g.rect(5, 20, 4, 1, Tp.Shoes);
-    g.rect(7, 9, 2, 5, Tp.JacketDark);
-    g.rect(7, 14, 2, 1, Tp.Skin);
-  } else {
-    const front = step === 1 ? 4 : 5;
-    const backLeg = step === 1 ? 9 : 8;
-    g.rect(front, 16, 2, 4, Tp.Pants);
-    g.rect(front - 1, 20, 3, 1, Tp.Shoes);
-    g.rect(backLeg, 16, 2, 4, Tp.Pants);
-    g.rect(backLeg, 20, 3, 1, Tp.Shoes);
-    g.rect(step === 1 ? 8 : 6, 9, 2, 5, Tp.JacketDark);
-    g.rect(step === 1 ? 8 : 6, 14, 2, 1, Tp.Skin);
-  }
-}
-
-function outline(g: Grid): void {
-  const copy = Uint8Array.from(g.pixels);
-  const at = (x: number, y: number) => (x < 0 || y < 0 || x >= TRAINER_WIDTH || y >= TRAINER_HEIGHT ? Tp.Empty : copy[y * TRAINER_WIDTH + x]!);
-  for (let y = 0; y < TRAINER_HEIGHT; y++) {
-    for (let x = 0; x < TRAINER_WIDTH; x++) {
-      if (at(x, y) !== Tp.Empty) continue;
-      const near = [at(x - 1, y), at(x + 1, y), at(x, y - 1), at(x, y + 1)].some((v) => v !== Tp.Empty && v !== Tp.Outline);
-      if (near) g.rect(x, y, 1, 1, Tp.Outline);
-    }
-  }
+  return rows;
 }
 
 const STEP_OF_FRAME: Readonly<Record<WalkFrame, number>> = { 0: 0, 1: 1, 2: -1 };
@@ -143,12 +236,9 @@ export function trainerPixels(facing: Facing, frame: WalkFrame): Uint8Array {
   const key = `${view}:${frame}`;
   const cached = cache.get(key);
   if (cached) return cached;
-  const g = new Grid();
-  if (view === "left") side(g, STEP_OF_FRAME[frame]);
-  else frontBack(g, view === "up", STEP_OF_FRAME[frame]);
-  outline(g);
-  cache.set(key, g.pixels);
-  return g.pixels;
+  const pixels = toPixels(viewRows(view, STEP_OF_FRAME[frame]));
+  cache.set(key, pixels);
+  return pixels;
 }
 
 /** Walk cycle: stand, step A, stand, step B. */

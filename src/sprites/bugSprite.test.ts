@@ -2,6 +2,7 @@ import { SPECIES } from "../game/data/species";
 import { BUG_TYPES } from "../game/types";
 import { colorFor, generateBugSprite, hasHandDrawnSprite, Px, shinyPalette, SPRITE_SIZE, TYPE_PALETTES } from "./bugSprite";
 import { HAND_DRAWN_HALVES } from "./handDrawn";
+import { MORE_HAND_DRAWN_HALVES } from "./handDrawnMore";
 
 const filled = (pixels: Uint8Array) => pixels.reduce((n, p) => n + (p !== Px.Empty ? 1 : 0), 0);
 
@@ -14,11 +15,20 @@ describe("hand-drawn sprites and animation frames", () => {
       const species = SPECIES.find((s) => s.id === id)!;
       expect(species.stage === 3 || species.rarity === "legendary").toBe(true);
     }
-    expect(hasHandDrawnSprite("typobit")).toBe(false);
+    expect(hasHandDrawnSprite("not-a-bug")).toBe(false);
+  });
+
+  it("every species is hand-drawn, and each evolution line grows", () => {
+    for (const species of SPECIES) expect(hasHandDrawnSprite(species.id), species.id).toBe(true);
+    const size = (id: string) => filled(generateBugSprite(SPECIES.find((s) => s.id === id)!).pixels);
+    expect(size("typobit")).toBeLessThan(size("typoworm"));
+    expect(size("typoworm")).toBeLessThan(size("syntaxwyrm"));
+    expect(size("leaklet")).toBeLessThan(size("leakroach"));
+    expect(size("leakroach")).toBeLessThan(size("heapocalypse"));
   });
 
   it("every hand-drawn half is 12x24 and uses known codes", () => {
-    for (const [id, rows] of Object.entries(HAND_DRAWN_HALVES)) {
+    for (const [id, rows] of Object.entries({ ...HAND_DRAWN_HALVES, ...MORE_HAND_DRAWN_HALVES })) {
       expect(rows, id).toHaveLength(SPRITE_SIZE);
       for (const row of rows) expect(row, `${id}: ${row}`).toMatch(/^[.kbslaepw]{12}$/);
     }
@@ -34,10 +44,11 @@ describe("hand-drawn sprites and animation frames", () => {
   });
 });
 
+/** The generator is the fallback for a species without a drawing yet; these ids have none. */
 describe("procedural bug sprites", () => {
   it("is deterministic per species", () => {
-    const a = generateBugSprite({ id: "typobit", family: "worm", stage: 1 });
-    const b = generateBugSprite({ id: "typobit", family: "worm", stage: 1 });
+    const a = generateBugSprite({ id: "proc-worm", family: "worm", stage: 1 });
+    const b = generateBugSprite({ id: "proc-worm", family: "worm", stage: 1 });
     expect(Array.from(a.pixels)).toEqual(Array.from(b.pixels));
   });
 
@@ -56,21 +67,23 @@ describe("procedural bug sprites", () => {
 
   it("draws something for every species and grows with the stage", () => {
     for (const species of SPECIES) expect(filled(generateBugSprite(species).pixels)).toBeGreaterThan(40);
-    const small = filled(generateBugSprite({ id: "leaklet", family: "beetle", stage: 1 }).pixels);
-    const big = filled(generateBugSprite({ id: "leaklet", family: "beetle", stage: 3 }).pixels);
+    const small = filled(generateBugSprite({ id: "proc-beetle", family: "beetle", stage: 1 }).pixels);
+    const big = filled(generateBugSprite({ id: "proc-beetle", family: "beetle", stage: 3 }).pixels);
     expect(big).toBeGreaterThan(small);
   });
 
   it("gives different species different shapes", () => {
-    const a = generateBugSprite({ id: "nullit", family: "beetle", stage: 1 });
-    const b = generateBugSprite({ id: "leaklet", family: "beetle", stage: 1 });
+    const a = generateBugSprite({ id: "proc-a", family: "beetle", stage: 1 });
+    const b = generateBugSprite({ id: "proc-b", family: "beetle", stage: 1 });
     expect(Array.from(a.pixels)).not.toEqual(Array.from(b.pixels));
   });
 
   it("has an outline and eyes", () => {
-    const { pixels } = generateBugSprite({ id: "corsbee", family: "winged", stage: 1 });
-    expect(pixels.includes(Px.Outline)).toBe(true);
-    expect(pixels.includes(Px.Pupil)).toBe(true);
+    for (const spec of [{ id: "proc-fly", family: "winged" as const, stage: 1 as const }, ...SPECIES]) {
+      const { pixels } = generateBugSprite(spec);
+      expect(pixels.includes(Px.Outline), spec.id).toBe(true);
+      expect(pixels.includes(Px.Pupil) || pixels.includes(Px.Eye), spec.id).toBe(true);
+    }
   });
 
   it("maps every pixel kind to a color", () => {

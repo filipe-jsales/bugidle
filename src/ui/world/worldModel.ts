@@ -17,7 +17,7 @@ export const FOLLOWER_SPEED = 140;
 export const WANDER_SPEED = 22;
 /** How far behind the trainer the active bug walks. */
 export const FOLLOW_DISTANCE = 38;
-export const WANDERER_COUNT = 7;
+export const WANDERER_COUNT = 10;
 /** A roaming bug this close to the trainer becomes the next encounter. */
 export const ENCOUNTER_RANGE = 260;
 /** Distance between our bug and the enemy during a fight. */

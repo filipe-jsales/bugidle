@@ -114,16 +114,6 @@ export const CATEGORY_NAMES: Record<ItemCategory, string> = {
 };
 
 /** Eras of the "From Transistor to Cloud" houses, keyed by HOUSE_TIERS ids. */
-export const HOUSE_ERAS: Record<string, { name: string; year: string; description: string }> = {
-  vacuumTube: { name: "Laboratório de Válvulas", year: "1946", description: "Computadores do tamanho de uma sala, como o ENIAC, com cerca de 17 mil válvulas." },
-  transistor: { name: "Oficina do Transistor", year: "1947", description: "O transistor substitui a válvula: menor, mais frio e muito mais confiável." },
-  integratedCircuit: { name: "Fábrica de Circuitos Integrados", year: "1958", description: "Vários transistores num único pedaço de silício." },
-  microprocessor: { name: "Estúdio do Microprocessador", year: "1971", description: "Um processador inteiro num só chip. Começa a era do computador pessoal." },
-  internet: { name: "Provedor de Internet", year: "1991", description: "A web liga os computadores do mundo todo." },
-  cloud: { name: "Datacenter na Nuvem", year: "2006", description: "Servidores alugados por minuto, em qualquer lugar do planeta." },
-  ai: { name: "Laboratório de IA", year: "2020", description: "Modelos que aprendem com dados e ajudam a escrever código." },
-};
-
 export const CAPTURE_MODE_NAMES: Record<CaptureMode, string> = {
   off: "Não capturar",
   all: "Capturar todos",
@@ -346,7 +336,7 @@ export const UI = {
   },
   houses: {
     title: "CASAS",
-    intro: "Bugs do Box podem morar numa casa e produzir moedas e XP sozinhos. Cada era da computação custa mais e rende mais.",
+    intro: "Bugs do Box moram nas casas e produzem moedas e XP sozinhos. Há uma casa por área da computação; cada marco da área custa mais e dobra a produção.",
     collectAll: "Coletar tudo",
     collect: "Coletar",
     build: "Construir",
@@ -437,7 +427,6 @@ export const UI = {
   mapControls: {
     zoomIn: "Aproximar",
     zoomOut: "Afastar",
-    recenter: "Seguir caçador",
     hint: "arraste para mover, roda do mouse para zoom",
   },
   compare: {

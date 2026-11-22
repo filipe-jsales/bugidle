@@ -6,7 +6,11 @@
 import type { SpriteFamily } from "../game/data/species";
 import { createSeededRng, hashString, type Rng } from "../game/rng";
 import type { BugType } from "../game/types";
-import { HAND_DRAWN_HALVES } from "./handDrawn";
+import { HAND_DRAWN_HALVES as FINAL_FORMS } from "./handDrawn";
+import { MORE_HAND_DRAWN_HALVES } from "./handDrawnMore";
+
+/** Every hand-drawn half by species id. */
+const HAND_DRAWN_HALVES: Readonly<Record<string, readonly string[]>> = { ...FINAL_FORMS, ...MORE_HAND_DRAWN_HALVES };
 
 export const SPRITE_SIZE = 24;
 

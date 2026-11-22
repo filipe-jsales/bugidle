@@ -18,6 +18,16 @@ export function clampZoom(zoom: number): number {
   return Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, zoom));
 }
 
+/** Smallest zoom at which the content still fills the whole screen (no empty border). */
+export function coverZoom(viewport: Size, content: Size): number {
+  return Math.max(viewport.width / content.width, viewport.height / content.height);
+}
+
+/** Zoom for a follow camera: inside the zoom limits and never small enough to show the map's edge. */
+export function followZoom(zoom: number, viewport: Size, content: Size): number {
+  return Math.max(clampZoom(zoom), coverZoom(viewport, content));
+}
+
 /** Keeps the view inside the content; centres it when the content is smaller than the screen. */
 export function clampCamera(camera: Vec, zoom: number, viewport: Size, content: Size): Vec {
   const axis = (value: number, view: number, size: number) => {
