@@ -169,6 +169,11 @@ export function App() {
           <LogPanel />
         </aside>
       </div>
+      {!store.saveOk && (
+        <button type="button" className="save-warning" onClick={() => actions.open({ kind: "save" })}>
+          {UI.save.failed}
+        </button>
+      )}
       <ModalHost modal={stack[stack.length - 1] ?? null} />
       {needsStarter(state) && <StarterModal />}
       {toastText && (

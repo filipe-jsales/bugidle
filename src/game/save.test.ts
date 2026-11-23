@@ -1,6 +1,7 @@
 import { createBattle } from "./battle";
 import { exportSave, importSave, loadFromStorage, saveToStorage, SaveError, STORAGE_KEY, type KeyValueStorage } from "./save";
 import { createInitialState } from "./state";
+import { maxHp } from "./bug";
 import { firstBug, stateWith } from "./testUtils";
 
 class MemoryStorage implements KeyValueStorage {
@@ -92,5 +93,78 @@ describe("local storage persistence", () => {
     storage.setItem(STORAGE_KEY, "{broken");
     expect(loadFromStorage(storage)).toBeNull();
     expect(storage.getItem(`${STORAGE_KEY}.corrupt`)).toBe("{broken");
+  });
+});
+
+describe("damaged saves are repaired on load", () => {
+  const edit = (state: ReturnType<typeof stateWith>, change: (s: Record<string, any>) => void) => {
+    const file = JSON.parse(exportSave(state));
+    change(file.state);
+    return importSave(JSON.stringify(file));
+  };
+
+  it("puts the strongest bug in the team when the team list is empty", () => {
+    const state = stateWith(["typobit", 5], ["nullit", 12]);
+    const loaded = edit(state, (s) => {
+      s.team = [];
+    });
+    expect(loaded.team).toHaveLength(1);
+    expect(loaded.bugs[loaded.team[0]!]!.speciesId).toBe("nullit");
+  });
+
+  it("takes that bug out of its house so it is not in two places", () => {
+    const state = stateWith(["typobit", 5], ["nullit", 12]);
+    const boxed = state.team[1]!;
+    const loaded = edit(state, (s) => {
+      s.team = [];
+      s.houses = [{ lot: 0, tier: 0, bugs: [boxed], pending: 0, xpCarry: 0 }];
+    });
+    expect(loaded.team).toEqual([boxed]);
+    expect(loaded.houses[0]!.bugs).toEqual([]);
+  });
+
+  it("removes repeated uids from the team", () => {
+    const state = stateWith(["typobit", 5], ["nullit", 12]);
+    const uid = state.team[0]!;
+    const loaded = edit(state, (s) => {
+      s.team = [uid, uid, uid];
+    });
+    expect(loaded.team).toEqual([uid]);
+  });
+
+  it("keeps HP, XP and level inside their ranges", () => {
+    const state = stateWith(["typobit", 5]);
+    const uid = state.team[0]!;
+    const loaded = edit(state, (s) => {
+      s.bugs[uid].currentHp = 99999;
+      s.bugs[uid].xp = -40;
+      s.bugs[uid].level = 7.6;
+    });
+    const bug = loaded.bugs[uid]!;
+    expect(bug.level).toBe(7);
+    expect(bug.xp).toBe(0);
+    expect(bug.currentHp).toBe(maxHp(bug));
+  });
+});
+
+describe("saving when the browser refuses", () => {
+  it("returns false instead of throwing when storage is full", () => {
+    const full: KeyValueStorage = {
+      getItem: () => null,
+      setItem: () => {
+        throw new Error("QuotaExceededError");
+      },
+      removeItem: () => {},
+    };
+    expect(saveToStorage(full, createInitialState())).toBe(false);
+  });
+
+  it("stores compact JSON that loads back", () => {
+    const data = new Map<string, string>();
+    const storage: KeyValueStorage = { getItem: (k) => data.get(k) ?? null, setItem: (k, v) => void data.set(k, v), removeItem: (k) => void data.delete(k) };
+    const state = stateWith(["typobit", 5]);
+    expect(saveToStorage(storage, state)).toBe(true);
+    expect(data.get(STORAGE_KEY)).not.toContain(String.fromCharCode(10));
+    expect(loadFromStorage(storage)?.team).toEqual(state.team);
   });
 });

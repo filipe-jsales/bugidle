@@ -55,7 +55,7 @@ export function StudyModal() {
         <div className="streak-head">
           <h4>{S.dailyTitle}</h4>
           <span className={`streak-pill ${currentStreak(state, today) > 0 ? "on" : ""}`} title={S.streakHint}>
-            {S.streak(currentStreak(state, today), Math.round((streakMultiplier(currentStreak(state, today) + (state.dailyDay === today ? 0 : 1)) - 1) * 100))}
+            {S.streak(currentStreak(state, today), Math.round((streakMultiplier(currentStreak(state, today) + 1) - 1) * 100), state.dailyDay === today)}
           </span>
         </div>
         {result ? (

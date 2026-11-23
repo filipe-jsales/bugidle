@@ -16,7 +16,9 @@ export function addItem(state: PersistentState, itemId: ItemId, quantity = 1): v
 export function consumeItem(state: PersistentState, itemId: ItemId, quantity = 1): boolean {
   const count = itemCount(state, itemId);
   if (count < quantity) return false;
-  state.inventory[itemId] = count - quantity;
+  // an empty slot is removed, like the save loader does, so a reload is identical
+  if (count === quantity) delete state.inventory[itemId];
+  else state.inventory[itemId] = count - quantity;
   return true;
 }
 

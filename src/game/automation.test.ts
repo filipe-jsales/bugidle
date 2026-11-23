@@ -37,7 +37,7 @@ describe("auto revive", () => {
   it("uses a Revive when the active bug falls, delaying the wipe", () => {
     const { state, events } = losingFight(true, 2);
     expect(events.filter((e) => e.type === "revived")).toHaveLength(2);
-    expect(state.inventory.revive).toBe(0);
+    expect(state.inventory.revive ?? 0).toBe(0);
     const firstRevive = events.findIndex((e) => e.type === "revived");
     const firstWipe = events.findIndex((e) => e.type === "teamWiped");
     expect(firstRevive).toBeLessThan(firstWipe);

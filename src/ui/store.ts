@@ -30,6 +30,8 @@ export class GameStore {
   log: LogLine[] = [];
   /** Recent events for animations (attacks, captures). */
   recent: TimedEvent[] = [];
+  /** False when the last save to the browser failed (storage full or blocked). */
+  saveOk = true;
   private version = 0;
   private nextId = 1;
   private listeners = new Set<() => void>();
@@ -97,7 +99,12 @@ export class GameStore {
   }
 
   save(): void {
-    if (this.storage) saveToStorage(this.storage, this.state);
+    if (!this.storage) return;
+    const ok = saveToStorage(this.storage, this.state);
+    if (ok !== this.saveOk) {
+      this.saveOk = ok;
+      this.emit();
+    }
   }
 
   /** Replaces the whole game from exported text. Throws SaveError on bad input. */

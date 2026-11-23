@@ -64,7 +64,7 @@ describe("type stones", () => {
     state.stones = { network: 2, security: 5 };
     expect(usableStones(state, bug)).toBe(7);
     expect(spendStones(state, bug, 4)).toBe(true);
-    expect(state.stones).toEqual({ network: 0, security: 3 });
+    expect(state.stones).toEqual({ security: 3 });
     expect(spendStones(state, bug, 4)).toBe(false);
     expect(state.stones.security).toBe(3);
   });
@@ -80,7 +80,7 @@ describe("type stones", () => {
     state.stones.logic = 3;
     expect(evolveBug(state, bug.uid).ok).toBe(true);
     expect(bug.speciesId).toBe("nullpointer");
-    expect(state.stones.logic).toBe(0);
+    expect(state.stones.logic ?? 0).toBe(0);
   });
 
   it("refining costs a cubic total and raises the stat", () => {
@@ -91,7 +91,7 @@ describe("type stones", () => {
     state.stones.memory = 24;
     expect(refineStat(state, bug.uid, "atk").ok).toBe(true);
     expect(refineStat(state, bug.uid, "atk").ok).toBe(true);
-    expect(state.stones.memory).toBe(0);
+    expect(state.stones.memory ?? 0).toBe(0);
     expect(bug.refine.atk).toBe(2);
     expect(computeStats(bug).atk).toBeGreaterThan(atk);
     expect(refineStat(state, bug.uid, "atk")).toEqual({ ok: false, reason: "notEnoughStones" });

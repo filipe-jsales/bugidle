@@ -9,7 +9,7 @@ import { CATEGORY_NAMES, ITEM_TEXT, stoneName, UI } from "../../i18n/ptBR";
 import { stoneIconUrl } from "../render/icons";
 import { useApp } from "../appContext";
 import { formatNumber } from "../format";
-import { BugSprite, Button, Icon, ItemIcon, Modal } from "../components/primitives";
+import { BugSprite, Button, Icon, ItemIcon, Modal, Tag } from "../components/primitives";
 import { store, useGame } from "../store";
 
 const CATEGORIES: ItemCategory[] = ["trap", "potion", "revive", "vitamin", "evolution", "held", "egg"];
@@ -101,17 +101,49 @@ export function BagModal() {
       ) : (
         <div className="bag-layout">
           <div className="bag-items">
-            {owned.map((id) => (
-              <button key={id} type="button" className={`bag-item ${selected === id ? "active" : ""}`} onClick={() => setSelected(id)}>
-                <ItemIcon id={id} size={32} />
-                <strong>{ITEM_TEXT[id].name}</strong>
-                <span>x{itemCount(state, id)}</span>
-                <small className="muted">{CATEGORY_NAMES[ITEMS[id].category]}</small>
-              </button>
+            {CATEGORIES.filter((cat) => owned.some((id) => ITEMS[id].category === cat)).map((cat) => (
+              <section key={cat} className="bag-group">
+                <h5>{CATEGORY_NAMES[cat]}</h5>
+                {owned
+                  .filter((id) => ITEMS[id].category === cat)
+                  .map((id) => (
+                    <button key={id} type="button" className={`bag-item ${selected === id ? "active" : ""}`} onClick={() => setSelected(id)}>
+                      <ItemIcon id={id} size={28} />
+                      <strong>{ITEM_TEXT[id].name}</strong>
+                      <span className="bag-count">x{itemCount(state, id)}</span>
+                    </button>
+                  ))}
+              </section>
             ))}
           </div>
           <div className="bag-targets">
-            {selected && <p className="small">{ITEM_TEXT[selected].description}</p>}
+            {!selected ? (
+              <div className="bag-placeholder">
+                <Icon name="bag" size={48} />
+                <p className="muted small">{UI.bag.pick}</p>
+              </div>
+            ) : (
+              <>
+                <div className="bag-detail">
+                  <ItemIcon id={selected} size={48} />
+                  <div>
+                    <strong>{ITEM_TEXT[selected].name}</strong>
+                    <small className="muted">
+                      {CATEGORY_NAMES[ITEMS[selected].category]} · x{itemCount(state, selected)}
+                    </small>
+                    <p className="small">{ITEM_TEXT[selected].description}</p>
+                  </div>
+                </div>
+                {ITEMS[selected].category === "trap" &&
+                  (state.settings.preferredTrap === selected ? (
+                    <Tag tone="green">{UI.bag.isPreferred}</Tag>
+                  ) : (
+                    <Button variant="purple" small onClick={() => store.update((s) => (s.settings.preferredTrap = selected))}>
+                      {UI.bag.makePreferred}
+                    </Button>
+                  ))}
+              </>
+            )}
             {usable && (
               <>
                 <p className="muted small">{UI.bag.chooseBug}</p>

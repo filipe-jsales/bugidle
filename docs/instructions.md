@@ -190,6 +190,12 @@ To go further:
 - **New route**: add to `ROUTES` with an `unlock`, a map position and a name in `ROUTE_NAMES`.
 - **New item**: add the id to `ITEM_IDS`, the definition to `ITEMS` and the text to `ITEM_TEXT`.
 
+## Chaos tests
+
+`src/game/fuzz.test.ts` plays 6 seeded games with random player actions (team moves, shop, items, houses, eggs, evolve, refine, routes, bosses) and checks the invariants after every tick: no NaN, HP in 0..max, levels 1..100, no bug in the team and a house at once, no negative items or stones, and export -> import -> export gives the same file (except a boss fight, which loads back on its return route). A second test damages a save 1500 times and requires `importSave` to throw `SaveError` or return a valid game. When adding state or commands, add them to `randomAction` and `checkInvariants`. For a longer hunt, copy the file with more seeds and steps and run it once; do not commit the long version.
+
+Save rules found by these tests: empty items and stones are deleted (not kept at 0); a save with bugs but no team puts the strongest bug in the team; `saveToStorage` returns false instead of throwing (the store shows a warning).
+
 ## How to verify a feature
 
 1. `npm test` passes (all suites) and `npm run typecheck` is clean.

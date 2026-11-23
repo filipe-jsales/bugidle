@@ -26,7 +26,9 @@ export function BossesModal() {
           return (
             <div key={boss.id} className={`boss-row ${available ? "" : "locked"}`}>
               <div className="boss-head">
-                <Icon name="bosses" size={32} />
+                <span className={`boss-trophy ${beaten ? "won" : ""}`} title={beaten ? BADGE_NAMES[boss.badgeId] : undefined}>
+                  <Icon name="bosses" size={32} />
+                </span>
                 <div>
                   <strong>{boss.name}</strong>
                   <div className="muted small">

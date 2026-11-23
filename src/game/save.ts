@@ -1,4 +1,4 @@
-import { MAX_IV, type BugInstance } from "./bug";
+import { maxHp, MAX_IV, type BugInstance } from "./bug";
 import { isItemId, ITEMS } from "./data/items";
 import { HATCHERY_SLOTS } from "./hatchery";
 import { HOUSE_LOTS, HOUSE_TIERS, type House } from "./housing";
@@ -27,10 +27,10 @@ export interface SaveFile {
 }
 
 /** RF10: everything except runtime data, as pretty JSON text. */
-export function exportSave(state: GameState, now: Date = new Date()): string {
+export function exportSave(state: GameState, now: Date = new Date(), compact = false): string {
   const { runtime: _runtime, ...persistent } = state;
   const file: SaveFile = { game: "bugidle", version: SAVE_VERSION, savedAt: now.toISOString(), state: persistent };
-  return JSON.stringify(file, null, 2);
+  return compact ? JSON.stringify(file) : JSON.stringify(file, null, 2);
 }
 
 type Json = Record<string, unknown>;
@@ -88,8 +88,11 @@ export function importSave(text: string): GameState {
       const raw = bug as unknown as Json;
       const potency = isNumber(raw.potency) && raw.potency >= 1 && raw.potency <= 5 ? (Math.floor(raw.potency) as BugInstance["potency"]) : 1;
       const refine = isStats(raw.refine) ? (raw.refine as unknown as BugInstance["refine"]) : { hp: 0, atk: 0, def: 0, spd: 0 };
-      bugs[uid] = {
+      const level = Math.floor(bug.level);
+      const fixed: BugInstance = {
         ...bug,
+        level,
+        xp: Math.max(0, bug.xp),
         origin: typeof bug.origin === "string" ? bug.origin : "unknown",
         potency,
         refine,
@@ -97,10 +100,13 @@ export function importSave(text: string): GameState {
         caughtAt: isNumber(raw.caughtAt) ? raw.caughtAt : undefined,
         caughtBy: typeof raw.caughtBy === "string" ? raw.caughtBy : undefined,
       };
+      // HP stays inside 0..max even if the file was edited by hand
+      fixed.currentHp = Math.max(0, Math.min(maxHp(fixed), Math.round(fixed.currentHp)));
+      bugs[uid] = fixed;
     }
   }
 
-  const team = isStringArray(raw.team) ? raw.team.filter((uid) => uid in bugs).slice(0, 6) : [];
+  const team = isStringArray(raw.team) ? [...new Set(raw.team.filter((uid) => uid in bugs))].slice(0, 6) : [];
   const inventory: GameState["inventory"] = {};
   if (isObject(raw.inventory)) {
     for (const [id, count] of Object.entries(raw.inventory)) {
@@ -165,6 +171,12 @@ export function importSave(text: string): GameState {
       houses.push({ lot: h.lot, tier, bugs: residents, pending: isNumber(h.pending) ? Math.max(0, h.pending) : 0, xpCarry: isNumber(h.xpCarry) ? Math.max(0, h.xpCarry) : 0 });
     }
     houses.sort((a, b) => a.lot - b.lot);
+  }
+  // a save with bugs but no team would leave the game stuck: the strongest bug joins the team
+  if (team.length === 0 && Object.keys(bugs).length > 0) {
+    const strongest = Object.values(bugs).sort((a, b) => b.level - a.level)[0]!;
+    for (const house of houses) house.bugs = house.bugs.filter((uid) => uid !== strongest.uid);
+    team.push(strongest.uid);
   }
 
   const maxUid = Object.keys(bugs).reduce((max, uid) => Math.max(max, Number(uid.replace(/\D/g, "")) || 0), 0);
@@ -281,8 +293,14 @@ export interface KeyValueStorage {
 
 export const STORAGE_KEY = "bugidle.save";
 
-export function saveToStorage(storage: KeyValueStorage, state: GameState): void {
-  storage.setItem(STORAGE_KEY, exportSave(state));
+/** Writes the save (compact JSON). Returns false when the browser refuses it, for example when storage is full. */
+export function saveToStorage(storage: KeyValueStorage, state: GameState): boolean {
+  try {
+    storage.setItem(STORAGE_KEY, exportSave(state, new Date(), true));
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 /** Returns null when there is no save or it is unreadable (the broken save is kept as a backup). */

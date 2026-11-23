@@ -36,8 +36,11 @@ export function spendStones(state: PersistentState, bug: BugInstance, amount: nu
   if (usableStones(state, bug) < amount) return false;
   let left = amount;
   for (const type of getSpecies(bug.speciesId).types) {
-    const take = Math.min(left, stoneCount(state, type));
-    state.stones[type] = stoneCount(state, type) - take;
+    const have = stoneCount(state, type);
+    const take = Math.min(left, have);
+    // an empty type is removed, like the save loader does, so a reload is identical
+    if (take === have) delete state.stones[type];
+    else state.stones[type] = have - take;
     left -= take;
   }
   return true;

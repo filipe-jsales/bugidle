@@ -137,8 +137,8 @@ export function BugDetailModal({ uid }: { uid: string }) {
         <div className="spotlight" />
         <BugSprite speciesId={bug.speciesId} shiny={bug.shiny} size={168} className="bob slow" />
         <div className="detail-score">
-          <strong style={{ color: TIER_COLORS[tier] }}>{decimal(score, 3)}</strong>
-          <span>/ 10,0</span>
+          <strong style={{ color: TIER_COLORS[tier] }}>{decimal(score, 1)}</strong>
+          <span>/ 10</span>
         </div>
         <div className="detail-tier" style={{ color: TIER_COLORS[tier] }}>
           {D.tiers[tier]}

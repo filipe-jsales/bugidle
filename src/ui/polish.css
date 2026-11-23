@@ -340,8 +340,8 @@ input[type="range"] {
 /* ---------------------------------------------------------------- houses by category */
 
 .house-tabs {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(118px, 1fr));
   gap: 4px;
 }
 .house-tab {
@@ -551,4 +551,15 @@ input[type="range"] {
   .shiny-sparkles i {
     animation: none;
   }
+}
+
+/* a boss trophy is gold only after the boss is beaten */
+.boss-trophy {
+  display: inline-grid;
+  filter: grayscale(1) brightness(0.7);
+  opacity: 0.75;
+}
+.boss-trophy.won {
+  filter: none;
+  opacity: 1;
 }

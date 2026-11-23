@@ -141,6 +141,16 @@ Principle: learning is optional, short and rewarded; it never blocks progress.
 - [x] Chuva de Código: a typing shooter with computing words; the end screen explains every word destroyed
 - [x] HUD: wider left side with an icon rail (Config., Mochila, Conquistas, Terminal, Som, Save), fewer top buttons with no side scroll, "Box" renamed "Equipe", the trainer as the profile picture, idle animation on the trainer, "em campo" and the team list
 
+## v0.14 - bug hunt and polish
+
+- [x] Chaos test (`fuzz.test.ts`): random player actions between ticks, checking after every step that coins, HP, levels, team, houses, items and stones stay valid and that a save loads back identical
+- [x] Broken save test: 1500 damaged save files must be refused with SaveError or load into a valid game
+- [x] Fixed: a save with bugs but an empty team loaded a stuck game; repeated uids in the team; HP/XP/level out of range in an edited save
+- [x] Fixed: a full or blocked browser storage threw an error every autosave; now a red warning asks to export the save. The browser save is compact JSON
+- [x] Items and stones that reach 0 are removed (same as after a reload)
+- [x] Mochila grouped by category, with a detail panel and "usar como armadilha preferida"
+- [x] Houses tabs in one even row; boss trophies are grey until the boss is beaten; study streak label says what you get today or tomorrow; bug score "1,5 / 10"; "Mandar para a reserva" instead of Box
+
 ## Next (core polish)
 
 
