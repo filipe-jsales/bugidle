@@ -96,7 +96,16 @@ export function paidPlaysLeft(state: PersistentState, game: GameId, today: numbe
  * and puts the score in the game's local ranking. Returns the coins, whether it
  * is a new best and its place in the ranking (1-based, 0 when it did not enter).
  */
-export function finishGame(state: PersistentState, game: GameId, points: number, today: number, pay = true): { coins: number; best: boolean; place: number } {
+/** The game of the day pays this many times the coins. */
+export const FEATURED_MULTIPLIER = 2;
+
+/** One game per day (never the detective, which has its own daily rule), in turns so it changes every day. */
+export function featuredGame(today: number): GameId {
+  const pool = GAME_IDS.filter((g) => g !== "detective");
+  return pool[((today % pool.length) + pool.length) % pool.length]!;
+}
+
+export function finishGame(state: PersistentState, game: GameId, points: number, today: number, pay = true): { coins: number; best: boolean; place: number; featured: boolean } {
   const score = Math.max(0, Math.min(100, Math.round(points)));
   const record = state.minigames.games[game] ?? { ranking: [], day: today, playsToday: 0, plays: 0 };
   if (record.day !== today) {
@@ -110,9 +119,10 @@ export function finishGame(state: PersistentState, game: GameId, points: number,
   const entry = { score, day: today };
   record.ranking = [...record.ranking, entry].sort((a, b) => b.score - a.score || b.day - a.day).slice(0, RANKING_SIZE);
   state.minigames.games[game] = record;
-  const coins = paid ? score * GAME_COINS_PER_POINT * (state.badges.length + 1) : 0;
+  const featured = game === featuredGame(today);
+  const coins = paid ? score * GAME_COINS_PER_POINT * (state.badges.length + 1) * (featured ? FEATURED_MULTIPLIER : 1) : 0;
   state.coins += coins;
-  return { coins, best: score > previousBest, place: record.ranking.indexOf(entry) + 1 };
+  return { coins, best: score > previousBest, place: record.ranking.indexOf(entry) + 1, featured };
 }
 
 /** Lowercase, no accents, letters and digits only: "Variável!" -> "variavel". */

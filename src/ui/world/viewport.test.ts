@@ -40,4 +40,11 @@ describe("map camera", () => {
     expect(far.y + viewport.height / zoom).toBeLessThanOrEqual(content.height + 1e-6);
     expect(followZoom(99, viewport, content)).toBe(MAX_ZOOM);
   });
+
+  it("can keep the target lower than the middle, for labels on top", () => {
+    const mid = centerOn({ x: 1000, y: 800 }, 1, { width: 400, height: 300 }, { width: 2000, height: 1600 });
+    const low = centerOn({ x: 1000, y: 800 }, 1, { width: 400, height: 300 }, { width: 2000, height: 1600 }, 0.14);
+    expect(low.y).toBeCloseTo(mid.y - 300 * 0.14);
+    expect(low.x).toBe(mid.x);
+  });
 });

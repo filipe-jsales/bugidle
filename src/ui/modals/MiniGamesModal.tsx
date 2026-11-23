@@ -1,6 +1,6 @@
 import { useState, type ComponentType } from "react";
 import { dayNumber } from "../../game/learning";
-import { bestScore, GAME_IDS, paidPlaysLeft, type GameId } from "../../game/minigames";
+import { bestScore, featuredGame, GAME_IDS, paidPlaysLeft, type GameId } from "../../game/minigames";
 import type { ItemId } from "../../game/data/items";
 import { GAME_TEXT, GAMES_UI } from "../../i18n/games.ptBR";
 import { MINIGAMES_UI } from "../../i18n/minigames.ptBR";
@@ -106,12 +106,14 @@ export function MiniGamesModal() {
           {tab === "ranking" ? (
             <Ranking />
           ) : (
+            <>
+            <p className="featured-banner">{GAMES_UI.featuredIntro(GAME_TEXT[featuredGame(today)].name)}</p>
             <div className="games-grid">
-              {GAME_IDS.map((id) => (
+              {[featuredGame(today), ...GAME_IDS.filter((g) => g !== featuredGame(today))].map((id) => (
                 <button
                   key={id}
                   type="button"
-                  className="game-card"
+                  className={`game-card ${id === featuredGame(today) ? "featured" : ""}`}
                   onClick={() => {
                     setGame(id);
                     setRound((r) => r + 1);
@@ -123,12 +125,14 @@ export function MiniGamesModal() {
                   <strong>{GAME_TEXT[id].name}</strong>
                   <small className="muted">{GAME_TEXT[id].short}</small>
                   <span className="tag-row">
+                    {id === featuredGame(today) && <Tag tone="pink">{GAMES_UI.featured}</Tag>}
                     <Tag tone="gold">{GAMES_UI.best(bestScore(state, id))}</Tag>
                     {id !== "detective" && <Tag tone={paidPlaysLeft(state, id, today) > 0 ? "green" : "dark"}>{GAMES_UI.paidLeft(paidPlaysLeft(state, id, today))}</Tag>}
                   </span>
                 </button>
               ))}
             </div>
+            </>
           )}
         </>
       )}

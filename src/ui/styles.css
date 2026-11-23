@@ -557,6 +557,8 @@ button.stat-chip:hover {
   border-radius: 4px;
   background: #1a1020;
   overflow: hidden;
+  /* clip, not hidden: a focused button inside (debug challenge) must not scroll the map and hide its top */
+  overflow: clip;
 }
 
 .battle-label {
@@ -676,6 +678,25 @@ button.stat-chip:hover {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+/* when nothing new happened, the line says what the team is doing */
+.battle-log-line.status {
+  color: var(--muted);
+}
+.battle-log-line.status::before {
+  content: "";
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  margin-right: 8px;
+  vertical-align: middle;
+  background: var(--green);
+  animation: status-blink 1.2s steps(2) infinite;
+}
+@keyframes status-blink {
+  50% {
+    opacity: 0.25;
+  }
 }
 
 .tone-good {
@@ -2461,4 +2482,67 @@ input[type="range"] {
   border-radius: 4px;
   box-shadow: 0 3px 0 var(--shadow);
   cursor: pointer;
+}
+
+/* free team slots: a dashed outline instead of empty space */
+.team-row.free {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  border-style: dashed;
+  background: transparent;
+  cursor: default;
+  opacity: 0.7;
+}
+.team-row.free:hover {
+  border-color: var(--inset-border);
+}
+.free-slot {
+  width: 36px;
+  height: 36px;
+  border: 2px dashed var(--inset-border);
+  border-radius: 4px;
+}
+.team-hint {
+  margin: 0;
+}
+
+.rail-label {
+  display: none;
+}
+@media (max-width: 1100px) {
+  .rail-button {
+    width: auto;
+    min-width: 64px;
+    height: auto;
+    padding: 4px 6px;
+    gap: 2px;
+  }
+  .rail-label {
+    display: block;
+    font-size: 10px;
+  }
+}
+
+.dex-left {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+.dex-types {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  gap: 6px 12px;
+}
+.dex-types h4 {
+  grid-column: 1 / -1;
+  margin: 0;
+}
+.dex-type-row {
+  display: grid;
+  grid-template-columns: 96px 1fr;
+  gap: 6px;
+  align-items: center;
 }

@@ -13,7 +13,7 @@ import { teamBugs, type GameState } from "../../game/state";
 import { walkFrame } from "../../sprites/trainerSprite";
 import { BOSS_TITLES, ROUTE_NAMES, UI } from "../../i18n/ptBR";
 import { useApp } from "../appContext";
-import { formatClock, formatNumber } from "../format";
+import { formatClock, formatNumber, statusLine } from "../format";
 import { buildAttackFx } from "../render/attackFx";
 import { trainerSpriteUrl } from "../render/pixels";
 import { battleGroundUrl, centerSprite, isHole, propSprite } from "../render/mapArt";
@@ -38,6 +38,9 @@ const BUG_PX = 56;
 const WILD_PX = 44;
 const TRAINER_SCALE = 2.5;
 const FLOAT_MS = 1500;
+/** A new log line stays under the map this long, then the status line comes back. */
+const FRESH_LINE_MS = 4000;
+const CAMERA_LOWER = 0.14;
 const FAINT_MS = 600;
 /** Height of a bug's body centre above its feet, for projectiles and texts. */
 const BODY_Y = BUG_PX * 0.55;
@@ -205,12 +208,21 @@ export function BattleView() {
   const isBoss = activity.kind === "boss";
   const trainerFacing = world.trainer.facing;
   const zoom = followZoom(zoomChoice, viewport, MAP_SIZE);
-  const camera = centerOn(world.trainer.pos, zoom, viewport, MAP_SIZE);
+  // the trainer sits a bit below the middle, so fights and name plates stay clear of the label on top
+  const camera = centerOn(world.trainer.pos, zoom, viewport, MAP_SIZE, CAMERA_LOWER);
   const changeZoom = (factor: number) => setZoomChoice(Math.max(MIN_ZOOM, followZoom(zoom * factor, viewport, MAP_SIZE)));
 
   return (
     <section className="panel battle-panel">
-      <div ref={viewportRef} className={`battle-scene ${shaking ? "shake" : ""}`}>
+      <div
+        ref={viewportRef}
+        className={`battle-scene ${shaking ? "shake" : ""}`}
+        // browsers without overflow: clip can still scroll it when a button inside gets focus
+        onScroll={(e) => {
+          e.currentTarget.scrollTop = 0;
+          e.currentTarget.scrollLeft = 0;
+        }}
+      >
         <div
           className="world pixel"
           style={{
@@ -387,9 +399,12 @@ export function BattleView() {
         </div>
 
         <div className="battle-actions" onPointerDown={(e) => e.stopPropagation()}>
-          <Button variant="dark" small onClick={() => open({ kind: "settings", tab: "audio" })} aria-label={UI.sound.title}>
-            <Icon name="sound" size={14} />
-          </Button>
+          {/* the side rail has the sound button; it is hidden in immersive mode, so the map shows one then */}
+          {prefs.immersive && (
+            <Button variant="dark" small onClick={() => open({ kind: "settings", tab: "audio" })} aria-label={UI.sound.title}>
+              <Icon name="sound" size={14} />
+            </Button>
+          )}
           {prefs.immersive && (
             <Button variant="dark" small onClick={() => setPreference("immersive", false)}>
               {SETTINGS_UI.immersiveExit}
@@ -437,7 +452,11 @@ export function BattleView() {
           </div>
         )}
       </div>
-      <div className={`battle-log-line tone-${lastLine?.tone ?? "info"}`}>{lastLine?.text ?? " "}</div>
+      {lastLine && performance.now() - lastLine.at < FRESH_LINE_MS ? (
+        <div className={`battle-log-line tone-${lastLine.tone}`}>{lastLine.text}</div>
+      ) : (
+        <div className="battle-log-line status">{statusLine(state)}</div>
+      )}
     </section>
   );
 }

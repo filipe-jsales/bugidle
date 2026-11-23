@@ -1,6 +1,7 @@
 import { itemsOfCategory, type ItemId } from "../../game/data/items";
 import { itemCount } from "../../game/inventory";
 import type { CaptureMode } from "../../game/state";
+import { isUnlocked, type FeatureId } from "../../game/unlocks";
 import { CAPTURE_MODE_NAMES, ITEM_TEXT, UI } from "../../i18n/ptBR";
 import { store, useGame } from "../store";
 import { Button, ItemIcon, Panel, Toggle } from "./primitives";
@@ -16,15 +17,18 @@ export function AutomationPanel() {
   const traps = itemsOfCategory("trap");
   const potions = itemsOfCategory("potion");
   const { open } = useApp();
+  const unlocked = (id: FeatureId) => isUnlocked(state, id);
 
   return (
     <Panel
       title={UI.automations}
       className="automation-panel"
       actions={
-        <Button small variant={settings.useRules ? "gold" : "dark"} onClick={() => open({ kind: "rules" })}>
-          {LEARN_UI.rules.navLabel}
-        </Button>
+        (settings.useRules || isUnlocked(state, "rules")) && (
+          <Button small variant={settings.useRules ? "gold" : "dark"} onClick={() => open({ kind: "rules" })}>
+            {LEARN_UI.rules.navLabel}
+          </Button>
+        )
       }
     >
       {settings.useRules && <p className="small rules-on">{LEARN_UI.rules.useRulesHint}</p>}
@@ -38,12 +42,12 @@ export function AutomationPanel() {
           ))}
         </div>
       </div>
-      <Toggle checked={settings.alwaysCaptureShiny} onChange={(v) => set({ alwaysCaptureShiny: v })} label={UI.alwaysShiny} />
+      {unlocked("alwaysShiny") && <Toggle checked={settings.alwaysCaptureShiny} onChange={(v) => set({ alwaysCaptureShiny: v })} label={UI.alwaysShiny} />}
 
       <div className="field">
         <span className="field-label">{UI.preferredTrap}</span>
         <div className="item-slots">
-          {traps.map((trap) => (
+          {traps.filter((trap) => itemCount(state, trap.id) > 0 || settings.preferredTrap === trap.id).map((trap) => (
             <button
               key={trap.id}
               type="button"
@@ -82,12 +86,13 @@ export function AutomationPanel() {
         ))}
       </div>
 
-      <Toggle checked={settings.autoEvolve} onChange={(v) => set({ autoEvolve: v })} label={UI.autoEvolve} />
-      <Toggle checked={settings.throwUntilCaught} onChange={(v) => set({ throwUntilCaught: v })} label={UI.throwUntilCaught} hint={UI.throwUntilCaughtHint} />
-      <Toggle checked={settings.autoRevive} onChange={(v) => set({ autoRevive: v })} label={`${UI.autoRevive} (${itemCount(state, "revive")})`} />
-      <Toggle checked={settings.debugChallenges} onChange={(v) => set({ debugChallenges: v })} label={LEARN_UI.debug.setting} hint={LEARN_UI.debug.settingHint} />
-      <Toggle checked={settings.returnToHunt} onChange={(v) => set({ returnToHunt: v })} label={UI.returnToHunt} hint={UI.returnToHuntHint} />
-      <Toggle checked={settings.trainWeakest} onChange={(v) => set({ trainWeakest: v })} label={UI.trainWeakest} hint={UI.trainWeakestHint} />
+      {unlocked("autoEvolve") && <Toggle checked={settings.autoEvolve} onChange={(v) => set({ autoEvolve: v })} label={UI.autoEvolve} />}
+      {unlocked("throwUntilCaught") && <Toggle checked={settings.throwUntilCaught} onChange={(v) => set({ throwUntilCaught: v })} label={UI.throwUntilCaught} hint={UI.throwUntilCaughtHint} />}
+      {unlocked("autoRevive") && <Toggle checked={settings.autoRevive} onChange={(v) => set({ autoRevive: v })} label={`${UI.autoRevive} (${itemCount(state, "revive")})`} />}
+      {unlocked("debugChallenges") && <Toggle checked={settings.debugChallenges} onChange={(v) => set({ debugChallenges: v })} label={LEARN_UI.debug.setting} hint={LEARN_UI.debug.settingHint} />}
+      {unlocked("returnToHunt") && <Toggle checked={settings.returnToHunt} onChange={(v) => set({ returnToHunt: v })} label={UI.returnToHunt} hint={UI.returnToHuntHint} />}
+      {unlocked("trainWeakest") && <Toggle checked={settings.trainWeakest} onChange={(v) => set({ trainWeakest: v })} label={UI.trainWeakest} hint={UI.trainWeakestHint} />}
+      {!unlocked("returnToHunt") && <p className="small muted more-soon">{UI.moreAutomations}</p>}
     </Panel>
   );
 }

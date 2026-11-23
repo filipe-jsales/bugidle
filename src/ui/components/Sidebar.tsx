@@ -102,7 +102,15 @@ export function TeamPanel() {
             <BugSummary bug={bug} compact showXp={false} idle idlePhase={index} />
           </button>
         ))}
+        {team.length < MAX_TEAM_SIZE &&
+          Array.from({ length: MAX_TEAM_SIZE - team.length }, (_, i) => (
+            <div key={`free-${i}`} className="team-row free" aria-hidden>
+              <span className="free-slot" />
+              <small className="muted">{UI.emptySlot}</small>
+            </div>
+          ))}
       </div>
+      {team.length > 0 && team.length < MAX_TEAM_SIZE && <p className="small muted team-hint">{UI.teamHint(MAX_TEAM_SIZE - team.length)}</p>}
     </Panel>
   );
 }

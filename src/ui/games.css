@@ -1082,3 +1082,21 @@
     height: 300px;
   }
 }
+
+/* game of the day */
+.featured-banner {
+  margin: 0 0 8px;
+  padding: 6px 10px;
+  font-size: 13px;
+  background: var(--inset);
+  border: 2px solid var(--gold-dark);
+  border-radius: 4px;
+}
+.game-card.featured {
+  border-color: var(--gold);
+  box-shadow: 0 0 0 2px var(--gold-dark) inset;
+}
+.featured-note {
+  color: var(--gold);
+  font-weight: 700;
+}

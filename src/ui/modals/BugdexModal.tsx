@@ -2,14 +2,14 @@ import { SPECIES_LAB } from "../labLinks";
 import { LAB_TOPIC_TEXT } from "../../i18n/labs.ptBR";
 import { GLOSSARY_UI } from "../../i18n/glossary.ptBR";
 import { useState } from "react";
-import { dexProgress, isCaught, isSeen } from "../../game/bugdex";
+import { dexByType, dexProgress, isCaught, isSeen } from "../../game/bugdex";
 import { getSpecies, preEvolutionOf, SPECIES } from "../../game/data/species";
 import { STAT_KEYS } from "../../game/data/stats";
 import { routesWithSpecies } from "../../game/data/world";
 import { STARTER_IDS } from "../../game/state";
 import { ITEM_TEXT, RARITY_NAMES, ROUTE_NAMES, SPECIES_DESCRIPTIONS, STAT_NAMES, UI } from "../../i18n/ptBR";
 import { useApp } from "../appContext";
-import { BugSprite, Button, Modal, Tag, TypeTag } from "../components/primitives";
+import { Bar, BugSprite, Button, Modal, Tag, TypeTag } from "../components/primitives";
 import { useGame } from "../store";
 import { lessonFor, lessonsFor } from "../../game/data/lessons";
 import { GlossaryText } from "../components/GlossaryText";
@@ -122,6 +122,7 @@ export function BugdexModal({ initialSpecies }: { initialSpecies?: string }) {
       }
     >
       <div className="dex-layout">
+        <div className="dex-left">
         <div className="dex-grid">
           {SPECIES.map((s) => {
             const seen = isSeen(state, s.id);
@@ -134,6 +135,16 @@ export function BugdexModal({ initialSpecies }: { initialSpecies?: string }) {
               </button>
             );
           })}
+        </div>
+        <section className="subpanel dex-types">
+          <h4>{UI.dex.byType}</h4>
+          {dexByType(state).map((row) => (
+            <div key={row.type} className="dex-type-row">
+              <TypeTag type={row.type} />
+              <Bar kind="xp" value={row.caught} max={row.total} label={`${row.caught}/${row.total}`} />
+            </div>
+          ))}
+        </section>
         </div>
         <DexEntryView speciesId={selected} />
       </div>

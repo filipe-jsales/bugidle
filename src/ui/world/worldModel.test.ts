@@ -1,3 +1,4 @@
+import { TOWN_RADIUS } from "./navigation";
 import { createSeededRng } from "../../game/rng";
 import {
   cameraFor,
@@ -26,9 +27,11 @@ function run(w: WorldModel, seconds: number, input: WorldInput, seed = 2) {
 }
 
 describe("world model", () => {
-  it("starts with the trainer in the middle and wild bugs on the map", () => {
+  it("starts with the trainer just outside the Reboot square and wild bugs on the map", () => {
     const w = makeWorld();
-    expect(w.trainer.pos).toEqual({ x: 900, y: 550 });
+    const fromTown = Math.hypot(w.trainer.pos.x - 900, w.trainer.pos.y - 550);
+    expect(fromTown).toBeGreaterThan(TOWN_RADIUS);
+    expect(fromTown).toBeLessThan(TOWN_RADIUS + 120);
     expect(w.wanderers).toHaveLength(WANDERER_COUNT);
     for (const b of w.wanderers) expect(["typobit", "nullit"]).toContain(b.speciesId);
   });
@@ -85,6 +88,7 @@ describe("world model", () => {
 
   it("centres the camera on the trainer and clamps it to the map", () => {
     const w = makeWorld();
+    w.trainer.pos = { x: 900, y: 550 };
     expect(cameraFor(w, VIEW)).toEqual({ x: 600, y: 370 });
     w.trainer.pos = { x: 10, y: 10 };
     expect(cameraFor(w, VIEW)).toEqual({ x: 0, y: 0 });

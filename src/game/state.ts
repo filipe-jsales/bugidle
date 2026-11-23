@@ -106,6 +106,8 @@ export interface PersistentState {
   studyStreak: StudyStreak;
   /** Mini game records (Detetive de Conceitos). */
   minigames: MiniGamesState;
+  /** Unlocked windows the player already opened (no more "NOVO" tag). */
+  seenFeatures: string[];
   nextUid: number;
 }
 
@@ -201,6 +203,7 @@ export function createInitialState(trainerName = "Hunter"): GameState {
     labs: {},
     minigames: createMiniGames(),
     studyStreak: { days: 0, lastDay: null, best: 0 },
+    seenFeatures: [],
     nextUid: 1,
     runtime: createRuntime(),
   };

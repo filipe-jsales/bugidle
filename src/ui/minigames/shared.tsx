@@ -61,7 +61,7 @@ export function GameHelp({ game }: { game: GameId }) {
 
 /** Saves the play once, then shows points, coins, record and ranking place. */
 export function GameResult({ game, points, onAgain, onExit, children }: { game: GameId; points: number; onAgain: () => void; onExit: () => void; children?: ReactNode }) {
-  const [result, setResult] = useState<{ coins: number; best: boolean; place: number } | null>(null);
+  const [result, setResult] = useState<{ coins: number; best: boolean; place: number; featured: boolean } | null>(null);
   const saved = useRef(false);
   useEffect(() => {
     if (saved.current) return;
@@ -75,6 +75,7 @@ export function GameResult({ game, points, onAgain, onExit, children }: { game: 
       <strong className="reveal-name">{GAMES_UI.points(score)}</strong>
       {result?.best && <span className="new-best">{GAMES_UI.newBest}</span>}
       {result && <span className="reveal-reward">{result.coins > 0 ? GAMES_UI.coins(formatNumber(result.coins)) : GAMES_UI.noCoins}</span>}
+      {result?.featured && result.coins > 0 && <span className="featured-note">{GAMES_UI.featuredPaid}</span>}
       {result && <small className="muted">{GAMES_UI.place(result.place)}</small>}
       {children}
       <section className="explain-box">

@@ -38,9 +38,12 @@ export function clampCamera(camera: Vec, zoom: number, viewport: Size, content: 
   return { x: axis(camera.x, viewport.width, content.width), y: axis(camera.y, viewport.height, content.height) };
 }
 
-/** Camera that puts `target` in the middle of the screen. */
-export function centerOn(target: Vec, zoom: number, viewport: Size, content: Size): Vec {
-  return clampCamera({ x: target.x - viewport.width / zoom / 2, y: target.y - viewport.height / zoom / 2 }, zoom, viewport, content);
+/**
+ * Camera that puts `target` in the middle of the screen, or `lower` (0..0.5) of
+ * the screen height below the middle, to keep room for the labels on top.
+ */
+export function centerOn(target: Vec, zoom: number, viewport: Size, content: Size, lower = 0): Vec {
+  return clampCamera({ x: target.x - viewport.width / zoom / 2, y: target.y - (viewport.height / zoom) * (0.5 + lower) }, zoom, viewport, content);
 }
 
 

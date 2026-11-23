@@ -132,7 +132,7 @@ The simulated player uses every system: it arranges the team (moving strong bugs
 
 ## Mini games
 
-The Mini Games window (top bar) is a hub of 17 small games about computing, plus a Ranking tab. Shared rules in `game/minigames.ts`: every game ends with 0-100 points (`finishGame`); the first 3 plays of each game per day pay coins (`PAID_PLAYS_PER_DAY`, `GAME_COINS_PER_POINT` x badges + 1), and every play goes to a local top 5 per game (`ranking`, saved in the game save).
+The Mini Games window (top bar) is a hub of 17 small games about computing, plus a Ranking tab. Shared rules in `game/minigames.ts`: every game ends with 0-100 points (`finishGame`); one game per day (`featuredGame`, never the detective) pays double coins (`FEATURED_MULTIPLIER`) and is shown first in the hub; the first 3 plays of each game per day pay coins (`PAID_PLAYS_PER_DAY`, `GAME_COINS_PER_POINT` x badges + 1), and every play goes to a local top 5 per game (`ranking`, saved in the game save).
 
 Where things are:
 - Screens: `ui/minigames/WordGames.tsx` (caça-palavras, cruzadas, forca, desembaralhe, memória), `CodeGames.tsx` (qual é a linguagem, adivinhe a saída, binário relâmpago, verdadeiro ou falso, corrida de digitação), `MachineGames.tsx` (pixel por código, robô do algoritmo, portas lógicas, encanamento), `StructuresGame.tsx` (sorting with `guildViz.vizFrames` on 8 bugs, stack, queue, hash table), `CodeRainGame.tsx` (typing shooter, requestAnimationFrame loop), `DetectiveGame.tsx`; shared pieces (result, countdown, stopwatch) in `ui/minigames/shared.tsx`; the hub and the card art in `MiniGamesModal.tsx`.
@@ -144,7 +144,18 @@ Detetive de Conceitos: guess a computing concept from clues that open one by one
 
 To add a concept: data in `game/data/concepts.ts`, text in `i18n/concepts.ptBR.ts` (name, accepted answers, riddle without the name, explanation) and a 16x16 drawing in `render/conceptArt.ts`. `minigames.test.ts` checks the text, that the riddle does not say the name and that no two concepts accept the same answer.
 
+## Gradual unlocking
+
+`game/unlocks.ts` lists the features that open as the player progresses (`FEATURES`, each with a test on the state: defeats, captures, badges, team size). Top-bar windows (Mini Games, Chefes, Casas, Ovos, Guilda) are hidden until open and then show a NOVO tag until visited (`newFeatures`, `markSeen`, saved in `seenFeatures`); automation switches just appear. The store writes a "Liberado: X" log line when something opens (`announceUnlocks`). Saves made before this feature mark everything already open as seen. Hidden switches keep working with their saved value. To add a feature: an entry in `FEATURES`, its name in `FEATURE_TEXT` (`i18n/ptBR.ts`), and a `feature` on its button (`TopNav.tsx`) or an `unlocked(...)` check (`RightColumn.tsx`). `unlocks.test.ts` checks that every feature opens by the end of the game.
+
+## Keyboard shortcuts
+
+Each main window has a letter (`key` on the entries in `TopNav.tsx`, also shown in the tooltips): B Bugdex, E Estudo, M Mapa, Q Equipe, L Loja, C Chefes, H Casas, G Guilda, O Ovos, J Mini Games, I Mochila, K Conquistas, S Save, comma Config. F2 opens the terminal. Shortcuts work only with no window open and outside text fields (mini games use the keyboard), and only for unlocked windows.
+
 ## HUD layout
+
+The line under the map shows a new log line for 4 s, then `statusLine(state)` (`ui/format.ts`) says what the team is doing. The camera keeps the trainer a bit below the middle (`centerOn(..., lower)`). The map uses `overflow: clip` and resets its scroll, so a focused button inside never scrolls it.
+
 
 `App.tsx`: left dock (`SideRail` + player card, EM CAMPO, EQUIPE), center (`TopNav` + battle), right (automations + log). The top bar only has the places the player visits most; small tools (Config., Mochila, Conquistas, Terminal, Som, Save) are the `RAIL` list in `TopNav.tsx`. Under 1100 px the rail becomes a row. The profile picture is the trainer sprite; `.idle-bob` gives the trainer and the team a stepped breathing animation (`BugSummary idle`), turned off by reduced effects and `prefers-reduced-motion`.
 

@@ -74,7 +74,7 @@ export function ItemIcon({ id, size = 24 }: { id: ItemId; size?: number }) {
 export function Toggle({ checked, onChange, label, hint }: { checked: boolean; onChange: (value: boolean) => void; label: string; hint?: string }) {
   return (
     <label className="toggle-row">
-      <button type="button" role="switch" aria-checked={checked} className={`toggle ${checked ? "on" : ""}`} onClick={() => onChange(!checked)}>
+      <button type="button" role="switch" aria-checked={checked} aria-label={label} className={`toggle ${checked ? "on" : ""}`} onClick={() => onChange(!checked)}>
         <span className="toggle-knob" />
       </button>
       <span>

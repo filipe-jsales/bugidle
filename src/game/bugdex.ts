@@ -1,3 +1,4 @@
+import { BUG_TYPES, type BugType } from "./types";
 import { SPECIES } from "./data/species";
 import type { DexEntry, PersistentState } from "./state";
 
@@ -40,6 +41,14 @@ export interface DexProgress {
   caught: number;
   shiny: number;
   total: number;
+}
+
+/** Caught species out of all species, for each bug type (a dual-type species counts in both). */
+export function dexByType(state: PersistentState): { type: BugType; caught: number; total: number }[] {
+  return BUG_TYPES.map((type) => {
+    const species = SPECIES.filter((s) => s.types.includes(type));
+    return { type, caught: species.filter((s) => (state.bugdex[s.id]?.caught ?? 0) > 0).length, total: species.length };
+  }).filter((row) => row.total > 0);
 }
 
 export function dexProgress(state: PersistentState): DexProgress {

@@ -9,7 +9,8 @@ import { AppContext, type AppActions, type ModalState } from "./appContext";
 import { BattleView } from "./components/BattleView";
 import { AutomationPanel, LogPanel } from "./components/RightColumn";
 import { ActiveBugCard, PlayerCard, TeamPanel } from "./components/Sidebar";
-import { SideRail, TopNav } from "./components/TopNav";
+import { shortcutEntry, SideRail, TopNav } from "./components/TopNav";
+import { markSeen } from "../game/unlocks";
 import { BoxModal } from "./modals/BoxModal";
 import { BugDetailModal } from "./modals/BugDetailModal";
 import { BugdexModal } from "./modals/BugdexModal";
@@ -98,6 +99,26 @@ export function App() {
       if ((e.key !== "`" && e.key !== "F2") || target?.closest("input, textarea, select")) return;
       e.preventDefault();
       setStack((s) => (s[s.length - 1]?.kind === "terminal" ? s.slice(0, -1) : [...s, { kind: "terminal" }]));
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+
+  const stackRef = useRef(stack);
+  stackRef.current = stack;
+
+  // one-letter shortcuts open the main windows, only when no window is open and nothing is being typed
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const target = e.target instanceof Element ? e.target : null;
+      if (e.ctrlKey || e.metaKey || e.altKey || target?.closest("input, textarea, select, [contenteditable]")) return;
+      if (needsStarter(store.state)) return;
+      const entry = shortcutEntry(store.state, e.key);
+      if (!entry) return;
+      if (stackRef.current.length > 0) return;
+      e.preventDefault();
+      if (entry.feature) store.update((st) => markSeen(st, entry.feature!));
+      setStack([entry.modal]);
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);

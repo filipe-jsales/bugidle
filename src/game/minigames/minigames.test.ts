@@ -36,7 +36,7 @@ describe("mini games: scores and local ranking", () => {
     const coins = state.coins;
     for (let i = 0; i < PAID_PLAYS_PER_DAY; i++) expect(finishGame(state, "binary", 50, TODAY).coins).toBeGreaterThan(0);
     expect(paidPlaysLeft(state, "binary", TODAY)).toBe(0);
-    expect(finishGame(state, "binary", 90, TODAY)).toEqual({ coins: 0, best: true, place: 1 });
+    expect(finishGame(state, "binary", 90, TODAY)).toMatchObject({ coins: 0, best: true, place: 1 });
     expect(paidPlaysLeft(state, "binary", TODAY + 1)).toBe(PAID_PLAYS_PER_DAY);
     for (let i = 0; i < 5; i++) finishGame(state, "binary", 10 + i, TODAY);
     const ranking = state.minigames.games.binary!.ranking;

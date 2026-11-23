@@ -8,7 +8,7 @@
  */
 import { randomInt, type Rng } from "../../game/rng";
 import type { Facing } from "../../sprites/trainerSprite";
-import { createNav, findPath, freePoint, outsideTown, pushOut, type Nav } from "./navigation";
+import { createNav, findPath, freePoint, outsideTown, pushOut, TOWN_RADIUS, type Nav } from "./navigation";
 
 export interface Vec {
   x: number;
@@ -147,7 +147,13 @@ export function createWorld(width: number, height: number, speciesPool: readonly
     atCenter: false,
     warpS: 99,
   };
-  for (let i = 0; i < WANDERER_COUNT; i++) w.wanderers.push(spawnWanderer(w, rng, start));
+  // the trainer starts on the road just outside the calm Reboot square, so the hunt begins at once
+  const spawn = placeable(w, { x: start.x + TOWN_RADIUS + 50, y: start.y });
+  w.trainer.pos = { ...spawn };
+  w.follower.pos = { x: spawn.x - FOLLOW_DISTANCE, y: spawn.y };
+  w.trail = [{ ...spawn }];
+  w.waypoint = { ...spawn };
+  for (let i = 0; i < WANDERER_COUNT; i++) w.wanderers.push(spawnWanderer(w, rng, spawn));
   return w;
 }
 

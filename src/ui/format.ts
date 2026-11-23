@@ -1,5 +1,6 @@
 import { ACHIEVEMENT_TEXT, ACHIEVEMENTS_UI } from "../i18n/achievements.ptBR";
 import { getSpecies } from "../game/data/species";
+import { activeEnemy } from "../game/battle";
 import { getBoss } from "../game/data/world";
 import type { GameEvent } from "../game/engine";
 import type { GameState } from "../game/state";
@@ -12,6 +13,23 @@ export interface LogLine {
   time: string;
   text: string;
   tone: LogTone;
+  /** performance.now() when it was written. */
+  at: number;
+}
+
+/** What the team is doing right now, for the line under the map when nothing new happened. */
+export function statusLine(state: GameState): string {
+  const rt = state.runtime;
+  if (rt.recoveryMs > 0) return UI.rebooting;
+  if (rt.atCenter) return UI.atCenter;
+  if (rt.debug) return UI.debugWaiting;
+  const battle = rt.battle;
+  if (battle && !battle.outcome) {
+    if (battle.kind === "boss" && battle.bossId) return UI.fightingBoss(getBoss(battle.bossId).name);
+    const enemy = activeEnemy(battle);
+    if (enemy) return UI.fighting(speciesName(enemy.speciesId), enemy.level);
+  }
+  return UI.searching;
 }
 
 const speciesName = (id: string) => getSpecies(id).name;
@@ -30,7 +48,7 @@ export function describeEvent(event: GameEvent, state: GameState): { text: strin
       return { text: `Batalha contra ${getBoss(event.bossId).name} começou!`, tone: "info" };
     case "rewards":
       return {
-        text: `${speciesName(event.speciesId)} derrotado! +${event.xp} xp bug, +${event.benchXp} xp equipe, +${event.trainerXp} xp caçador${event.coins ? `, +${event.coins} moedas` : ""}`,
+        text: `${speciesName(event.speciesId)} derrotado! +${event.xp} xp bug${event.benchXp > 0 ? `, +${event.benchXp} xp equipe` : ""}, +${event.trainerXp} xp caçador${event.coins ? `, +${event.coins} moedas` : ""}`,
         tone: "info",
       };
     case "captureAttempt":

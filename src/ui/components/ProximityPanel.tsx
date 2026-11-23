@@ -41,7 +41,10 @@ export function ProximityPanel() {
   return (
     <div className={`proximity-overlay ${open ? "open" : "folded"}`}>
       <button type="button" className="proximity-head" onClick={() => setOpen((o) => !o)} aria-expanded={open}>
-        <span className="proximity-title">{P.title}</span>
+        <span className="proximity-title">
+          <span className="title-long">{P.title}</span>
+          <span className="title-short">{P.titleShort}</span>
+        </span>
         {trap && <ItemIcon id={trap.id} size={18} />}
         <span className={`proximity-caret ${open ? "" : "up"}`} aria-hidden />
       </button>

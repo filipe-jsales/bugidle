@@ -7,6 +7,8 @@ import { defaultRng, type Rng } from "../game/rng";
 import { importSave, loadFromStorage, saveToStorage, STORAGE_KEY, type KeyValueStorage } from "../game/save";
 import { createInitialState, type GameState } from "../game/state";
 import { describeEvent, type LogLine } from "./format";
+import { FEATURES, unlockedFeatures, type FeatureId } from "../game/unlocks";
+import { FEATURE_TEXT, UNLOCK_UI } from "../i18n/ptBR";
 
 const TICK_MS = 100;
 const AUTOSAVE_MS = 10_000;
@@ -33,6 +35,8 @@ export class GameStore {
   /** False when the last save to the browser failed (storage full or blocked). */
   saveOk = true;
   private version = 0;
+  /** Features open at the last check, to announce the ones that open next. */
+  private opened: Set<FeatureId> | null = null;
   private nextId = 1;
   private listeners = new Set<() => void>();
   private eventListeners = new Set<(events: GameEvent[]) => void>();
@@ -82,6 +86,7 @@ export class GameStore {
       this.record(events);
       this.eventListeners.forEach((l) => l(events));
     }
+    this.announceUnlocks();
     this.emit();
   }
 
@@ -92,10 +97,25 @@ export class GameStore {
       const id = this.nextId++;
       this.recent.push({ id, at, event });
       const line = describeEvent(event, this.state);
-      if (line) this.log.unshift({ id, time, ...line });
+      if (line) this.log.unshift({ id, time, at, ...line });
     }
     if (this.recent.length > 40) this.recent = this.recent.slice(-40);
     if (this.log.length > LOG_LIMIT) this.log.length = LOG_LIMIT;
+  }
+
+  /** Writes "Liberado: X" in the log when a feature opens during play. */
+  private announceUnlocks(): void {
+    const now = new Set(unlockedFeatures(this.state));
+    if (this.opened) {
+      for (const id of now) {
+        if (this.opened.has(id)) continue;
+        const kind = FEATURES.find((f) => f.id === id)!.kind;
+        const at = typeof performance === "undefined" ? Date.now() : performance.now();
+        const time = new Date().toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+        this.log.unshift({ id: this.nextId++, time, at, tone: "rare", text: kind === "window" ? UNLOCK_UI.window(FEATURE_TEXT[id]) : UNLOCK_UI.automation(FEATURE_TEXT[id]) });
+      }
+    }
+    this.opened = now;
   }
 
   save(): void {
@@ -110,6 +130,7 @@ export class GameStore {
   /** Replaces the whole game from exported text. Throws SaveError on bad input. */
   importText(text: string): void {
     this.state = importSave(text);
+    this.opened = null;
     this.log = [];
     this.recent = [];
     this.save();
@@ -119,6 +140,7 @@ export class GameStore {
   reset(): void {
     this.storage?.removeItem(STORAGE_KEY);
     this.state = createInitialState();
+    this.opened = null;
     this.log = [];
     this.recent = [];
     this.emit();

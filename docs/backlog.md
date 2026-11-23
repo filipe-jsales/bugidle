@@ -151,6 +151,17 @@ Principle: learning is optional, short and rewarded; it never blocks progress.
 - [x] Mochila grouped by category, with a detail panel and "usar como armadilha preferida"
 - [x] Houses tabs in one even row; boss trophies are grey until the boss is beaten; study streak label says what you get today or tomorrow; bug score "1,5 / 10"; "Mandar para a reserva" instead of Box
 
+## v0.15 - first impression and UX polish
+
+- [x] The trainer starts on the road outside the Reboot square, and the line under the map always says what is happening ("Procurando bugs...", "Lutando contra X", rebooting, debug challenge)
+- [x] 3-step guide on the first-bug screen (he fights alone, traps catch, studying gives bonuses)
+- [x] Gradual unlocking (`game/unlocks.ts`): Mini Games, Chefes, Casas, Ovos and Guilda appear as the player progresses, with a NOVO tag until opened and a "Liberado" log line; advanced automation switches appear the same way; only owned traps are listed
+- [x] The map camera keeps the trainer a bit below the middle, so fights stay clear of the label on top; fixed the map being scrolled by a focused button (labels and the debug challenge title were cut)
+- [x] Log hides "+0 xp equipe"; one sound button (rail; the map shows one only in immersive mode)
+- [x] Switches have accessible names; empty team slots with a hint; folded proximity panel is a small "PERTO" chip on phones; rail shows names on narrow screens; Bugdex shows caught by type
+- [x] Keyboard shortcuts for the main windows (B, E, M, Q, L, C, H, G, O, J, I, K, S, comma), shown in the button tooltips
+- [x] Game of the day: one mini game per day pays double coins, shown first in the hub, with a dot on the Mini Games button while it still pays
+
 ## Next (core polish)
 
 

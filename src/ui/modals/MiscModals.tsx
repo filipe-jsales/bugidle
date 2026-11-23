@@ -10,7 +10,7 @@ import { useApp } from "../appContext";
 import { LEARN_UI } from "../../i18n/learning.ptBR";
 import { REVIEW_BONUS_PER_CORRECT } from "../../game/learning";
 import { formatClock, formatDuration, formatNumber } from "../format";
-import { BugSprite, Button, Icon, Modal, Tag, TypeTag } from "../components/primitives";
+import { BugSprite, Button, Icon, ItemIcon, Modal, Tag, TypeTag } from "../components/primitives";
 import { store, useGame } from "../store";
 
 export function BossesModal() {
@@ -168,6 +168,20 @@ export function StarterModal() {
         </header>
         <div className="modal-body">
           <p className="muted">{UI.starter.subtitle}</p>
+          <ol className="starter-guide">
+            {UI.starter.steps.map((step, i) => (
+              <li key={step.title}>
+                <span className="guide-art">{i === 0 ? <Icon name="bosses" size={32} /> : i === 1 ? <ItemIcon id="breakpoint" size={32} /> : <Icon name="study" size={32} />}</span>
+                <div>
+                  <strong>
+                    {i + 1}. {step.title}
+                  </strong>
+                  <p className="small muted">{step.text}</p>
+                </div>
+              </li>
+            ))}
+          </ol>
+          <h4 className="starter-choose">{UI.starter.choose}</h4>
           <div className="starter-grid">
             {STARTER_IDS.map((id) => {
               const species = getSpecies(id);

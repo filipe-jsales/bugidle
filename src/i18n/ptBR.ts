@@ -1,3 +1,4 @@
+import type { FeatureId } from "../game/unlocks";
 /**
  * All player-facing text (pt-BR). Code and data use English ids; the UI looks
  * strings up here, so a second language only needs another file with this shape.
@@ -213,6 +214,29 @@ export const ERROR_TEXT: Record<ActionError, string> = {
   notInRoute: "Este bug não aparece nesta rota.",
 };
 
+/** Names of features that open as the player progresses (unlocks.ts). */
+export const FEATURE_TEXT: Record<FeatureId, string> = {
+  minigames: "Mini Games",
+  houses: "Casas",
+  bosses: "Chefes",
+  hatchery: "Ovos",
+  guild: "Guilda",
+  alwaysShiny: "Sempre capturar shiny",
+  throwUntilCaught: "Lançar até capturar",
+  autoEvolve: "Evoluir automaticamente",
+  debugChallenges: "Desafios de depuração",
+  autoRevive: "Usar Reviver ao cair",
+  returnToHunt: "Voltar à caça após o reboot",
+  trainWeakest: "Treinar o mais fraco",
+  rules: "Regras de automação",
+};
+
+export const UNLOCK_UI = {
+  newTag: "NOVO",
+  window: (name: string) => `Liberado: ${name}! Veja o novo botão no topo.`,
+  automation: (name: string) => `Nova automação liberada: ${name}.`,
+};
+
 export const UI = {
   gameTitle: "BugIdle",
   level: "Nv",
@@ -230,6 +254,8 @@ export const UI = {
   },
   inField: "EM CAMPO",
   team: "EQUIPE",
+  emptySlot: "vaga livre",
+  teamHint: (free: number) => `Capture bugs para completar o time: ${free} vaga${free === 1 ? "" : "s"} livre${free === 1 ? "" : "s"}. Bugs a mais ficam na reserva.`,
   seeAll: "Ver todos",
   rail: "Atalhos",
   automations: "AUTOMAÇÕES",
@@ -253,6 +279,10 @@ export const UI = {
   forfeit: "Desistir do Chefe",
   rebooting: "A enfermeira está reiniciando sua equipe...",
   searching: "Procurando bugs...",
+  moreAutomations: "Mais automações aparecem conforme você joga.",
+  fighting: (name: string, level: number) => `Lutando contra ${name} Nv ${level}`,
+  fightingBoss: (name: string) => `Desafiando ${name}`,
+  debugWaiting: "Desafio de depuração esperando sua resposta",
   power: "PODER",
   quality: "QUALIDADE",
   ivSum: "IV SOMADO",
@@ -298,6 +328,7 @@ export const UI = {
     catchRate: "Taxa de captura",
     rarity: "Raridade",
     defeated: "derrotados",
+    byType: "CAPTURADOS POR TIPO",
   },
   box: {
     search: "buscar bug...",
@@ -343,7 +374,13 @@ export const UI = {
   },
   starter: {
     title: "Escolha seu primeiro bug",
-    subtitle: "Ele luta sozinho. Você cuida das escolhas.",
+    subtitle: "Bem-vindo, caçador de bugs! Veja como funciona:",
+    steps: [
+      { title: "Ele luta sozinho", text: "Seu bug anda pelo mapa e enfrenta os bugs selvagens. Ele ganha XP e você ganha moedas, até com a aba em segundo plano." },
+      { title: "Armadilhas capturam", text: "Bugs enfraquecidos podem ser capturados com armadilhas. Escolha nas Automações quais capturar, ou clique num bug do mapa." },
+      { title: "Estudar dá bônus", text: "Cada bug ensina um erro de programação real. O desafio do dia no Estudo paga moedas e ovos, e mais a cada dia seguido." },
+    ],
+    choose: "Agora escolha seu parceiro:",
     pick: "Escolher",
   },
   levelCap: "limite de nível",
@@ -440,6 +477,7 @@ export const UI = {
   },
   proximity: {
     title: "PROXIMIDADE PARA CAPTURA",
+    titleShort: "PERTO",
     fighting: "em batalha",
     throwsLeft: (n: number) => `${n} armadilha${n === 1 ? "" : "s"} restante${n === 1 ? "" : "s"}`,
     chance: (pct: string) => `${pct}% por armadilha`,

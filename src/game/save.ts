@@ -9,6 +9,7 @@ import { hasSpecies } from "./data/species";
 import { labQuestion } from "./data/labs";
 import { getConcept } from "./data/concepts";
 import { isGameId } from "./minigames";
+import { isFeatureId, unlockedFeatures } from "./unlocks";
 import { BOSSES, ROUTES } from "./data/world";
 import { createInitialState, createRuntime, defaultSettings, SAVE_VERSION, type CaptureMode, type GameState, type PersistentState } from "./state";
 
@@ -181,7 +182,7 @@ export function importSave(text: string): GameState {
 
   const maxUid = Object.keys(bugs).reduce((max, uid) => Math.max(max, Number(uid.replace(/\D/g, "")) || 0), 0);
 
-  return {
+  const loaded: GameState = {
     version: SAVE_VERSION,
     trainer: {
       name: typeof trainerRaw.name === "string" ? trainerRaw.name.slice(0, 20) : base.trainer.name,
@@ -280,8 +281,12 @@ export function importSave(text: string): GameState {
       return isNumber(slot) ? slot : null;
     }),
     nextUid: Math.max(isNumber(raw.nextUid) ? raw.nextUid : 1, maxUid + 1),
+    seenFeatures: [],
     runtime: createRuntime(),
   };
+  // saves from before gradual unlocking treat everything already open as seen, so no window says "NOVO"
+  loaded.seenFeatures = isStringArray(raw.seenFeatures) ? [...new Set(raw.seenFeatures.filter(isFeatureId))] : unlockedFeatures(loaded);
+  return loaded;
 }
 
 /** Minimal storage interface so tests can use an in-memory fake. */
