@@ -1,4 +1,5 @@
 /** Teaching texts (pt-BR): why each lesson's line is wrong and what each region covers. */
+import { MORE_LESSON_WHY } from "./lessonsMore.ptBR";
 
 export const LESSON_WHY: Record<string, string> = {
   typobit: "O nome da variável foi digitado errado: totl não existe, o certo é total.",
@@ -39,6 +40,7 @@ export const LESSON_WHY: Record<string, string> = {
   y2kbeetle: "Com dois dígitos, 00 vira 1900. Guarde o ano com quatro dígitos.",
   zeroday: "Basta mandar qualquer usuário para entrar. A senha precisa ser conferida.",
   markmoth: "Em 1947 a falha era física: uma mariposa presa no relé. Tirando o inseto, o computador volta.",
+  ...MORE_LESSON_WHY,
 };
 
 /** What each region teaches, shown on the map. */
@@ -90,6 +92,15 @@ export const LEARN_UI = {
     setting: "Desafios de depuração",
     settingHint: "pausa encontros especiais por até 12 s para você achar o bug",
   },
+  order: {
+    title: "ORDENE O CÓDIGO",
+    prompt: (bug: string) => `Bônus: monte o código de ${bug} já corrigido, clicando nas linhas na ordem certa.`,
+    empty: "Clique nas linhas abaixo para montar o código aqui.",
+    check: "Conferir",
+    right: "Certo! O código está na ordem.",
+    wrong: "Não é essa a ordem. Veja a correta abaixo.",
+    correct: "Ordem certa:",
+  },
   quiz: {
     progress: (n: number, total: number) => `${n} de ${total}`,
     prompt: "Clique na linha que tem o bug.",
@@ -104,6 +115,7 @@ export const LEARN_UI = {
     dailyDone: "Você já fez o desafio de hoje. Volte amanhã.",
     dailyNeedsBugs: "Encontre alguns bugs nas rotas para liberar o desafio do dia.",
     dailyResult: (correct: number, total: number, coins: string, egg: boolean) => `Você acertou ${correct} de ${total} e ganhou ${coins} moedas${egg ? " e um Ovo Misterioso" : ""}.`,
+    orderBonus: "Bônus de ordenar o código incluído.",
     boxesTitle: "SUAS CAIXAS DE REVISÃO",
     boxesIntro: "Cada bug estudado fica numa caixa. Acertou, ele sobe de caixa e volta depois de mais dias; errou, volta para a caixa 1. Assim você revisa mais o que ainda não sabe (repetição espaçada).",
     box: (n: number) => `Caixa ${n}`,

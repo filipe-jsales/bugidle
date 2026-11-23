@@ -1,3 +1,8 @@
+import type { LabTopic } from "../../game/data/labs";
+import { LAB_TOPIC_TEXT } from "../../i18n/labs.ptBR";
+
+/** Houses with a lab about their subject. */
+const HOUSE_LAB: Partial<Record<string, LabTopic>> = { databases: "sql", networks: "network", security: "security" };
 import { useState } from "react";
 import { getSpecies } from "../../game/data/species";
 import {
@@ -206,7 +211,7 @@ function EmptyLot({ def }: { def: HouseLot }) {
 
 export function HousesModal() {
   const state = useGame();
-  const { close, toast } = useApp();
+  const { close, toast, open } = useApp();
   const [lot, setLot] = useState(0);
   const pending = state.houses.reduce((sum, h) => sum + Math.floor(h.pending), 0);
   const def = HOUSE_LOTS.find((l) => l.lot === lot) ?? HOUSE_LOTS[0]!;
@@ -255,6 +260,11 @@ export function HousesModal() {
           </div>
         </div>
         <Perks def={def} />
+        {HOUSE_LAB[def.category] && (
+          <Button variant="purple" small onClick={() => open({ kind: "lab", topic: HOUSE_LAB[def.category]! })}>
+            {LAB_TOPIC_TEXT[HOUSE_LAB[def.category]!].name}
+          </Button>
+        )}
       </section>
 
       {house ? <HouseCard house={house} def={def} /> : <EmptyLot def={def} />}

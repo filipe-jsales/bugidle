@@ -91,3 +91,43 @@ describe("terminal", () => {
     expect(complete(state, "c")).toBe("c");
   });
 });
+
+describe("terminal levels: pipes, text tools and scripts", () => {
+  /** A box with two memory bugs (one shiny) and a logic bug. */
+  function boxState(badges: number) {
+    const state = stateWith(["typobit", 5], ["leaklet", 6], ["leaklet", 7], ["nullit", 8]);
+    state.team = [state.team[0]!];
+    const leaklets = Object.values(state.bugs).filter((b) => b.speciesId === "leaklet");
+    leaklets[0]!.shiny = true;
+    state.badges = ["badge-localhost", "badge-staging", "badge-production"].slice(0, badges);
+    return state;
+  }
+
+  it("pipes and grep are locked until the first badge", () => {
+    expect(run(boxState(0), "ls box | grep shiny")[0]).toContain("bloqueado");
+    expect(run(boxState(1), "ls box | grep shiny")).toHaveLength(1);
+    expect(run(boxState(1), "grep shiny")[0]).toContain("ls box | grep");
+  });
+
+  it("grep matches, ignores case with -i and inverts with -v", () => {
+    const state = boxState(1);
+    expect(run(state, "ls box | grep memory")).toHaveLength(2);
+    expect(run(state, "ls box | grep -i LEAKLET")).toHaveLength(2);
+    expect(run(state, "ls box | grep -v memory")).toHaveLength(1);
+  });
+
+  it("text tools need two badges and chain after grep", () => {
+    expect(run(boxState(1), "ls box | wc -l")[0]).toContain("bloqueado");
+    const state = boxState(2);
+    expect(run(state, "ls box | grep memory | wc -l")).toEqual(["2"]);
+    expect(run(state, "ls box | head 1")).toHaveLength(1);
+    expect(run(state, "ls box | sort")[0]).toContain("Leaklet");
+  });
+
+  it("scripts with ; and && need three badges", () => {
+    expect(run(boxState(2), "pwd; whoami")[0]).toContain("bloqueado");
+    expect(run(boxState(3), "pwd; whoami")).toEqual(["/localhost/port-3000", "Hunter (caçador nível 1)"]);
+    expect(run(boxState(3), "levels").join(" ")).toContain("[x] scripts");
+  });
+});
+

@@ -2,6 +2,7 @@
  * The idle core loop: spawn encounters on the selected route, fight automatically,
  * throw traps, collect rewards and unlock content. `tick` is called by the UI clock.
  */
+import { CLEAR_DAY, encounterBoost, type Conditions } from "./weather";
 import { checkAchievements, getAchievement } from "./achievements";
 import { heldCoinMult, heldXpMult } from "./held";
 import { activeEnemy, activePlayerBug, createBattle, stepBattle, type BattleEvent, type BattleOutcome } from "./battle";
@@ -33,8 +34,7 @@ import type { BugType } from "./types";
 /** Time between encounters: the trainer walks the map looking for the next bug. */
 export const SPAWN_DELAY_MS = 2200;
 export const RECOVERY_MS = 3000;
-/** Calm time after a fight before the Reboot Center can be used. */
-export const CENTER_CALM_MS = 3000;
+
 export const POTION_COOLDOWN_MS = 1200;
 export const STARTER_LEVEL = 5;
 /** How long a "debug to capture" challenge waits for the player. */
@@ -62,8 +62,10 @@ export type GameEvent =
   | BattleEvent
   | { type: "encounter"; speciesId: string; level: number; shiny: boolean }
   | { type: "bossStart"; bossId: string }
-  | { type: "captureAttempt"; itemId: ItemId; speciesId: string; success: boolean }
-  | { type: "captured"; uid: string; speciesId: string; shiny: boolean; newEntry: boolean; destination: "team" | "box" }
+  | { type: "captureAttempt"; itemId: ItemId; speciesId: string; success: boolean; roaming?: boolean }
+  | { type: "captured"; uid: string; speciesId: string; shiny: boolean; newEntry: boolean; destination: "team" | "box"; roaming?: boolean }
+  /** A roaming bug the player threw a trap at broke free and ran away. */
+  | { type: "fled"; speciesId: string }
   | { type: "outOfTraps" }
   | {
       type: "rewards";
@@ -136,22 +138,21 @@ export function forfeitBoss(state: GameState): ActionResult {
   return OK;
 }
 
-/** True while fighting, and for a few seconds after a fight ends. */
+/** True while a fight is running (leaving it gives up its XP and coins). */
 export function inCombat(state: GameState): boolean {
-  const rt = state.runtime;
-  if (rt.battle && !rt.battle.outcome) return true;
-  return state.totals.playTimeMs - rt.combatEndedAt < CENTER_CALM_MS;
+  const battle = state.runtime.battle;
+  return Boolean(battle && !battle.outcome);
 }
 
 /**
  * Goes to the Reboot Center, a calm place with no encounters, where the nurse
- * heals the team. Needs a few seconds out of combat. With "return to hunt" on,
- * the team leaves by itself after the heal; otherwise it waits there.
+ * heals and revives the whole team. A fight in progress is abandoned (the UI
+ * asks first: its XP and coins are lost). With "return to hunt" on, the team
+ * leaves by itself after the heal; otherwise it waits there.
  */
 export function visitRebootCenter(state: GameState): ActionResult {
   if (state.activity.kind === "boss") return fail("busy");
   if (state.runtime.atCenter || state.runtime.recoveryMs > 0) return OK;
-  if (inCombat(state)) return fail("inCombat");
   endBattle(state);
   state.runtime.recoveryMs = RECOVERY_MS;
   state.runtime.atCenter = true;
@@ -167,13 +168,45 @@ export function throwTrapNow(state: GameState): ActionResult {
   return OK;
 }
 
-/** The player picked a roaming bug on the map: hunt it next and throw a trap at it. */
-export function huntSpecies(state: GameState, speciesId: string): ActionResult {
+/**
+ * The player clicked a roaming bug on the map: a trap flies to it on the next
+ * step. It is caught or it runs away; either way it leaves the map.
+ */
+export function throwAtRoaming(state: GameState, speciesId: string): ActionResult {
   if (state.activity.kind !== "route") return fail("notInRoute");
   if (!getRoute(state.activity.routeId).encounters.some((e) => e.speciesId === speciesId)) return fail("notInRoute");
   if (!pickTrap(state.inventory, state.settings.preferredTrap)) return fail("noItem");
-  state.runtime.huntTarget = speciesId;
+  state.runtime.roamingThrows.push(speciesId);
   return OK;
+}
+
+function resolveRoamingThrows(state: GameState, rng: Rng, events: GameEvent[]): void {
+  const rt = state.runtime;
+  while (rt.roamingThrows.length > 0) {
+    const speciesId = rt.roamingThrows.shift()!;
+    if (state.activity.kind !== "route") continue;
+    const trap = pickTrap(state.inventory, state.settings.preferredTrap);
+    if (!trap) {
+      events.push({ type: "outOfTraps" });
+      rt.roamingThrows = [];
+      return;
+    }
+    consumeItem(state, trap.id);
+    const wild = spawnWild(getRoute(state.activity.routeId), rng, speciesId);
+    registerSeen(state, wild.speciesId);
+    const success = chance(rng, Math.min(1, captureChance(wild, trap.captureMultiplier)));
+    events.push({ type: "captureAttempt", itemId: trap.id, speciesId, success, roaming: true });
+    if (!success) {
+      events.push({ type: "fled", speciesId });
+      continue;
+    }
+    const caught: BugInstance = { ...wild, uid: nextUid(state), held: null, caughtAt: Date.now(), caughtBy: state.trainer.name };
+    const newEntry = registerCaught(state, caught.speciesId, caught.shiny);
+    const destination = addBug(state, caught);
+    state.totals.captures += 1;
+    if (caught.shiny) state.totals.shinies += 1;
+    events.push({ type: "captured", uid: caught.uid, speciesId: caught.speciesId, shiny: caught.shiny, newEntry, destination, roaming: true });
+  }
 }
 
 /** Sends the team back out after it was left at the Reboot Center. */
@@ -218,7 +251,6 @@ export function answerDebug(state: GameState, line: number | null, today = dayNu
 }
 
 function endBattle(state: GameState): void {
-  if (state.runtime.battle) state.runtime.combatEndedAt = state.totals.playTimeMs;
   state.runtime.battle = null;
   state.runtime.manualThrow = false;
   state.runtime.debug = null;
@@ -250,6 +282,7 @@ function stepOnce(state: GameState, dtMs: number, rng: Rng, events: GameEvent[])
   const team = teamBugs(state);
   if (team.length === 0) return;
   const rt = state.runtime;
+  resolveRoamingThrows(state, rng, events);
 
   if (rt.recoveryMs > 0) {
     rt.recoveryMs -= dtMs;
@@ -319,9 +352,7 @@ function startBattle(state: GameState, rng: Rng, events: GameEvent[]): void {
     return;
   }
   const route = getRoute(state.activity.routeId);
-  const wild = spawnWild(route, rng, rt.huntTarget);
-  const hunted = rt.huntTarget !== null && wild.speciesId === rt.huntTarget;
-  rt.huntTarget = null;
+  const wild = spawnWild(route, rng, null, rt.conditions);
   registerSeen(state, wild.speciesId);
   rt.battle = createBattle("wild", [wild]);
   events.push({ type: "encounter", speciesId: wild.speciesId, level: wild.level, shiny: wild.shiny });
@@ -331,16 +362,17 @@ function startBattle(state: GameState, rng: Rng, events: GameEvent[]): void {
     events.push({ type: "debugOffered", speciesId: wild.speciesId });
     return;
   }
-  // A bug the player picked on the map gets a trap right away.
-  if (hunted) rt.manualThrow = true;
   // Throw before the first hit too, so strong teams can still catch.
-  else tryCapture(state, rng, events);
+  tryCapture(state, rng, events);
 }
 
-/** A wild bug of the route; `speciesId` forces the species when the route has it. */
-export function spawnWild(route: RouteDef, rng: Rng, speciesId: string | null = null): BugInstance {
+/**
+ * A wild bug of the route; `speciesId` forces the species when the route has it.
+ * The weather and the time of day change how likely each species is.
+ */
+export function spawnWild(route: RouteDef, rng: Rng, speciesId: string | null = null, conditions: Conditions = CLEAR_DAY): BugInstance {
   const forced = speciesId ? route.encounters.find((e) => e.speciesId === speciesId) : undefined;
-  const encounter = forced ?? pickWeighted(rng, route.encounters);
+  const encounter = forced ?? pickWeighted(rng, route.encounters.map((e) => ({ ...e, weight: e.weight * encounterBoost(e.speciesId, conditions) })));
   const level = randomInt(rng, route.minLevel, route.maxLevel);
   return createBug({ uid: `wild-${Math.floor(rng() * 1e9)}`, speciesId: encounter.speciesId, level, rng, origin: route.id });
 }

@@ -3,7 +3,7 @@ import { getSpecies } from "../game/data/species";
 import { getBoss } from "../game/data/world";
 import type { GameEvent } from "../game/engine";
 import type { GameState } from "../game/state";
-import { BADGE_NAMES, ITEM_TEXT, ROUTE_NAMES } from "../i18n/ptBR";
+import { BADGE_NAMES, ITEM_TEXT, ROUTE_NAMES, UI } from "../i18n/ptBR";
 
 export type LogTone = "info" | "good" | "bad" | "rare";
 
@@ -46,6 +46,8 @@ export function describeEvent(event: GameEvent, state: GameState): { text: strin
       return { text: `${bugName(state, event.uid)} subiu para o nível ${event.level}!`, tone: "good" };
     case "evolved":
       return { text: `${speciesName(event.from)} evoluiu para ${speciesName(event.to)}!`, tone: "rare" };
+    case "fled":
+      return { text: UI.proximity.fled(speciesName(event.speciesId)), tone: "bad" };
     case "achievement":
       return { text: ACHIEVEMENTS_UI.toast(ACHIEVEMENT_TEXT[event.id]?.name ?? event.id, formatNumber(event.reward)), tone: "rare" };
     case "hatched":

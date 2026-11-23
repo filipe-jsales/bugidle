@@ -1,3 +1,4 @@
+import { frameAt, vizFrames, VIZ_SIZE } from "../guildViz";
 import { bestOwned, CHAMPIONS, evaluate, getChampion, getRaid, isRaidUnlocked, raidReward, RAIDS, raidProgress, recruit, startRaid, stopRaid, type RaidTraits } from "../../game/guild";
 import { CHAMPION_TEXT, GUILD_UI as G, RAID_TEXT } from "../../i18n/guild.ptBR";
 import { useApp } from "../appContext";
@@ -43,6 +44,7 @@ export function GuildModal() {
             {CHAMPION_TEXT[running.championId]?.name} · {time(running.durationMs * (1 - raidProgress(state)))}
           </span>
           <Bar kind="xp" value={raidProgress(state)} max={1} />
+          <GuildBars championId={running.championId} raidId={running.raidId} progress={raidProgress(state)} />
           <div className="button-row wrap">
             <Toggle checked={guild.autoRepeat} onChange={(v) => store.update((s) => void (s.guild.autoRepeat = v))} label={G.autoRepeat} />
             <Button small variant="danger" onClick={() => report(store.run(stopRaid))}>
@@ -145,5 +147,26 @@ export function GuildModal() {
         </div>
       </section>
     </Modal>
+  );
+}
+
+/** The champion's algorithm working on 16 bars, one step per slice of the raid. */
+function GuildBars({ championId, raidId, progress }: { championId: string; raidId: string; progress: number }) {
+  const frames = vizFrames(championId, raidId);
+  const frame = frameAt(frames, progress);
+  const index = frames.indexOf(frame);
+  return (
+    <div className="guild-viz">
+      <div className="guild-bars" aria-hidden>
+        {frame.bars.map((value, i) => {
+          const tone = frame.found === i ? "found" : frame.active.includes(i) ? "active" : frame.done.includes(i) ? "done" : frame.target === value ? "target" : "";
+          return <span key={i} className={`guild-bar ${tone}`} style={{ height: `${(value / VIZ_SIZE) * 100}%` }} />;
+        })}
+      </div>
+      <small className="muted">
+        {G.vizStep(index + 1, frames.length)}
+        {frame.target !== undefined && ` · ${G.vizTarget(frame.target)}`}
+      </small>
+    </div>
   );
 }

@@ -6,6 +6,7 @@ import { isBugType } from "./types";
 import { sanitizeRules } from "./rules";
 import { CHAMPIONS, createGuild, RAIDS } from "./guild";
 import { hasSpecies } from "./data/species";
+import { labQuestion } from "./data/labs";
 import { BOSSES, ROUTES } from "./data/world";
 import { createInitialState, createRuntime, defaultSettings, SAVE_VERSION, type CaptureMode, type GameState, type PersistentState } from "./state";
 
@@ -196,6 +197,15 @@ export function importSave(text: string): GameState {
     },
     houses,
     rules: sanitizeRules(raw.rules),
+    labs: Object.fromEntries(
+      Object.entries(isObject(raw.labs) ? raw.labs : {})
+        .filter(([id, r]) => labQuestion(id) && isObject(r))
+        .map(([id, r]) => {
+          const x = r as Json;
+          const count = (v: unknown) => (isNumber(v) ? Math.max(0, Math.floor(v)) : 0);
+          return [id, { solved: x.solved === true, tries: count(x.tries), wrong: count(x.wrong) }];
+        }),
+    ),
     guild: (() => {
       const g = isObject(raw.guild) ? raw.guild : {};
       const base = createGuild();
@@ -211,7 +221,11 @@ export function importSave(text: string): GameState {
     knowledge: Object.fromEntries(
       Object.entries(isObject(raw.knowledge) ? raw.knowledge : {})
         .filter(([id, card]) => hasSpecies(id) && isObject(card) && isNumber(card.box) && isNumber(card.due))
-        .map(([id, card]) => [id, { box: Math.max(1, Math.min(5, Math.floor((card as Json).box as number))), due: (card as Json).due as number }]),
+        .map(([id, card]) => {
+          const c = card as Json;
+          const count = (v: unknown) => (isNumber(v) ? Math.max(0, Math.floor(v)) : 0);
+          return [id, { box: Math.max(1, Math.min(5, Math.floor(c.box as number))), due: c.due as number, seen: count(c.seen), right: count(c.right), wrong: count(c.wrong) }];
+        }),
     ),
     dailyDay: isNumber(raw.dailyDay) ? raw.dailyDay : null,
     bossReview: Object.fromEntries(Object.entries(isObject(raw.bossReview) ? raw.bossReview : {}).filter(([id, n]) => validBoss(id) && isNumber(n)).map(([id, n]) => [id, Math.max(0, Math.min(3, n as number))])),

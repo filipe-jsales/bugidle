@@ -28,9 +28,9 @@ describe("spaced repetition (Leitner boxes)", () => {
 
   it("moves up on a right answer and back to box 1 on a wrong one", () => {
     const state = stateWith(["leaklet", 5]);
-    expect(recordAnswer(state, "nullit", true, TODAY)).toEqual({ box: 1, due: TODAY + 1 });
-    expect(recordAnswer(state, "nullit", true, TODAY)).toEqual({ box: 2, due: TODAY + 2 });
-    expect(recordAnswer(state, "nullit", false, TODAY)).toEqual({ box: 1, due: TODAY + 1 });
+    expect(recordAnswer(state, "nullit", true, TODAY)).toMatchObject({ box: 1, due: TODAY + 1 });
+    expect(recordAnswer(state, "nullit", true, TODAY)).toMatchObject({ box: 2, due: TODAY + 2 });
+    expect(recordAnswer(state, "nullit", false, TODAY)).toMatchObject({ box: 1, due: TODAY + 1 });
   });
 
   it("counts days in UTC", () => {
@@ -112,17 +112,53 @@ describe("learning state", () => {
     tick(state, 3000, createSeededRng(1));
     const species = state.runtime.debug!.speciesId;
     answerDebug(state, lessonFor(species)!.badLine, TODAY);
-    expect(state.knowledge[species]).toEqual({ box: 1, due: TODAY + 1 });
+    expect(state.knowledge[species]).toMatchObject({ box: 1, due: TODAY + 1 });
   });
 
   it("is saved", () => {
     const state = stateWith(["leaklet", 5]);
-    state.knowledge.nullit = { box: 3, due: TODAY };
+    state.knowledge.nullit = { box: 3, due: TODAY, seen: 4, right: 3, wrong: 1 };
     state.dailyDay = TODAY;
     state.bossReview["boss-staging"] = 2;
     const loaded = importSave(exportSave(state));
     expect(loaded.knowledge).toEqual(state.knowledge);
     expect(loaded.dailyDay).toBe(TODAY);
     expect(loaded.bossReview).toEqual({ "boss-staging": 2 });
+  });
+});
+
+describe("second lessons and code ordering", () => {
+  it("the two lessons of a bug take turns as it is reviewed", async () => {
+    const { reviewLesson } = await import("./learning");
+    const state = stateWith(["leaklet", 5]);
+    expect(reviewLesson(state, "nullit")!.id).toBe("nullit");
+    recordAnswer(state, "nullit", true, TODAY);
+    expect(reviewLesson(state, "nullit")!.id).toBe("nullit#2");
+    recordAnswer(state, "nullit", false, TODAY);
+    expect(reviewLesson(state, "nullit")!.id).toBe("nullit");
+    expect(state.knowledge.nullit).toMatchObject({ seen: 2, right: 1, wrong: 1 });
+  });
+
+  it("the daily ordering puzzle uses a seen bug and checks the order", async () => {
+    const { dailyOrderLesson, isRightOrder } = await import("./learning");
+    const { fixedLines } = await import("./data/lessons");
+    const state = stateWith(["leaklet", 5]);
+    state.bugdex = {};
+    expect(dailyOrderLesson(state, TODAY)).toBeUndefined();
+    state.bugdex.offbyone = { seen: 1, defeated: 0, caught: 0, shinyCaught: false };
+    const lesson = dailyOrderLesson(state, TODAY)!;
+    expect(lesson.speciesId).toBe("offbyone");
+    expect(lesson.lines.length).toBeGreaterThanOrEqual(3);
+    const lines = fixedLines(lesson);
+    expect(isRightOrder(lesson, lines.map((_, i) => i))).toBe(true);
+    expect(isRightOrder(lesson, lines.map((_, i) => i).reverse())).toBe(false);
+  });
+
+  it("a right order adds coins to the daily challenge", () => {
+    const a = stateWith(["leaklet", 5]);
+    const b = stateWith(["leaklet", 5]);
+    const coinsA = finishDaily(a, {}, TODAY, true).coins;
+    const coinsB = finishDaily(b, {}, TODAY, false).coins;
+    expect(coinsA).toBeGreaterThan(coinsB);
   });
 });

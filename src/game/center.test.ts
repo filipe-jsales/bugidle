@@ -1,4 +1,4 @@
-import { CENTER_CALM_MS, huntSpecies, inCombat, throwTrapNow, tick, visitRebootCenter, type GameEvent } from "./engine";
+import { inCombat, throwAtRoaming, throwTrapNow, tick, visitRebootCenter, type GameEvent } from "./engine";
 import { createSeededRng } from "./rng";
 import { stateWith } from "./testUtils";
 
@@ -11,23 +11,23 @@ function startFight(state: ReturnType<typeof stateWith>, seed = 1): GameEvent[] 
 }
 
 describe("Reboot Center: a calm place", () => {
-  it("cannot be used during a fight or in the first seconds after it", () => {
-    const state = stateWith(["leaklet", 10]);
+  it("can be used during a fight: the fight is dropped, then everyone is healed and revived", () => {
+    const state = stateWith(["leaklet", 10], ["nullit", 10]);
     state.settings.captureMode = "off";
     startFight(state);
     expect(inCombat(state)).toBe(true);
-    expect(visitRebootCenter(state)).toEqual({ ok: false, reason: "inCombat" });
-    // end the fight and wait less than the calm time
-    state.runtime.battle!.outcome = "won";
-    tick(state, 100, createSeededRng(2));
-    state.runtime.atCenter = true; // keep new fights from starting while we check the clock
-    expect(inCombat(state)).toBe(true);
-    state.runtime.atCenter = false;
-    state.totals.playTimeMs += CENTER_CALM_MS;
-    state.runtime.battle = null;
-    expect(inCombat(state)).toBe(false);
+    const [a, b] = state.team.map((uid) => state.bugs[uid]!);
+    a!.currentHp = 0;
+    b!.currentHp = 1;
+    const coins = state.coins;
     expect(visitRebootCenter(state).ok).toBe(true);
+    expect(inCombat(state)).toBe(false);
     expect(state.runtime.atCenter).toBe(true);
+    const events = tick(state, 3100, createSeededRng(2));
+    expect(events.some((e) => e.type === "rewards")).toBe(false);
+    expect(state.coins).toBe(coins);
+    expect(a!.currentHp).toBeGreaterThan(1);
+    expect(b!.currentHp).toBeGreaterThan(1);
   });
 
   it("no encounters while the nurse heals; with return to hunt the team leaves after", () => {
@@ -63,16 +63,26 @@ describe("throwing a trap by hand", () => {
     expect(throwTrapNow(state)).toEqual({ ok: false, reason: "noItem" });
   });
 
-  it("picking a roaming bug makes it the next encounter and throws at it", () => {
+  it("a trap thrown at a roaming bug catches it or it runs away", () => {
     const state = stateWith(["leaklet", 10]);
     state.settings.captureMode = "off";
-    state.inventory = { breakpoint: 5 };
-    expect(huntSpecies(state, "nullit").ok).toBe(true);
-    const events = startFight(state, 5);
-    tick(state, 100, createSeededRng(6)).forEach((e) => events.push(e));
-    const encounter = events.find((e) => e.type === "encounter");
-    expect(encounter && encounter.type === "encounter" && encounter.speciesId).toBe("nullit");
-    expect(events.some((e) => e.type === "captureAttempt")).toBe(true);
-    expect(huntSpecies(state, "zeroday")).toEqual({ ok: false, reason: "notInRoute" });
+    state.inventory = { rootAccess: 1, breakpoint: 3 };
+    state.settings.preferredTrap = "rootAccess";
+    const before = Object.keys(state.bugs).length;
+    expect(throwAtRoaming(state, "nullit").ok).toBe(true);
+    const events = tick(state, 100, createSeededRng(6));
+    const caught = events.find((e) => e.type === "captured");
+    expect(caught && caught.type === "captured" && caught.roaming).toBe(true);
+    expect(Object.keys(state.bugs).length).toBe(before + 1);
+    state.settings.preferredTrap = "breakpoint";
+    let fled = false;
+    for (let i = 0; i < 3 && !fled; i++) {
+      throwAtRoaming(state, "nullit");
+      fled = tick(state, 100, createSeededRng(20 + i)).some((e) => e.type === "fled");
+    }
+    expect(fled).toBe(true);
+    expect(throwAtRoaming(state, "zeroday")).toEqual({ ok: false, reason: "notInRoute" });
+    state.inventory = {};
+    expect(throwAtRoaming(state, "nullit")).toEqual({ ok: false, reason: "noItem" });
   });
 });

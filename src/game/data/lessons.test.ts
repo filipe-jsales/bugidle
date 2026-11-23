@@ -1,15 +1,24 @@
 import { LESSON_WHY, REGION_TOPICS } from "../../i18n/learning.ptBR";
-import { LESSONS, lessonFor } from "./lessons";
+import { fixedLines, LESSONS, lessonFor, lessonsFor } from "./lessons";
 import { SPECIES } from "./species";
 import { REGIONS } from "./world";
 
 describe("lessons", () => {
-  it("every species has exactly one lesson with an explanation", () => {
+  it("every species has two lessons, each with an explanation, and unique ids", () => {
     for (const species of SPECIES) {
-      expect(lessonFor(species.id), species.id).toBeDefined();
-      expect(LESSON_WHY[species.id]?.length, species.id).toBeGreaterThan(20);
+      expect(lessonFor(species.id)?.id, species.id).toBe(species.id);
+      expect(lessonsFor(species.id), species.id).toHaveLength(2);
+      for (const lesson of lessonsFor(species.id)) expect(LESSON_WHY[lesson.id]?.length, lesson.id).toBeGreaterThan(20);
     }
-    expect(LESSONS).toHaveLength(SPECIES.length);
+    expect(LESSONS).toHaveLength(SPECIES.length * 2);
+    expect(new Set(LESSONS.map((l) => l.id)).size).toBe(LESSONS.length);
+  });
+
+  it("fixedLines replaces only the bad line", () => {
+    const lesson = lessonFor("offbyone")!;
+    const fixed = fixedLines(lesson);
+    expect(fixed[lesson.badLine]).toBe(lesson.fix);
+    expect(fixed.filter((line, i) => line !== lesson.lines[i])).toHaveLength(1);
   });
 
   it("the bad line exists and the fix changes it", () => {

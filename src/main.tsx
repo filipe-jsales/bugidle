@@ -7,6 +7,7 @@ import "./ui/styles.css";
 import "./ui/learning.css";
 import "./ui/polish.css";
 import "./ui/features.css";
+import "./ui/edu.css";
 import { App } from "./ui/App";
 
 const root = document.getElementById("root");

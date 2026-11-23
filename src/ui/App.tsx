@@ -1,3 +1,5 @@
+import { LabModal } from "./modals/LabModal";
+import { GlossaryModal } from "./modals/GlossaryModal";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { ActionResult } from "../game/result";
 import { needsStarter } from "../game/state";
@@ -60,6 +62,10 @@ function ModalHost({ modal }: { modal: ModalState | null }) {
       return <HatcheryModal />;
     case "rules":
       return <RulesModal />;
+    case "lab":
+      return <LabModal topic={modal.topic} />;
+    case "glossary":
+      return <GlossaryModal />;
     case "study":
       return <StudyModal />;
     case "guild":
@@ -119,7 +125,7 @@ export function App() {
   const actions = useMemo<AppActions>(
     () => ({
       // Opening a bug or a species sheet from another window keeps it underneath; closing returns to it.
-      open: (modal) => setStack((s) => (modal.kind === "bug" || modal.kind === "compare" || modal.kind === "review" || (modal.kind === "bugdex" && modal.speciesId) ? [...s, modal] : [modal])),
+      open: (modal) => setStack((s) => (modal.kind === "bug" || modal.kind === "compare" || modal.kind === "review" || modal.kind === "lab" || modal.kind === "glossary" || (modal.kind === "bugdex" && modal.speciesId) ? [...s, modal] : [modal])),
       close: () => setStack((s) => s.slice(0, -1)),
       report: (result: ActionResult) => {
         if (!result.ok) toast(ERROR_TEXT[result.reason]);

@@ -24,11 +24,31 @@ export const COMMAND_HELP: Record<string, string> = {
   echo: "echo <texto>         repete o texto",
   date: "date                 data e hora",
   history: "history              comandos digitados",
+  levels: "levels               o que o terminal já liberou",
+};
+
+/** Text tools used after a pipe, unlocked with badges. */
+export const FILTER_HELP: Record<string, string> = {
+  grep: "... | grep [-i] [-v] <texto>   só as linhas com o texto (-i ignora maiúsculas, -v inverte)",
+  head: "... | head [n]       as primeiras n linhas",
+  tail: "... | tail [n]       as últimas n linhas",
+  wc: "... | wc -l          conta as linhas",
+  sort: "... | sort           ordena as linhas",
+  uniq: "... | uniq           tira linhas repetidas seguidas",
 };
 
 export const T = {
   welcome: ["BugIdle terminal 1.0", "Digite help para ver os comandos. Use Tab para completar e as setas para o histórico."],
   unknown: (cmd: string) => `${cmd}: comando não encontrado. Digite help.`,
+  lockedFeature: (what: string, badges: number) => `${what}: bloqueado. Libera com ${badges} insígnia${badges === 1 ? "" : "s"} (veja: levels).`,
+  needsPipe: (cmd: string) => `${cmd} lê a saída de outro comando. Ex.: ls box | ${cmd}${cmd === "grep" ? " shiny" : ""}`,
+  usageFilter: (cmd: string) => `uso: ${cmd} <texto>`,
+  levels: (level: number, need: { pipes: number; tools: number; scripts: number }) => [
+    `Insígnias: ${level}`,
+    `${level >= need.pipes ? "[x]" : "[ ]"} pipes e grep      (${need.pipes} insígnia)   ex.: ls box | grep shiny`,
+    `${level >= need.tools ? "[x]" : "[ ]"} head, tail, wc, sort, uniq (${need.tools} insígnias)  ex.: ls box | grep memory | wc -l`,
+    `${level >= need.scripts ? "[x]" : "[ ]"} scripts com ; e &&   (${need.scripts} insígnias)  ex.: collect; egg; status`,
+  ],
   usage: (cmd: string) => `uso: ${COMMAND_HELP[cmd] ?? cmd}`,
   ok: "ok",
   whoami: (name: string, level: number) => `${name} (caçador nível ${level})`,

@@ -3,6 +3,7 @@ import type { Lesson } from "../../game/data/lessons";
 import { getSpecies } from "../../game/data/species";
 import { LEARN_UI, LESSON_WHY } from "../../i18n/learning.ptBR";
 import { CodeBlock } from "./CodeBlock";
+import { GlossaryText } from "./GlossaryText";
 import { BugSprite, Button } from "./primitives";
 
 const Q = LEARN_UI.quiz;
@@ -38,7 +39,7 @@ export function Quiz({ lessons, onFinish }: { lessons: Lesson[]; onFinish: (answ
       {answered && (
         <>
           <p className={picked === lesson.badLine ? "ok-text" : "bad-text"}>{picked === lesson.badLine ? LEARN_UI.debug.right : LEARN_UI.debug.wrong}</p>
-          <p className="small">{LESSON_WHY[lesson.speciesId]}</p>
+          <GlossaryText text={LESSON_WHY[lesson.id] ?? ""} className="small" />
           <Button variant="gold" onClick={() => (last ? onFinish(answers) : setIndex(index + 1))}>
             {last ? Q.finish : Q.next}
           </Button>

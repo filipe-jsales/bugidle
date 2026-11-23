@@ -4,7 +4,7 @@
  * Days are counted as whole UTC days so the rules are easy to test.
  */
 import { addItem } from "./inventory";
-import { lessonFor, type Lesson } from "./data/lessons";
+import { fixedLines, lessonFor, lessonsFor, LESSONS, type Lesson } from "./data/lessons";
 import { getSpecies, SPECIES } from "./data/species";
 import { getBoss, routesOfRegion } from "./data/world";
 import type { PersistentState } from "./state";
@@ -21,7 +21,14 @@ export interface KnowledgeCard {
   box: number;
   /** Day number when it should be reviewed again. */
   due: number;
+  /** Answers so far (picks which lesson comes next) and how many were right or wrong. */
+  seen?: number;
+  right?: number;
+  wrong?: number;
 }
+
+/** Points for ordering the fixed code in the daily challenge. */
+export const DAILY_ORDER_COINS = 60;
 
 export function dayNumber(date: Date): number {
   return Math.floor(date.getTime() / 86_400_000);
@@ -36,7 +43,13 @@ export function intervalFor(box: number): number {
 export function recordAnswer(state: PersistentState, speciesId: string, correct: boolean, today: number): KnowledgeCard {
   const current = state.knowledge[speciesId] ?? { box: 0, due: today };
   const box = correct ? Math.min(MAX_BOX, current.box + 1) : 1;
-  const card = { box, due: today + intervalFor(box) };
+  const card: KnowledgeCard = {
+    box,
+    due: today + intervalFor(box),
+    seen: (current.seen ?? 0) + 1,
+    right: (current.right ?? 0) + (correct ? 1 : 0),
+    wrong: (current.wrong ?? 0) + (correct ? 0 : 1),
+  };
   state.knowledge[speciesId] = card;
   return card;
 }
@@ -48,7 +61,29 @@ export function dailyLessons(state: PersistentState, today: number): Lesson[] {
     .filter((s) => state.knowledge[s.id] && state.knowledge[s.id]!.due <= today)
     .sort((a, b) => state.knowledge[a.id]!.box - state.knowledge[b.id]!.box || a.dex - b.dex);
   const fresh = seen.filter((s) => !state.knowledge[s.id]);
-  return [...due, ...fresh].slice(0, DAILY_QUESTIONS).map((s) => lessonFor(s.id)!);
+  return [...due, ...fresh].slice(0, DAILY_QUESTIONS).map((s) => reviewLesson(state, s.id)!);
+}
+
+/** The lesson a species shows next: the two lessons take turns. */
+export function reviewLesson(state: PersistentState, speciesId: string): Lesson | undefined {
+  const all = lessonsFor(speciesId);
+  if (all.length === 0) return undefined;
+  return all[(state.knowledge[speciesId]?.seen ?? 0) % all.length];
+}
+
+/**
+ * Today's "put the code in order" puzzle: a fixed lesson of 3 or more lines
+ * from a bug the player has seen, picked by the day so it changes daily.
+ */
+export function dailyOrderLesson(state: PersistentState, today: number): Lesson | undefined {
+  const pool = LESSONS.filter((l) => l.lines.length >= 3 && (state.bugdex[l.speciesId]?.seen ?? 0) > 0);
+  return pool.length > 0 ? pool[today % pool.length] : undefined;
+}
+
+/** True when `order` (indexes into the fixed lines) rebuilds the code exactly. */
+export function isRightOrder(lesson: Lesson, order: readonly number[]): boolean {
+  const lines = fixedLines(lesson);
+  return order.length === lines.length && order.every((index, position) => lines[index] === lines[position]);
 }
 
 export function dailyAvailable(state: PersistentState, today: number): boolean {
@@ -59,7 +94,7 @@ export function dailyAvailable(state: PersistentState, today: number): boolean {
  * Grades the daily challenge. `answers` maps species to the picked line.
  * Coins per right answer, plus a Mystery Egg for a perfect score.
  */
-export function finishDaily(state: PersistentState, answers: Record<string, number>, today: number): { correct: number; coins: number; egg: boolean } {
+export function finishDaily(state: PersistentState, answers: Record<string, number>, today: number, orderRight = false): { correct: number; coins: number; egg: boolean } {
   if (state.dailyDay === today) return { correct: 0, coins: 0, egg: false };
   const lessons = dailyLessons(state, today);
   let correct = 0;
@@ -68,7 +103,7 @@ export function finishDaily(state: PersistentState, answers: Record<string, numb
     if (right) correct += 1;
     recordAnswer(state, lesson.speciesId, right, today);
   }
-  const coins = correct * DAILY_COINS_PER_CORRECT * (state.badges.length + 1);
+  const coins = (correct * DAILY_COINS_PER_CORRECT + (orderRight ? DAILY_ORDER_COINS : 0)) * (state.badges.length + 1);
   const egg = lessons.length > 0 && correct === lessons.length;
   state.coins += coins;
   if (egg) addItem(state, "mysteryEgg");

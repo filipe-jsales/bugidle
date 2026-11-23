@@ -1,3 +1,7 @@
+import type { LabTopic } from "../../game/data/labs";
+import { SPECIES_LAB } from "../labLinks";
+import { LAB_TOPIC_TEXT } from "../../i18n/labs.ptBR";
+
 import { useState } from "react";
 import { isCaught } from "../../game/bugdex";
 import { bossOfRegion, getRoute, REGIONS, routesOfRegion, type RouteDef } from "../../game/data/world";
@@ -22,7 +26,7 @@ function lockReason(route: RouteDef): string {
 
 export function MapModal() {
   const state = useGame();
-  const { close, report } = useApp();
+  const { close, report, open } = useApp();
   const currentRouteId = state.activity.kind === "route" ? state.activity.routeId : state.activity.returnRouteId;
   const [regionId, setRegionId] = useState(getRoute(currentRouteId).regionId);
   const [view, setView] = useState<"map" | "list">("map");
@@ -31,6 +35,7 @@ export function MapModal() {
   const routes = routesOfRegion(regionId);
   const boss = bossOfRegion(regionId);
   const regionOpen = isRegionUnlocked(state, regionId);
+  const regionLabs = [...new Set(routes.flatMap((r) => r.encounters.map((e) => SPECIES_LAB[e.speciesId]).filter((t): t is LabTopic => Boolean(t))))];
 
   const go = (routeId: string) => {
     if (report(store.run((s) => selectRoute(s, routeId)))) close();
@@ -64,6 +69,11 @@ export function MapModal() {
       </div>
       <p className="region-topics small">
         <strong>{LEARN_UI.regionTeaches(REGION_TOPICS[regionId]?.title ?? "")}</strong> · {REGION_TOPICS[regionId]?.topics.join(", ")}
+        {regionLabs.map((topic) => (
+          <button key={topic} type="button" className="link-button region-lab" onClick={() => open({ kind: "lab", topic })}>
+            {LAB_TOPIC_TEXT[topic].name}
+          </button>
+        ))}
       </p>
       <div className="map-toolbar">
         <span className="muted">{regionOpen ? "" : UI.map.badgeHint(BADGE_NAMES[region.requiredBadge ?? ""] ?? "")}</span>

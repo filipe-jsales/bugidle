@@ -1,4 +1,5 @@
 export type SettingsTab = "audio" | "interactivity" | "hud" | "performance" | "support";
+import type { LabTopic } from "../game/data/labs";
 import { createContext, useContext } from "react";
 import type { ActionResult } from "../game/result";
 
@@ -17,6 +18,8 @@ export type ModalState =
   | { kind: "hatchery" }
   | { kind: "rules" }
   | { kind: "study" }
+  | { kind: "lab"; topic: LabTopic }
+  | { kind: "glossary" }
   | { kind: "guild" }
   | { kind: "terminal" }
   | { kind: "review"; bossId: string }

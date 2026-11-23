@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { activeEnemy } from "../../game/battle";
 import { maxHp } from "../../game/bug";
-import { huntSpecies, throwTrapNow } from "../../game/engine";
+import { throwTrapNow } from "../../game/engine";
+import { throwAtWanderer } from "../world/roamingThrows";
 import { useApp } from "../appContext";
 import { isCaught } from "../../game/bugdex";
 import { baseCaptureChance, MAX_THROWS_PER_ENCOUNTER, pickTrap } from "../../game/capture";
@@ -28,9 +29,7 @@ export function ProximityPanel() {
   const throwNow = () => {
     if (report(store.run(throwTrapNow))) toast(P.thrown);
   };
-  const hunt = (speciesId: string) => {
-    if (report(store.run((s) => huntSpecies(s, speciesId)))) toast(P.hunting(getSpecies(speciesId).name));
-  };
+
   const world = currentWorld();
   const trap = pickTrap(state.inventory, state.settings.preferredTrap);
   const multiplier = trap?.captureMultiplier ?? 1;
@@ -67,12 +66,12 @@ export function ProximityPanel() {
             </button>
           )}
           {nearby.map((w) => (
-            <button key={w.id} type="button" className={`proximity-row ${state.runtime.huntTarget === w.speciesId ? "targeted" : ""}`} onClick={() => hunt(w.speciesId)} title={P.huntHint}>
+            <button key={w.id} type="button" className="proximity-row" onClick={() => world && report(throwAtWanderer(world, w))} title={P.roamingHint}>
               <BugSprite speciesId={w.speciesId} size={28} />
               <div className="proximity-info">
                 <div className="proximity-name">
                   <strong>{getSpecies(w.speciesId).name}</strong>
-                  {state.runtime.huntTarget === w.speciesId ? <Tag tone="pink">{P.targetTag}</Tag> : !isCaught(state, w.speciesId) && <Tag tone="gold">{P.newTag}</Tag>}
+                  {!isCaught(state, w.speciesId) && <Tag tone="gold">{P.newTag}</Tag>}
                 </div>
                 <Bar kind="time" value={baseCaptureChance(w.speciesId, multiplier)} max={0.35} label={P.chance(pct(w.speciesId))} />
               </div>

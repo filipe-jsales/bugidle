@@ -1,3 +1,5 @@
+import type { LabResult } from "./labs";
+import { CLEAR_DAY, type Conditions } from "./weather";
 import type { Battle } from "./battle";
 import type { BugInstance } from "./bug";
 import type { ItemId } from "./data/items";
@@ -94,6 +96,8 @@ export interface PersistentState {
   bossReview: Record<string, number>;
   /** Guild of Algorithms: owned champions, the running raid and clears. */
   guild: GuildState;
+  /** Lab challenge results by question id. */
+  labs: Record<string, LabResult>;
   nextUid: number;
 }
 
@@ -114,12 +118,12 @@ export interface RuntimeState {
   captureBonus: number;
   /** Play time when each species last offered a debug challenge. */
   debugOfferedAt: Record<string, number>;
-  /** Play time (ms) when the last fight ended; the Reboot Center needs a few calm seconds. */
-  combatEndedAt: number;
   /** The player clicked "throw": one trap goes on the next step, outside the automatic filter. */
   manualThrow: boolean;
-  /** Species the player clicked on the map: the next encounter is with it, and a trap is thrown. */
-  huntTarget: string | null;
+  /** Roaming bugs the player clicked: a trap flies to each one on the next step. */
+  roamingThrows: string[];
+  /** Weather and time of day on the current map (the UI sets them from the clock). */
+  conditions: Conditions;
 }
 
 export interface GameState extends PersistentState {
@@ -139,9 +143,9 @@ export function createRuntime(): RuntimeState {
     debug: null,
     captureBonus: 0,
     debugOfferedAt: {},
-    combatEndedAt: -Infinity,
     manualThrow: false,
-    huntTarget: null,
+    roamingThrows: [],
+    conditions: { ...CLEAR_DAY },
   };
 }
 
@@ -185,6 +189,7 @@ export function createInitialState(trainerName = "Hunter"): GameState {
     dailyDay: null,
     bossReview: {},
     guild: createGuild(),
+    labs: {},
     nextUid: 1,
     runtime: createRuntime(),
   };

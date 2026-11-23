@@ -20,12 +20,21 @@ import type { ActionResult } from "../game/result";
 import { ruleAsCode } from "../game/rules";
 import { teamBugs, type CaptureMode, type GameState } from "../game/state";
 import { BUG_TYPES } from "../game/types";
-import { COMMAND_HELP, T } from "../i18n/terminal.ptBR";
+import { COMMAND_HELP, FILTER_HELP, T } from "../i18n/terminal.ptBR";
 import { ERROR_TEXT, ITEM_TEXT, ROUTE_NAMES, SPECIES_DESCRIPTIONS, CAPTURE_MODE_NAMES } from "../i18n/ptBR";
 import { LESSON_WHY } from "../i18n/learning.ptBR";
 import { CHAMPION_TEXT, RAID_TEXT } from "../i18n/guild.ptBR";
 
-export const COMMANDS = Object.keys(COMMAND_HELP);
+export const COMMANDS = [...Object.keys(COMMAND_HELP), ...Object.keys(FILTER_HELP)];
+
+/** Badges needed for each terminal feature: pipes and grep, then text tools, then scripts. */
+export const TERMINAL_LEVELS = { pipes: 1, tools: 2, scripts: 3 } as const;
+
+const TOOLS = ["head", "tail", "wc", "sort", "uniq"];
+
+function terminalLevel(state: GameState): number {
+  return state.badges.length;
+}
 
 export interface CommandOutput {
   lines: string[];
@@ -66,7 +75,7 @@ function list(state: GameState, what: string): string[] {
       return teamBugs(state).map((b, i) => `${i + 1}  ${getSpecies(b.speciesId).name.padEnd(13)} Nv ${String(b.level).padStart(3)}  HP ${b.currentHp}`);
     case "box": {
       const box = Object.values(state.bugs).filter((b) => !state.team.includes(b.uid));
-      return box.length ? box.map((b) => `${getSpecies(b.speciesId).name.padEnd(13)} Nv ${b.level}`) : [T.empty];
+      return box.length ? box.map((b) => `${getSpecies(b.speciesId).name.padEnd(13)} Nv ${String(b.level).padStart(3)}  ${getSpecies(b.speciesId).types.join("/")}${b.shiny ? "  shiny" : ""}`) : [T.empty];
     }
     case "items": {
       const owned = (Object.keys(state.inventory) as ItemId[]).filter((id) => (state.inventory[id] ?? 0) > 0);
@@ -83,14 +92,79 @@ function list(state: GameState, what: string): string[] {
   }
 }
 
+/**
+ * Runs a full line: scripts (";" and "&&") and pipes ("|") are unlocked with
+ * badges; each piece after a pipe is a text filter over the lines before it.
+ */
 export function runCommand(state: GameState, input: string, ctx: TerminalContext): CommandOutput {
+  const level = terminalLevel(state);
+  if (/;|&&/.test(input)) {
+    if (level < TERMINAL_LEVELS.scripts) return { lines: [T.lockedFeature("; e &&", TERMINAL_LEVELS.scripts)] };
+    const out: CommandOutput = { lines: [] };
+    for (const part of input.split(/;|&&/)) {
+      const r = runPipeline(state, part, ctx, level);
+      if (r.clear) out.lines = [];
+      out.lines.push(...r.lines);
+    }
+    return out;
+  }
+  return runPipeline(state, input, ctx, level);
+}
+
+function runPipeline(state: GameState, input: string, ctx: TerminalContext, level: number): CommandOutput {
+  const [first = "", ...filters] = input.split("|");
+  if (filters.length > 0 && level < TERMINAL_LEVELS.pipes) return { lines: [T.lockedFeature("|", TERMINAL_LEVELS.pipes)] };
+  const head = first.trim().split(/\s+/)[0] ?? "";
+  if (head in FILTER_HELP) return { lines: [T.needsPipe(head)] };
+  let out = runSingle(state, first, ctx);
+  for (const filter of filters) {
+    if (out.clear) break;
+    out = { lines: applyFilter(filter.trim(), out.lines, level) };
+  }
+  return out;
+}
+
+/** Text tools that read the lines coming from a pipe. */
+export function applyFilter(filter: string, lines: string[], level: number): string[] {
+  const [name = "", ...args] = filter.split(/\s+/);
+  if (TOOLS.includes(name) && level < TERMINAL_LEVELS.tools) return [T.lockedFeature(name, TERMINAL_LEVELS.tools)];
+  switch (name) {
+    case "grep": {
+      const flags = args.filter((a) => a.startsWith("-")).join("");
+      const pattern = args.filter((a) => !a.startsWith("-")).join(" ");
+      if (!pattern) return [T.usageFilter("grep")];
+      const ignoreCase = flags.includes("i");
+      const invert = flags.includes("v");
+      const needle = ignoreCase ? pattern.toLowerCase() : pattern;
+      return lines.filter((l) => (ignoreCase ? l.toLowerCase() : l).includes(needle) !== invert);
+    }
+    case "head":
+      return lines.slice(0, Number(args[0]?.replace("-", "")) || 10);
+    case "tail":
+      return lines.slice(-(Number(args[0]?.replace("-", "")) || 10));
+    case "wc":
+      return [String(lines.length)];
+    case "sort":
+      return [...lines].sort((a, b) => a.localeCompare(b, "pt-BR"));
+    case "uniq":
+      return lines.filter((l, i) => l !== lines[i - 1]);
+    default:
+      return [T.unknown(name)];
+  }
+}
+
+function runSingle(state: GameState, input: string, ctx: TerminalContext): CommandOutput {
   const [cmd = "", ...args] = input.trim().split(/\s+/);
   const arg = args[0] ?? "";
   switch (cmd) {
     case "":
       return { lines: [] };
     case "help":
-      return { lines: arg ? [COMMAND_HELP[arg] ?? T.unknown(arg)] : Object.values(COMMAND_HELP) };
+      return { lines: arg ? [COMMAND_HELP[arg] ?? FILTER_HELP[arg] ?? T.unknown(arg)] : [...Object.values(COMMAND_HELP), "", ...Object.values(FILTER_HELP)] };
+    case "levels": {
+      const level = terminalLevel(state);
+      return { lines: T.levels(level, TERMINAL_LEVELS) };
+    }
     case "clear":
       return { lines: [], clear: true };
     case "whoami":

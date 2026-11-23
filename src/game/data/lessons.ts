@@ -1,10 +1,14 @@
 /**
- * One short lesson per species: a few lines of code that contain that bug, the
- * line where it is, and the corrected line. Used by "Debug to capture", the
+ * Short lessons, two per species: a few lines of code that contain that bug, the
+ * line where it is, and the corrected line. The second ones are in lessonsMore.ts. Used by "Debug to capture", the
  * Bugdex "how to fix", boss code reviews, the daily challenge and the terminal.
  * The explanation text lives in i18n (LESSON_WHY).
  */
+import { MORE_LESSONS } from "./lessonsMore";
+
 export interface Lesson {
+  /** The species id for the first lesson, "<species>#2" for the second. */
+  readonly id: string;
   readonly speciesId: string;
   readonly language: "js" | "c" | "css" | "sql" | "git";
   readonly lines: readonly string[];
@@ -14,10 +18,10 @@ export interface Lesson {
   readonly fix: string;
 }
 
-const L = (speciesId: string, language: Lesson["language"], lines: string[], badLine: number, fix: string): Lesson => ({ speciesId, language, lines, badLine, fix });
+const L = (speciesId: string, language: Lesson["language"], lines: string[], badLine: number, fix: string): Lesson => ({ id: speciesId, speciesId, language, lines, badLine, fix });
 
 // prettier-ignore
-export const LESSONS: readonly Lesson[] = [
+const FIRST_LESSONS: readonly Lesson[] = [
   L("typobit", "js", ["const total = 10;", "console.log(totl);"], 1, "console.log(total);"),
   L("typoworm", "js", ["if (ready) {", "  start();", "// faltou fechar o bloco"], 2, "}"),
   L("syntaxwyrm", "js", ["const user = {", "  name: \"Ana\",", "  age: 30", ";"], 3, "};"),
@@ -58,8 +62,23 @@ export const LESSONS: readonly Lesson[] = [
   L("markmoth", "js", ["relay(70).close();", "// uma mariposa esta presa no rele 70"], 0, "removeMoth(70); relay(70).close();"),
 ];
 
-const BY_SPECIES = new Map(LESSONS.map((l) => [l.speciesId, l]));
+export const LESSONS: readonly Lesson[] = [...FIRST_LESSONS, ...MORE_LESSONS];
 
+/** The first lesson of a species (debug to capture, boss review, Bugdex). */
 export function lessonFor(speciesId: string): Lesson | undefined {
-  return BY_SPECIES.get(speciesId);
+  return FIRST_LESSONS.find((l) => l.speciesId === speciesId);
+}
+
+/** Every lesson of a species, first one first. */
+export function lessonsFor(speciesId: string): Lesson[] {
+  return LESSONS.filter((l) => l.speciesId === speciesId);
+}
+
+export function lessonById(id: string): Lesson | undefined {
+  return LESSONS.find((l) => l.id === id);
+}
+
+/** The lesson's code with the bad line already fixed. */
+export function fixedLines(lesson: Lesson): string[] {
+  return lesson.lines.map((line, i) => (i === lesson.badLine ? lesson.fix : line));
 }

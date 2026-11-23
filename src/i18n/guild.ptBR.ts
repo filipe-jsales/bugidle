@@ -40,6 +40,8 @@ export const GUILD_UI = {
   send: "Enviar",
   stop: "Parar",
   running: (name: string) => `Em missão: ${name}`,
+  vizStep: (n: number, total: number) => `passo ${n} de ${total} do algoritmo`,
+  vizTarget: (value: number) => `procurando o ${value}`,
   autoRepeat: "Repetir a missão sozinha",
   locked: "Conclua a missão anterior",
   size: (n: string) => `n = ${n}`,

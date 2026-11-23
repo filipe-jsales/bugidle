@@ -1,0 +1,317 @@
+/*
+ * v0.10 learning screens: code ordering, labs, glossary, guild bars, teacher
+ * report. Same theme: inset boxes, 2px borders, pixel fonts, steps() motion.
+ */
+
+/* ---------------------------------------------------------------- ordering puzzle */
+
+.order-puzzle {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.order-puzzle p {
+  margin: 0;
+}
+.order-answer {
+  margin: 0;
+  padding: 8px 8px 8px 34px;
+  min-height: 44px;
+  background: var(--inset);
+  border: 2px dashed var(--inset-border);
+  border-radius: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.order-answer.right {
+  border-style: solid;
+  border-color: var(--green-dark);
+}
+.order-answer.wrong {
+  border-style: solid;
+  border-color: var(--red-dark);
+}
+.order-answer button,
+.order-answer span {
+  width: 100%;
+  text-align: left;
+  padding: 4px 8px;
+  background: var(--inset-2);
+  border: 2px solid var(--inset-border);
+  border-radius: 3px;
+  color: inherit;
+  cursor: pointer;
+  display: block;
+}
+.order-answer span {
+  cursor: default;
+}
+.order-pool {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.order-piece {
+  text-align: left;
+  padding: 5px 8px;
+  background: var(--panel-dark);
+  border: 2px solid var(--panel-border);
+  border-radius: 3px;
+  color: inherit;
+  cursor: pointer;
+  transition: transform 80ms steps(2);
+}
+.order-piece:hover:not(:disabled) {
+  transform: translateX(3px);
+  border-color: var(--gold);
+}
+.mono button,
+.mono span,
+.mono .order-piece,
+.order-pool.mono .order-piece {
+  font-family: ui-monospace, "Cascadia Code", Consolas, monospace;
+  font-size: 12px;
+  white-space: pre-wrap;
+}
+
+/* ---------------------------------------------------------------- labs */
+
+.lab-topics {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 6px;
+}
+.lab-topic,
+.lab-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  padding: 10px;
+  text-align: left;
+  color: inherit;
+  background: var(--inset);
+  border: 2px solid var(--inset-border);
+  border-radius: 4px;
+  cursor: pointer;
+  transition:
+    transform 80ms steps(2),
+    border-color 80ms steps(2);
+}
+.lab-topic:hover,
+.lab-card:hover {
+  border-color: var(--purple);
+  transform: translateY(-1px);
+}
+.lab-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.lab-card {
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+}
+.lab-card > span {
+  flex: 1;
+  font-size: 13px;
+}
+.lab-card > strong {
+  font-family: var(--font-title);
+  color: var(--gold);
+}
+.lab-card.solved {
+  border-color: var(--green-dark);
+}
+.lab-question {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.lab-prompt {
+  margin: 0;
+  font-weight: 700;
+  line-height: 1.45;
+}
+.lab-code {
+  margin: 0;
+  padding: 10px 12px;
+  background: #0b0f0c;
+  border: 2px solid #1f2a24;
+  border-radius: 4px;
+  color: #8ff0a4;
+  font-family: ui-monospace, "Cascadia Code", Consolas, monospace;
+  font-size: 12px;
+  overflow-x: auto;
+}
+.lab-options {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.lab-option {
+  text-align: left;
+  padding: 8px 10px;
+  background: var(--inset);
+  border: 2px solid var(--inset-border);
+  border-radius: 4px;
+  color: inherit;
+  cursor: pointer;
+  white-space: pre-wrap;
+  transition:
+    transform 80ms steps(2),
+    border-color 80ms steps(2);
+}
+.lab-option.mono {
+  font-family: ui-monospace, "Cascadia Code", Consolas, monospace;
+  font-size: 12px;
+}
+.lab-option:hover:not(:disabled) {
+  border-color: var(--gold);
+  transform: translateX(3px);
+}
+.lab-option.right {
+  border-color: var(--green);
+  background: #1f3a24;
+}
+.lab-option.wrong {
+  border-color: var(--red);
+  background: #3a1f24;
+}
+.lab-option.dim {
+  opacity: 0.55;
+}
+.lab-table-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  overflow-x: auto;
+}
+.lab-table {
+  border-collapse: collapse;
+  font-size: 12px;
+  background: var(--inset);
+}
+.lab-table th,
+.lab-table td {
+  padding: 3px 10px;
+  border: 1px solid var(--inset-border);
+  text-align: left;
+}
+.lab-table th {
+  background: var(--inset-2);
+  font-family: var(--font-title);
+  font-size: 10px;
+}
+.region-lab {
+  margin-left: 8px;
+}
+
+/* ---------------------------------------------------------------- glossary */
+
+.glossary-text p {
+  margin: 0;
+  line-height: 1.5;
+}
+.glossary-word {
+  padding: 0;
+  background: none;
+  border: none;
+  color: inherit;
+  font: inherit;
+  text-decoration: underline dashed var(--gold);
+  text-underline-offset: 3px;
+  cursor: help;
+}
+.glossary-word:hover,
+.glossary-word.active {
+  color: var(--gold);
+}
+.glossary-def {
+  margin-top: 6px !important;
+  padding: 6px 8px;
+  background: var(--inset);
+  border-left: 4px solid var(--gold);
+  border-radius: 3px;
+}
+.glossary-list {
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 6px;
+}
+.glossary-entry {
+  padding: 8px 10px;
+  background: var(--inset);
+  border: 2px solid var(--inset-border);
+  border-radius: 4px;
+}
+.glossary-entry dt {
+  font-family: var(--font-title);
+  font-size: 11px;
+  color: var(--gold);
+}
+.glossary-entry dd {
+  margin: 4px 0 0;
+  font-size: 13px;
+  line-height: 1.45;
+}
+.dex-lesson {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+/* ---------------------------------------------------------------- guild bars */
+
+.guild-viz {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.guild-bars {
+  height: 72px;
+  display: flex;
+  align-items: flex-end;
+  gap: 3px;
+  padding: 6px;
+  background: var(--inset);
+  border: 2px solid var(--inset-border);
+  border-radius: 4px;
+}
+.guild-bar {
+  flex: 1;
+  background: var(--purple-dark);
+  border-top: 2px solid var(--purple);
+}
+.guild-bar.active {
+  background: var(--gold-dark);
+  border-top-color: var(--gold);
+}
+.guild-bar.done {
+  background: var(--green-dark);
+  border-top-color: var(--green);
+}
+.guild-bar.target {
+  background: var(--blue-dark);
+  border-top-color: var(--blue);
+}
+.guild-bar.found {
+  background: var(--gold);
+  border-top-color: #fff;
+}
+
+/* code must show what you type: no ligatures (>= stays >=, not a symbol) */
+pre,
+code,
+.mono,
+.lab-option,
+.lab-code,
+.terminal,
+.code-block {
+  font-variant-ligatures: none;
+  font-feature-settings: "liga" 0, "calt" 0;
+}

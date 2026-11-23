@@ -1,3 +1,4 @@
+import { GlossaryText } from "./GlossaryText";
 import { useState } from "react";
 import { lessonFor } from "../../game/data/lessons";
 import { getSpecies } from "../../game/data/species";
@@ -48,7 +49,7 @@ export function DebugPanel() {
           <>
             <p className={showing.correct ? "ok-text" : "bad-text"}>{showing.correct ? D.right : D.wrong}</p>
             <CodeBlock lesson={lesson} reveal picked={showing.picked} />
-            <p className="small">{LESSON_WHY[speciesId]}</p>
+            <GlossaryText text={LESSON_WHY[speciesId] ?? ""} className="small" />
           </>
         )
       )}

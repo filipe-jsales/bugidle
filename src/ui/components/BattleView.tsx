@@ -3,7 +3,11 @@ import { activeEnemy, activePlayerBug } from "../../game/battle";
 import { maxHp, type BugInstance } from "../../game/bug";
 import { getSpecies } from "../../game/data/species";
 import { getBoss, getRegion, getRoute } from "../../game/data/world";
-import { forfeitBoss, huntSpecies, RECOVERY_MS, returnToHunt, throwTrapNow, visitRebootCenter } from "../../game/engine";
+import { forfeitBoss, RECOVERY_MS, returnToHunt, throwTrapNow, visitRebootCenter } from "../../game/engine";
+import { RESULT_MS, roamingEffects, throwAtWanderer } from "../world/roamingThrows";
+import { RebootConfirm } from "./RebootConfirm";
+import { msToNextWeather } from "../../game/weather";
+import { TIME_TEXT, WEATHER_TEXT, WEATHER_UI } from "../../i18n/weather.ptBR";
 import { defaultRng } from "../../game/rng";
 import { teamBugs, type GameState } from "../../game/state";
 import { walkFrame } from "../../sprites/trainerSprite";
@@ -111,6 +115,7 @@ export function BattleView() {
   const lastEnemy = useRef<{ bug: BugInstance; pos: Vec; endedAt: number | null } | null>(null);
   // The battle camera always follows the trainer; the player only picks the zoom, with the buttons.
   const [zoomChoice, setZoomChoice] = useState(1);
+  const [confirmReboot, setConfirmReboot] = useState(false);
 
   useEffect(() => {
     const el = viewportRef.current;
@@ -146,6 +151,7 @@ export function BattleView() {
 
   const prefs = usePreferences();
   const healing = state.runtime.recoveryMs > 0;
+  const conditions = state.runtime.conditions;
   const lighting = prefs.timeLighting ? lightingFor(new Date().getHours()) : null;
   const now = performance.now();
   const rt = state.runtime;
@@ -168,7 +174,7 @@ export function BattleView() {
 
   const lastPlayerHit = lastOf(recent, (e) => e.event.type === "attack" && e.event.side === "player");
   const lastEnemyHit = lastOf(recent, (e) => e.event.type === "attack" && e.event.side === "enemy");
-  const lastThrow = lastOf(recent, (e) => e.event.type === "captureAttempt");
+  const lastThrow = lastOf(recent, (e) => e.event.type === "captureAttempt" && !e.event.roaming);
   const throwing = lastThrow && now - lastThrow.at < 900 ? lastThrow : undefined;
   const lastCrit = lastOf(recent, (e) => e.event.type === "attack" && e.event.critical);
   const shaking = lastCrit !== undefined && now - lastCrit.at < 420;
@@ -247,12 +253,10 @@ export function BattleView() {
             <button
               key={w.id}
               type="button"
-              className={`entity wild clickable-bug ${rt.huntTarget === w.speciesId ? "targeted" : ""}`}
+              className="entity wild clickable-bug"
               style={at(w.pos)}
-              title={UI.proximity.huntHint}
-              onClick={() => {
-                if (report(store.run((s) => huntSpecies(s, w.speciesId)))) toast(UI.proximity.hunting(getSpecies(w.speciesId).name));
-              }}
+              title={UI.proximity.roamingHint}
+              onClick={() => report(throwAtWanderer(world, w))}
             >
               <div className="shadow" />
               <BugSprite speciesId={w.speciesId} size={WILD_PX} animate phase={w.id * 0.37} />
@@ -268,7 +272,6 @@ export function BattleView() {
                 if (report(store.run(throwTrapNow))) toast(UI.proximity.thrown);
               }}
             >
-              {prefs.nameplates && <Nameplate bug={enemy} showHp={false} />}
               <div className="shadow" />
               <div key={lastEnemyHit?.id ?? 0} className="lunge" style={{ "--lx": `${Math.sign(playerPos.x - enemyPos.x) * 14}px`, "--ly": `${Math.sign(playerPos.y - enemyPos.y) * 8}px` } as CSSProperties}>
                 <div key={lastPlayerHit?.id ?? 0} className="hit-flash">
@@ -307,7 +310,6 @@ export function BattleView() {
 
           {player && (
             <div className="entity" style={at(playerPos)}>
-              {prefs.nameplates && <Nameplate bug={player} showHp />}
               <div className="shadow" />
               {levelUp && <div key={levelUp.id} className="levelup-ring" />}
               <div key={lastPlayerHit?.id ?? 0} className="lunge" style={{ "--lx": `${Math.sign(enemyPos.x - playerPos.x) * 14}px`, "--ly": `${Math.sign(enemyPos.y - playerPos.y) * 8}px` } as CSSProperties}>
@@ -315,6 +317,33 @@ export function BattleView() {
                   <BugSprite speciesId={player.speciesId} shiny={player.shiny} size={BUG_PX} className={world.follower.moving ? "hop" : ""} animate />
                 </div>
               </div>
+            </div>
+          )}
+
+          {roamingEffects(now).map((fx) => (
+            <div key={`fx${fx.id}`} className={`entity roaming-fx ${fx.result ?? "flying"}`} style={at(fx.pos)}>
+              <div className="shadow" />
+              <BugSprite speciesId={fx.speciesId} size={WILD_PX} />
+              <div className="trap-throw roaming-trap">
+                <ItemIcon id={state.settings.preferredTrap} size={20} />
+              </div>
+              {fx.result && (
+                <span className={`roaming-result ${fx.result}`} style={{ animationDuration: `${RESULT_MS}ms` }}>
+                  {fx.result === "caught" ? "CAPTURADO!" : UI.proximity.fledFloat}
+                </span>
+              )}
+            </div>
+          ))}
+
+          {/* name, level and HP boxes above everything else on the map */}
+          {prefs.nameplates && enemy && world.encounter && (
+            <div className="nameplate-anchor" style={{ left: enemyPos.x, top: enemyPos.y - BUG_PX - 2 }}>
+              <Nameplate bug={enemy} showHp={false} />
+            </div>
+          )}
+          {prefs.nameplates && player && (
+            <div className="nameplate-anchor" style={{ left: playerPos.x, top: playerPos.y - BUG_PX - 2 }}>
+              <Nameplate bug={player} showHp />
             </div>
           )}
 
@@ -328,6 +357,7 @@ export function BattleView() {
         </div>
 
         {lighting && lighting.opacity > 0 && <div className="time-lighting" style={{ background: lighting.color, opacity: lighting.opacity }} />}
+        {conditions.weather !== "clear" && !prefs.economy && !prefs.ultraEconomy && <div className={`weather weather-${conditions.weather}`} aria-hidden />}
 
         <div className="battle-label">
           {isBoss ? (
@@ -343,6 +373,12 @@ export function BattleView() {
           ) : (
             <>
               <strong>{ROUTE_NAMES[scene.routeId]}</strong>
+              <span
+                className={`weather-chip weather-chip-${conditions.weather}`}
+                title={`${WEATHER_TEXT[conditions.weather].effect}${TIME_TEXT[conditions.time].effect ? `; ${TIME_TEXT[conditions.time].effect}` : ""} (${WEATHER_UI.changesIn(Math.ceil(msToNextWeather(new Date()) / 60_000))})`}
+              >
+                {WEATHER_TEXT[conditions.weather].name} · {TIME_TEXT[conditions.time].name}
+              </span>
               <span className="muted">
                 {UI.level} {getRoute(scene.routeId).minLevel}-{getRoute(scene.routeId).maxLevel}
               </span>
@@ -364,7 +400,7 @@ export function BattleView() {
               {UI.forfeit}
             </Button>
           ) : (
-            <Button variant="purple" onClick={() => report(store.run(visitRebootCenter))}>
+            <Button variant="purple" onClick={() => (rt.battle && !rt.battle.outcome ? setConfirmReboot(true) : report(store.run(visitRebootCenter)))}>
               <Icon name="reboot" size={14} /> <span className="btn-text">{UI.rebootCenter}</span>
             </Button>
           )}
@@ -380,6 +416,7 @@ export function BattleView() {
         </div>
 
         <ProximityPanel />
+        {confirmReboot && <RebootConfirm onClose={() => setConfirmReboot(false)} />}
         <DebugPanel />
 
         {rt.atCenter && rt.recoveryMs <= 0 && (

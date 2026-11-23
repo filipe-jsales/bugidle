@@ -1,3 +1,6 @@
+import { SPECIES_LAB } from "../labLinks";
+import { LAB_TOPIC_TEXT } from "../../i18n/labs.ptBR";
+import { GLOSSARY_UI } from "../../i18n/glossary.ptBR";
 import { useState } from "react";
 import { dexProgress, isCaught, isSeen } from "../../game/bugdex";
 import { getSpecies, preEvolutionOf, SPECIES } from "../../game/data/species";
@@ -6,13 +9,15 @@ import { routesWithSpecies } from "../../game/data/world";
 import { STARTER_IDS } from "../../game/state";
 import { ITEM_TEXT, RARITY_NAMES, ROUTE_NAMES, SPECIES_DESCRIPTIONS, STAT_NAMES, UI } from "../../i18n/ptBR";
 import { useApp } from "../appContext";
-import { BugSprite, Modal, Tag, TypeTag } from "../components/primitives";
+import { BugSprite, Button, Modal, Tag, TypeTag } from "../components/primitives";
 import { useGame } from "../store";
-import { lessonFor } from "../../game/data/lessons";
+import { lessonFor, lessonsFor } from "../../game/data/lessons";
+import { GlossaryText } from "../components/GlossaryText";
 import { LEARN_UI, LESSON_WHY } from "../../i18n/learning.ptBR";
 import { CodeBlock } from "../components/CodeBlock";
 
 function DexEntryView({ speciesId }: { speciesId: string }) {
+  const { open } = useApp();
   const state = useGame();
   const species = getSpecies(speciesId);
   const entry = state.bugdex[speciesId];
@@ -76,13 +81,25 @@ function DexEntryView({ speciesId }: { speciesId: string }) {
       <section className="dex-fix">
         <h4>{LEARN_UI.howToFix}</h4>
         {caught && lessonFor(speciesId) ? (
-          <>
-            <CodeBlock lesson={lessonFor(speciesId)!} reveal />
-            <p className="small">{LESSON_WHY[speciesId]}</p>
-          </>
+          lessonsFor(speciesId).map((lesson) => (
+            <div key={lesson.id} className="dex-lesson">
+              <CodeBlock lesson={lesson} reveal />
+              <GlossaryText text={LESSON_WHY[lesson.id] ?? ""} className="small" />
+            </div>
+          ))
         ) : (
           <p className="muted small">{LEARN_UI.lockedFix}</p>
         )}
+        <div className="button-row wrap">
+          {SPECIES_LAB[speciesId] && (
+            <Button variant="purple" small onClick={() => open({ kind: "lab", topic: SPECIES_LAB[speciesId]! })}>
+              {LAB_TOPIC_TEXT[SPECIES_LAB[speciesId]!].name}
+            </Button>
+          )}
+          <Button variant="dark" small onClick={() => open({ kind: "glossary" })}>
+            {GLOSSARY_UI.open}
+          </Button>
+        </div>
       </section>
     </div>
   );

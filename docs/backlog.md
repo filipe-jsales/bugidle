@@ -103,11 +103,22 @@ Principle: learning is optional, short and rewarded; it never blocks progress.
 - [x] New trap tiers: Logpoint 1.2x, Breakpoint Condicional 2x, Tracepoint 3x, Core Dump 3.6x
 - [x] All items and menu icons redrawn at 16x16 with outline and three-tone shading
 
+## v0.10 - learning pack, weather, catching roaming bugs
+
+- [x] Click a roaming bug: a trap flies to it; caught or "FUGIU!", and it leaves the map and the proximity list
+- [x] Nameplates (name, level, HP) above everything on the map
+- [x] Reboot Center: during a fight a popup warns that the fight's XP and coins are lost; confirming heals and revives the whole team (no more 3 s rule)
+- [x] Weather and time of day change encounters (rain, storm, fog, heat; dusk and night bring rare bugs), with effects on the map
+- [x] Second lesson for every bug; the daily review alternates them
+- [x] "Ordene o código" bonus puzzle in the daily challenge
+- [x] Labs: Git (Mergefly), SQL (Bancos de Dados), Networks (Redes), Security (Injectick, Xssquito), 4 challenges each
+- [x] Glossary: underlined words in explanations and a Glossário window
+- [x] Terminal levels: pipes and grep, then head/tail/wc/sort/uniq, then scripts with ; and &&
+- [x] Guild visualizer: the algorithm's bars move while the raid runs
+- [x] Teacher report: download a text report of what was studied
+
 ## Next (core polish)
 
-- [ ] More lessons per bug (today one each) so reviews do not repeat
-- [ ] Terminal: pipes and grep (`ls box | grep shiny`) as a later lesson
-- [ ] Guild: search/sort visualizer (bars moving) while a raid runs
 
 
 - [ ] Trainer customization (avatar colors, outfits)
@@ -120,7 +131,6 @@ Principle: learning is optional, short and rewarded; it never blocks progress.
 
 ## Ideas: mechanics
 
-- [ ] Weather and time events on the map (rain in the server room = more network bugs; night = more rare bugs), tied to "Iluminação pelo horário"
 - [ ] Bug abilities: one passive per species (Heisenbug dodges the first hit, Leaklet drains HP each turn)
 - [ ] Team synergies: 3 bugs of the same type give a small bonus; mixed teams get type coverage hints
 - [ ] Rival hunter NPC who appears on routes for a short fight, with a weekly team
@@ -129,17 +139,26 @@ Principle: learning is optional, short and rewarded; it never blocks progress.
 - [ ] Trap crafting with stones (stones + coins = a better trap)
 - [ ] Badges case and trainer card to show progress (playtime, shinies, favorite bug)
 - [ ] Expeditions: send a boxed team on a timed trip to a cleared route for loot
+- [ ] Weather forecast: a small panel with the next 3 weather slots per region, to plan where to hunt
+- [ ] Weather-only bugs: a rare species that only appears in storms or at night
+- [ ] Bug moods: a bug that wins a lot gets "em chamas" (+speed) for a while; one that loses gets tired
+- [ ] Route bosses: a mini-boss every 100 defeats on a route, with a stone reward
+- [ ] Bounties: daily board with 3 tasks (catch 5 memory bugs, win 20 fights in the rain...) for coins and eggs
+- [ ] Shiny chain: catching the same species in a row slowly raises the shiny chance
+- [ ] Photo mode: hide the HUD and save a screenshot of the map with the team
 
 ## Ideas: learning
 
-- [ ] "Fix the code" mini-challenge: reorder lines (Parsons problems) instead of picking one line
-- [ ] Git lessons in the Mergefly route: branches, merge conflicts as a small visual puzzle
-- [ ] SQL mini-queries in the Bancos de Dados house: pick the query that returns the right rows
-- [ ] Networking lesson in the Redes house: follow a packet through DNS, TCP and HTTP
-- [ ] Security lesson: spot the injection in a form; ties to Injectick and Xssquito
-- [ ] Glossary in the Bugdex: every technical word in the lessons links to a short definition
-- [ ] Terminal levels: unlock `grep`, pipes and scripts as the player progresses
-- [ ] Teacher mode: export a report of what the player studied (boxes, right answers per topic)
+- [ ] Type the fix: instead of picking the line, write the corrected line (checked against a few accepted answers)
+- [ ] Code tracing: "what does this print?" questions where the player follows the variables step by step
+- [ ] Big-O lab in the Guild: guess which champion finishes first before sending them, and see the real step count
+- [ ] Data structures lab: stack, queue and hash map as small visual puzzles (push/pop, enqueue/dequeue)
+- [ ] Regex lab with Regexorpion: write a pattern that matches the green lines and not the red ones
+- [ ] Logic gates lab in the Histórica house: build AND, OR and NOT from transistors
+- [ ] Binary and hex: convert numbers to open the Y2Kbeetle chest
+- [ ] Debugger mini-game: step through code with breakpoints and watch the variables change
+- [ ] Study streak: days in a row with the daily challenge give a growing bonus
+- [ ] Class code: a teacher shares a code and the report groups the students (needs online, later)
 
 ## Later: other mechanics (not started on purpose)
 

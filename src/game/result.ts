@@ -37,7 +37,6 @@ export type ActionError =
   | "raidRunning"
   | "raidLocked"
   | "cannotRun"
-  | "inCombat"
   | "notInRoute";
 
 export const OK: ActionResult = { ok: true };

@@ -77,9 +77,13 @@ Obstacles and roads (`world/navigation.ts`): the map has a few wobbly roads and 
 
 Map art (`render/mapArt.ts`): every region is a themed place drawn in layers at half resolution: ground tiles with variations, big details (copper traces, cable runs, cloud mounds), holes (the sky under the Cloud region), textured roads with an edge and a lip, the Reboot Center square, and small decorations that never block. Obstacles are standing sprites with an automatic outline, sorted by depth with the bugs (6 drawings per region; in the Cloud some obstacles are holes in the floor instead). To add a region look, add a `Theme` with `tile`, `road`, `decor`, `props` and `plaza`.
 
-The Reboot Center is a calm square at the map start (`nav.town`): the building is an obstacle, the nurse stands by the door (`sprites/nurseSprite.ts`), wild bugs stay outside the square. Going to the center needs 3 s out of combat (`inCombat`, `CENTER_CALM_MS`); otherwise the player gets "Fique 3 segundos fora de combate". The trainer appears at the door with a warp effect (also after a team wipe, like waking up at a center), the nurse heals for `RECOVERY_MS`, and with "Voltar à caça" on the team leaves by itself.
+The Reboot Center is a calm square at the map start (`nav.town`): the building is an obstacle, the nurse stands by the door (`sprites/nurseSprite.ts`), wild bugs stay outside the square. During a fight the button asks first (`RebootConfirm`): the fight is abandoned and its XP and coins are lost; out of a fight it goes straight there. The nurse heals and revives the whole team. The trainer appears at the door with a warp effect (also after a team wipe, like waking up at a center), the nurse heals for `RECOVERY_MS`, and with "Voltar à caça" on the team leaves by itself.
 
-Capturing by hand: clicking the enemy on the map or its row in the proximity panel throws a trap (`throwTrapNow`, ignores the filter and the 3-throw limit). Clicking a roaming bug (map or panel) marks its species (`huntSpecies`): the next encounter is with it, and a trap is thrown right away. The world draws the enemy where a roaming bug of the same species is.
+Capturing by hand: clicking the enemy on the map or its row in the proximity panel throws a trap (`throwTrapNow`, ignores the filter and the 3-throw limit). Clicking a roaming bug (map or panel) throws a trap straight at it (`throwAtRoaming`, resolved on the next step): it is caught ("CAPTURADO!") or runs away ("FUGIU!"), and either way it leaves the map and the panel (`ui/world/roamingThrows.ts` keeps the effect at its spot). The world draws the enemy where a roaming bug of the same species is.
+
+Nameplates (name, level, HP) are drawn in their own layer above everything on the map (`.nameplate-anchor`), so obstacles never cover the enemy's HP.
+
+Weather and time of day (`game/weather.ts`): each region has a climate; its weather changes every 20 minutes from the clock (the same for everyone at the same time). Rain doubles network bugs, storms bring concurrency and network bugs, fog logic and UI, heat performance and memory. Dusk makes rare bugs 1.5x as common; the night doubles rare and triples legendary. The UI writes the conditions into `state.runtime.conditions` each step; tests and the simulation use `CLEAR_DAY`, so balance is unchanged. The map shows rain, storm (with lightning), fog or heat on top, and a chip with the weather and the time next to the route name.
 
 Battle map rules (keep them):
 - The camera **always follows the trainer**. There is no dragging and no mouse-wheel zoom on the battle map; the only control is the zoom **+ / -** buttons (bottom right).
@@ -134,7 +138,14 @@ The settings window (Config. in the top bar, or the sound button on the map) has
 
 Rule: learning is optional, short and rewarded. It never blocks progress, and a wrong answer only loses a bonus. Tests run the idle loop with `debugChallenges` off (see `testUtils.ts`) and the balance simulation does too.
 
-- Every learning feature reads `data/lessons.ts`. To add a bug, add its lesson and its `LESSON_WHY` text; `lessons.test.ts` fails otherwise.
+- Every learning feature reads `data/lessons.ts`. Each bug has two lessons: the first in `lessons.ts` (id = species id) and the second in `lessonsMore.ts` (id `<species>#2`); `LESSON_WHY` is keyed by lesson id. The daily review alternates between them (`reviewLesson`, by how many times the card was answered). To add a bug, add both lessons and both texts; `lessons.test.ts` fails otherwise.
+- Code ordering (Parsons problems): after the 3 daily questions, a bonus puzzle asks to rebuild the fixed code of a lesson in order (`dailyOrderLesson`, `isRightOrder`, `OrderPuzzle.tsx`).
+- Labs (`data/labs.ts`, `game/labs.ts`, `LabModal.tsx`): Git, SQL, Networks and Security, 4 challenges each (multiple choice with code or a table, or ordering). Each pays coins once, on the first right answer. Opened from the Study screen, the Databases/Networks/Security houses, the Bugdex page of related bugs and the region map (`ui/labLinks.ts`). Code and tables in the data file, prose in `i18n/labs.ptBR.ts`.
+- Glossary (`i18n/glossary.ptBR.ts`, `ui/glossary.ts`, `GlossaryText`): technical words in explanations are underlined and show their definition when tapped; the full list is in the Glossário window (Study and Bugdex).
+- Terminal levels: pipes and `grep` with 1 badge, `head`/`tail`/`wc`/`sort`/`uniq` with 2, scripts with `;` and `&&` with 3 (`TERMINAL_LEVELS`, `levels` command).
+- Guild visualizer (`ui/guildViz.ts`): the running raid shows the champion's real algorithm on 16 bars, one step per slice of the raid; the step count shows the Big-O difference.
+- Teacher mode (`game/studyReport.ts`, `ui/teacherReport.ts`): the Study screen downloads a text report with answers by region topic, Leitner boxes, bugs to review and labs. Cards keep `seen`, `right` and `wrong` for it.
+- Code is shown without font ligatures (`>=` stays `>=`).
 - Player text for these features lives in `i18n/learning.ptBR.ts`, `i18n/guild.ptBR.ts` and `i18n/terminal.ptBR.ts`. Terminal commands stay in English, like a real shell.
 - The terminal lives in `src/ui` because it produces text; it only calls game commands.
 
@@ -181,7 +192,13 @@ To go further:
 | - | Achievements | `achievements.ts`, `AchievementsModal.tsx` | `achievements.test.ts` |
 | - | Held items | `held.ts`, `HeldItemSection.tsx` | `held.test.ts` |
 | - | Map obstacles, roads, themed map art, Reboot Center square | `world/navigation.ts`, `render/mapArt.ts`, `sprites/nurseSprite.ts` | `navigation.test.ts`, `mapArt.test.ts` |
-| - | Reboot Center calm time, throw by hand, hunt a species | `engine.ts` (`visitRebootCenter`, `throwTrapNow`, `huntSpecies`) | `center.test.ts` |
+| - | Reboot Center (confirm, heal), throw by hand, throw at roaming bugs | `engine.ts` (`visitRebootCenter`, `throwTrapNow`, `throwAtRoaming`), `RebootConfirm.tsx` | `center.test.ts` |
+| - | Weather and time of day | `weather.ts`, `BattleView.tsx` | `weather.test.ts` |
+| - | Two lessons per bug, code ordering | `data/lessonsMore.ts`, `learning.ts`, `OrderPuzzle.tsx` | `lessons.test.ts`, `learning.test.ts` |
+| - | Labs (Git, SQL, Networks, Security) | `data/labs.ts`, `labs.ts`, `LabModal.tsx` | `labs.test.ts` |
+| - | Glossary | `i18n/glossary.ptBR.ts`, `ui/glossary.ts`, `GlossaryModal.tsx` | `glossary.test.ts` |
+| - | Guild visualizer | `ui/guildViz.ts`, `GuildModal.tsx` | `guildViz.test.ts` |
+| - | Teacher report | `studyReport.ts`, `ui/teacherReport.ts` | `studyReport.test.ts` |
 | - | Item and icon art (16x16 shaded) | `render/itemArt.ts`, `render/iconArt.ts`, `render/shadedArt.ts` | `itemArt.test.ts` |
 | - | Settings window (5 tabs) | `preferences.ts`, `SettingsModal.tsx`, `usePreferenceEffects.ts` | `preferences.test.ts` |
 | - | Houses by category with milestone timelines | `housing.ts`, `HousesModal.tsx`, `i18n/houses.ptBR.ts`, `render/houseArt.ts` | `housing.test.ts` |
@@ -195,7 +212,7 @@ To go further:
 | - | Automation rules | `rules.ts`, `RulesModal.tsx` | `rules.test.ts` |
 | - | Daily challenge, Leitner boxes, boss review | `learning.ts`, `StudyModals.tsx` | `learning.test.ts` |
 | - | Guild of Algorithms | `guild.ts`, `GuildModal.tsx` | `guild.test.ts` |
-| - | Terminal | `ui/terminal.ts`, `TerminalModal.tsx` | `terminal.test.ts` |
+| - | Terminal (with levels: pipes, grep, tools, scripts) | `ui/terminal.ts`, `TerminalModal.tsx` | `terminal.test.ts` |
 | - | Battle map follow + zoom buttons; region map fills the window | `world/viewport.ts`, `BattleView.tsx`, `MapModal.tsx` | `viewport.test.ts` |
 | - | Automations (throw until caught, auto revive, return to hunt) | `engine.ts` | `automation.test.ts` |
 | - | Hand-drawn sprites (all species, trainer) and idle frames | `sprites/handDrawn.ts`, `sprites/handDrawnMore.ts`, `sprites/trainerSprite.ts` | `bugSprite.test.ts`, `trainerSprite.test.ts` |

@@ -1,3 +1,5 @@
+import { conditionsAt } from "../game/weather";
+import { getRoute } from "../game/data/world";
 import { useSyncExternalStore } from "react";
 import { tick, type GameEvent } from "../game/engine";
 import type { ActionResult } from "../game/result";
@@ -72,6 +74,7 @@ export class GameStore {
   }
 
   advance(dtMs: number): void {
+    this.state.runtime.conditions = conditionsAt(new Date(), regionOfActivity(this.state));
     const events = tick(this.state, Math.min(dtMs, MAX_CATCH_UP_MS), this.rng);
     if (events.length > 0) {
       this.record(events);
@@ -150,4 +153,10 @@ export const store = new GameStore(typeof window === "undefined" ? null : browse
 export function useGame(): GameState {
   useSyncExternalStore(store.subscribe, store.getVersion);
   return store.state;
+}
+
+/** Region of the route the player is on (or will return to after a boss). */
+function regionOfActivity(state: GameState): string {
+  const routeId = state.activity.kind === "route" ? state.activity.routeId : state.activity.returnRouteId;
+  return getRoute(routeId).regionId;
 }
