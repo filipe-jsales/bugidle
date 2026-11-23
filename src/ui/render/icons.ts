@@ -1,5 +1,6 @@
 import type { ItemId } from "../../game/data/items";
 import { ITEM_ART } from "./itemArt";
+import { CONCEPT_ART } from "./conceptArt";
 import { ICON_ART, type IconName } from "./iconArt";
 import { shadeArt } from "./shadedArt";
 import { createCanvas } from "./pixels";
@@ -56,4 +57,9 @@ export function stoneIconUrl(type: BugType): string {
 
 export function iconUrl(name: IconName): string {
   return shadedUrl(`icon:${name}`, ICON_ART[name]);
+}
+
+/** The 2D picture of a mini game concept (Linux's penguin, Git's branches...). */
+export function conceptIconUrl(id: string): string {
+  return shadedUrl(`concept:${id}`, CONCEPT_ART[id] ?? ICON_ART.study);
 }

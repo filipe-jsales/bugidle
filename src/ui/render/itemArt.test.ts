@@ -1,5 +1,7 @@
 import { ITEM_IDS } from "../../game/data/items";
 import { ICON_ART } from "./iconArt";
+import { CONCEPT_ART } from "./conceptArt";
+import { CONCEPTS } from "../../game/data/concepts";
 import { ITEM_ART } from "./itemArt";
 import { FLAT, RAMPS, shadeArt } from "./shadedArt";
 
@@ -7,7 +9,7 @@ const known = (ch: string) => ch === "." || ch in RAMPS || ch in FLAT;
 
 describe("item and icon pixel art", () => {
   it("every item and icon is a 16x16 drawing with known letters and enough body", () => {
-    const all = [...ITEM_IDS.map((id) => [id, ITEM_ART[id]] as const), ...Object.entries(ICON_ART)];
+    const all = [...ITEM_IDS.map((id) => [id, ITEM_ART[id]] as const), ...Object.entries(ICON_ART), ...Object.entries(CONCEPT_ART)];
     for (const [id, art] of all) {
       expect(art, id).toHaveLength(16);
       for (const row of art) {
@@ -28,5 +30,9 @@ describe("item and icon pixel art", () => {
     expect(colors[1]![1]).toBe(RAMPS.r!.light);
     expect(colors[2]![2]).toBe(RAMPS.r!.dark);
     expect(colors[0]![0]).toBeNull();
+  });
+
+  it("every mini game concept has its picture", () => {
+    for (const c of CONCEPTS) expect(CONCEPT_ART[c.id], c.id).toBeDefined();
   });
 });

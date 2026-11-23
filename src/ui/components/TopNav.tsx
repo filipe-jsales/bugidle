@@ -1,5 +1,6 @@
 import { UI } from "../../i18n/ptBR";
 import { ACHIEVEMENTS_UI } from "../../i18n/achievements.ptBR";
+import { MINIGAMES_UI } from "../../i18n/minigames.ptBR";
 import { SETTINGS_UI } from "../../i18n/settings.ptBR";
 import { LEARN_UI } from "../../i18n/learning.ptBR";
 import { GUILD_UI } from "../../i18n/guild.ptBR";
@@ -20,6 +21,7 @@ const ENTRIES: { modal: ModalState; icon: IconName; label: string }[] = [
   { modal: { kind: "houses" }, icon: "houses", label: UI.nav.houses },
   { modal: { kind: "guild" }, icon: "guild", label: GUILD_UI.navLabel },
   { modal: { kind: "hatchery" }, icon: "hatchery", label: UI.nav.hatchery },
+  { modal: { kind: "minigames" }, icon: "minigames", label: MINIGAMES_UI.nav },
   { modal: { kind: "achievements" }, icon: "medal", label: ACHIEVEMENTS_UI.nav },
   { modal: { kind: "terminal" }, icon: "terminal", label: "Terminal (F2)" },
   { modal: { kind: "settings" }, icon: "gear", label: SETTINGS_UI.nav },

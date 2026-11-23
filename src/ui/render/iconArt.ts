@@ -1,6 +1,24 @@
 /** 16x16 flat art for the menu icons (see itemArt.ts for the letters). */
 // prettier-ignore
 export const ICON_ART = {
+  minigames: [
+    "................",
+    "................",
+    "...pppppppppp...",
+    "..pppppppppppp..",
+    ".ppppppppppppyp.",
+    ".ppkppppppppypy.",
+    ".pkkkppppppppyp.",
+    ".ppkppppppprppp.",
+    ".ppppppppprprpp.",
+    ".pppppppppprppp.",
+    ".ppppppppppppppp",
+    "..ppp......ppp..",
+    "................",
+    "................",
+    "................",
+    "................",
+  ],
   bugdex: [
     "................",
     "..rrrrrrrrrrrr..",

@@ -1,3 +1,4 @@
+import { createMiniGames, type MiniGamesState } from "./minigames";
 import type { LabResult } from "./labs";
 import { CLEAR_DAY, type Conditions } from "./weather";
 import type { Battle } from "./battle";
@@ -98,6 +99,8 @@ export interface PersistentState {
   guild: GuildState;
   /** Lab challenge results by question id. */
   labs: Record<string, LabResult>;
+  /** Mini game records (Detetive de Conceitos). */
+  minigames: MiniGamesState;
   nextUid: number;
 }
 
@@ -190,6 +193,7 @@ export function createInitialState(trainerName = "Hunter"): GameState {
     bossReview: {},
     guild: createGuild(),
     labs: {},
+    minigames: createMiniGames(),
     nextUid: 1,
     runtime: createRuntime(),
   };

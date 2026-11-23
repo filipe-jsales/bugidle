@@ -1,5 +1,6 @@
 import { LabModal } from "./modals/LabModal";
 import { GlossaryModal } from "./modals/GlossaryModal";
+import { MiniGamesModal } from "./modals/MiniGamesModal";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { ActionResult } from "../game/result";
 import { needsStarter } from "../game/state";
@@ -66,6 +67,8 @@ function ModalHost({ modal }: { modal: ModalState | null }) {
       return <LabModal topic={modal.topic} />;
     case "glossary":
       return <GlossaryModal />;
+    case "minigames":
+      return <MiniGamesModal />;
     case "study":
       return <StudyModal />;
     case "guild":

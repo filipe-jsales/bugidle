@@ -7,6 +7,7 @@ import { sanitizeRules } from "./rules";
 import { CHAMPIONS, createGuild, RAIDS } from "./guild";
 import { hasSpecies } from "./data/species";
 import { labQuestion } from "./data/labs";
+import { getConcept } from "./data/concepts";
 import { BOSSES, ROUTES } from "./data/world";
 import { createInitialState, createRuntime, defaultSettings, SAVE_VERSION, type CaptureMode, type GameState, type PersistentState } from "./state";
 
@@ -206,6 +207,19 @@ export function importSave(text: string): GameState {
           return [id, { solved: x.solved === true, tries: count(x.tries), wrong: count(x.wrong) }];
         }),
     ),
+    minigames: (() => {
+      const mg = isObject(raw.minigames) ? raw.minigames : {};
+      const d = isObject(mg.detective) ? mg.detective : {};
+      const paid = isObject(d.paid) ? Object.fromEntries(Object.entries(d.paid).filter(([id, day]) => getConcept(id) && isNumber(day))) : {};
+      return {
+        detective: {
+          day: isNumber(d.day) ? d.day : -1,
+          points: isNumber(d.points) ? Math.max(0, d.points) : 0,
+          paid: paid as Record<string, number>,
+          solved: isNumber(d.solved) ? Math.max(0, Math.floor(d.solved)) : 0,
+        },
+      };
+    })(),
     guild: (() => {
       const g = isObject(raw.guild) ? raw.guild : {};
       const base = createGuild();

@@ -130,6 +130,14 @@ Run `npm run simulate` (optionally with seeds: `npm run simulate -- 1 2 3`). It 
 
 The simulated player uses every system: it arranges the team (moving strong bugs out of houses), shops, builds houses when the price is half its wallet, refines the top three bugs keeping 8 stones for evolutions, buys and hatches eggs, and equips held items. It also prints refines, eggs hatched and the house return (coins collected / coins spent). Current results (v0.8): 22-23 h total, first region 1.1-1.2 h, houses return 1.7-3.1x. House prices are set so each step pays itself back in about 45 minutes (`housing.test.ts`).
 
+## Mini games
+
+The Mini Games window (top bar) holds small games about computing; each game is one component in `MiniGamesModal.tsx` and its rules live in `game/minigames.ts` (pure, tested).
+
+Detetive de Conceitos: guess a computing concept from clues that open one by one. A wrong guess or the 30 s clock opens the next clue: 1) category and era, 2) four trait bars, 3) where it is used and seals (open source, language, hardware), 4) a riddle, 5) the name's letters. A right answer is worth 10, 8, 6, 4 or 2 points (`CLUE_POINTS`), paid as coins (`COINS_PER_POINT` x badges + 1); each concept pays once per day (`solveConcept`). After the round the concept's 2D picture appears with what it is, what it is for and where it is used. Answers ignore case, accents and spaces (`normalizeAnswer`).
+
+To add a concept: data in `game/data/concepts.ts`, text in `i18n/concepts.ptBR.ts` (name, accepted answers, riddle without the name, explanation) and a 16x16 drawing in `render/conceptArt.ts`. `minigames.test.ts` checks the text, that the riddle does not say the name and that no two concepts accept the same answer.
+
 ## Settings and preferences
 
 The settings window (Config. in the top bar, or the sound button on the map) has five tabs: Áudio, Interatividade, HUD, Desempenho, Suporte. Every switch has a "?" with a one-line explanation in `i18n/settings.ptBR.ts`. They are browser preferences (`ui/preferences.ts`), not game state, so they are not in the save. To add one: a key in `Preferences` with its default, its text in `PREFERENCE_TEXT`, its tab in `KEYS` (`SettingsModal.tsx`), and its effect (CSS body class in `usePreferenceEffects.ts`, or read `usePreferences()` where needed). Pure decisions (`soundAllowed`, `mapFps`, `lightingFor`, `bodyClasses`) are unit tested.
@@ -189,6 +197,7 @@ To go further:
 | RF08 | Bugdex: seen/caught/shiny, stats, locations | `bugdex.ts`, `BugdexModal.tsx` | `progression.test.ts` |
 | RF09 | Shop and inventory | `inventory.ts` | `inventory.test.ts` |
 | RF10 | Autosave in the browser, JSON export/import | `save.ts`, `store.ts` | `save.test.ts`, `store.test.ts` |
+| - | Mini games: Detetive de Conceitos | `minigames.ts`, `data/concepts.ts`, `MiniGamesModal.tsx`, `render/conceptArt.ts` | `minigames.test.ts`, `itemArt.test.ts` |
 | - | Achievements | `achievements.ts`, `AchievementsModal.tsx` | `achievements.test.ts` |
 | - | Held items | `held.ts`, `HeldItemSection.tsx` | `held.test.ts` |
 | - | Map obstacles, roads, themed map art, Reboot Center square | `world/navigation.ts`, `render/mapArt.ts`, `sprites/nurseSprite.ts` | `navigation.test.ts`, `mapArt.test.ts` |

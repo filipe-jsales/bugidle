@@ -117,6 +117,13 @@ Principle: learning is optional, short and rewarded; it never blocks progress.
 - [x] Guild visualizer: the algorithm's bars move while the raid runs
 - [x] Teacher report: download a text report of what was studied
 
+## v0.11 - Mini Games: Detetive de Conceitos
+
+- [x] Mini Games window in the top bar, first game: Detetive de Conceitos
+- [x] 24 computing concepts (Linux, Git, Python, JavaScript, HTML, CSS, SQL, API, Docker, cloud, firewall, algorithm, recursion, variable, loop, array, compiler, CPU, RAM, encryption, binary, HTTP, terminal, bug)
+- [x] 5 clues that open on a wrong guess or after 30 s; 10/8/6/4/2 points paid as coins; each concept pays once a day; today's points shown
+- [x] 2D pixel picture of each concept and an explanation after the round (what it is, what it is for, where it is used)
+
 ## Next (core polish)
 
 
@@ -159,6 +166,24 @@ Principle: learning is optional, short and rewarded; it never blocks progress.
 - [ ] Debugger mini-game: step through code with breakpoints and watch the variables change
 - [ ] Study streak: days in a row with the daily challenge give a growing bonus
 - [ ] Class code: a teacher shares a code and the report groups the students (needs online, later)
+
+## Ideas: mini games (not started)
+
+- [ ] Caça-palavras: find computing words in a letter grid, themed by region (Git words in Staging, SQL words in Production)
+- [ ] Palavras cruzadas: small crosswords whose clues are the glossary definitions
+- [ ] Forca do programador: hangman with computing terms; each wrong letter "breaks" a bit of a server
+- [ ] Desembaralhe: anagram of a term (LUNXI -> LINUX) against the clock
+- [ ] Memória: flip cards to match a concept with its definition or a command with what it does
+- [ ] Qual é a linguagem?: a short snippet appears, pick the language (Python, JavaScript, SQL, C, CSS)
+- [ ] Adivinhe a saída: read a few lines and type what they print
+- [ ] Binário relâmpago: convert numbers between decimal, binary and hex as fast as possible
+- [ ] Pixel por código: paint a small pixel image by reading hex colors
+- [ ] Robô do algoritmo: give a robot a list of commands (andar, virar, repetir) to reach the bug, like a tiny Lightbot
+- [ ] Portas lógicas: light the lamp by choosing AND, OR and NOT gates
+- [ ] Verdadeiro ou falso relâmpago: 60 seconds of quick true/false statements about computing
+- [ ] Corrida de digitação: type a line of code exactly, timed, with a ghost of your best run
+- [ ] Encanamento de dados: rotate pipes so the data flows from the server to the user, like a packet route
+- [ ] Ranking local of the best scores per mini game (online ranking only later)
 
 ## Later: other mechanics (not started on purpose)
 

@@ -20,6 +20,7 @@ export type ModalState =
   | { kind: "study" }
   | { kind: "lab"; topic: LabTopic }
   | { kind: "glossary" }
+  | { kind: "minigames" }
   | { kind: "guild" }
   | { kind: "terminal" }
   | { kind: "review"; bossId: string }
