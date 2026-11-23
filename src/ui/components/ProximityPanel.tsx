@@ -1,10 +1,13 @@
 import { useState } from "react";
 import { activeEnemy } from "../../game/battle";
+import { maxHp } from "../../game/bug";
+import { huntSpecies, throwTrapNow } from "../../game/engine";
+import { useApp } from "../appContext";
 import { isCaught } from "../../game/bugdex";
 import { baseCaptureChance, MAX_THROWS_PER_ENCOUNTER, pickTrap } from "../../game/capture";
 import { getSpecies } from "../../game/data/species";
 import { UI } from "../../i18n/ptBR";
-import { useGame } from "../store";
+import { store, useGame } from "../store";
 import { distance } from "../world/worldModel";
 import { currentWorld } from "../world/worldRegistry";
 import { Bar, BugSprite, ItemIcon, Tag } from "./primitives";
@@ -20,7 +23,14 @@ const startsOpen = () => typeof window === "undefined" || !window.matchMedia?.("
  */
 export function ProximityPanel() {
   const state = useGame();
+  const { report, toast } = useApp();
   const [open, setOpen] = useState(startsOpen);
+  const throwNow = () => {
+    if (report(store.run(throwTrapNow))) toast(P.thrown);
+  };
+  const hunt = (speciesId: string) => {
+    if (report(store.run((s) => huntSpecies(s, speciesId)))) toast(P.hunting(getSpecies(speciesId).name));
+  };
   const world = currentWorld();
   const trap = pickTrap(state.inventory, state.settings.preferredTrap);
   const multiplier = trap?.captureMultiplier ?? 1;
@@ -39,7 +49,7 @@ export function ProximityPanel() {
       {open && (
         <div className="proximity-list">
           {enemy && (
-            <div className="proximity-row fighting">
+            <button type="button" className="proximity-row fighting" onClick={throwNow} title={P.throwHint}>
               <BugSprite speciesId={enemy.speciesId} shiny={enemy.shiny} size={28} />
               <div className="proximity-info">
                 <div className="proximity-name">
@@ -48,24 +58,25 @@ export function ProximityPanel() {
                     {UI.level} {enemy.level}
                   </span>
                 </div>
-                <Bar kind="hp" value={baseCaptureChance(enemy.speciesId, multiplier)} max={0.35} label={P.chance(pct(enemy.speciesId))} />
+                <Bar kind="hp" value={enemy.currentHp} max={maxHp(enemy)} label={P.hp(enemy.currentHp, maxHp(enemy))} />
                 <small className="muted">
-                  {P.fighting} · {P.throwsLeft(Math.max(0, MAX_THROWS_PER_ENCOUNTER - state.runtime.captureAttemptsThisBattle))}
+                  {P.chance(pct(enemy.speciesId))} · {P.throwsLeft(Math.max(0, MAX_THROWS_PER_ENCOUNTER - state.runtime.captureAttemptsThisBattle))}
                 </small>
               </div>
-            </div>
+              {trap && <ItemIcon id={trap.id} size={18} />}
+            </button>
           )}
           {nearby.map((w) => (
-            <div key={w.id} className="proximity-row">
+            <button key={w.id} type="button" className={`proximity-row ${state.runtime.huntTarget === w.speciesId ? "targeted" : ""}`} onClick={() => hunt(w.speciesId)} title={P.huntHint}>
               <BugSprite speciesId={w.speciesId} size={28} />
               <div className="proximity-info">
                 <div className="proximity-name">
                   <strong>{getSpecies(w.speciesId).name}</strong>
-                  {!isCaught(state, w.speciesId) && <Tag tone="gold">{P.newTag}</Tag>}
+                  {state.runtime.huntTarget === w.speciesId ? <Tag tone="pink">{P.targetTag}</Tag> : !isCaught(state, w.speciesId) && <Tag tone="gold">{P.newTag}</Tag>}
                 </div>
                 <Bar kind="time" value={baseCaptureChance(w.speciesId, multiplier)} max={0.35} label={P.chance(pct(w.speciesId))} />
               </div>
-            </div>
+            </button>
           ))}
           {!enemy && nearby.length === 0 && <p className="muted small">{P.empty}</p>}
         </div>

@@ -361,3 +361,123 @@ body.night-mode {
   pointer-events: none;
   filter: drop-shadow(0 4px 0 rgba(10, 4, 14, 0.35));
 }
+
+/* ---------------------------------------------------------------- clickable bugs, the Reboot Center */
+
+button.proximity-row {
+  width: 100%;
+  text-align: left;
+  color: inherit;
+  cursor: pointer;
+  transition:
+    transform 80ms steps(2),
+    border-color 80ms steps(2);
+}
+button.proximity-row:hover {
+  border-color: var(--gold);
+  transform: translateX(-2px);
+}
+.proximity-row.targeted {
+  border-color: var(--pink);
+}
+.clickable-bug {
+  pointer-events: auto;
+  cursor: crosshair;
+  background: none;
+  border: none;
+  padding: 0;
+  color: inherit;
+}
+.clickable-bug:hover img {
+  filter: drop-shadow(0 0 0 #fff) drop-shadow(1px 0 0 #ffd25a) drop-shadow(-1px 0 0 #ffd25a) drop-shadow(0 1px 0 #ffd25a) drop-shadow(0 -1px 0 #ffd25a);
+}
+.clickable-bug.targeted::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: -14px;
+  width: 0;
+  height: 0;
+  transform: translateX(-50%);
+  border-left: 6px solid transparent;
+  border-right: 6px solid transparent;
+  border-top: 8px solid var(--pink);
+  animation: target-bob 600ms steps(2) infinite;
+}
+@keyframes target-bob {
+  50% {
+    transform: translate(-50%, -3px);
+  }
+}
+.entity-img {
+  position: absolute;
+  pointer-events: none;
+}
+.heal-ring {
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  width: 40px;
+  height: 14px;
+  transform: translateX(-50%);
+  border: 3px solid var(--green);
+  box-shadow: 0 0 0 2px var(--green-dark);
+  animation: heal-ring 700ms steps(4) infinite;
+}
+@keyframes heal-ring {
+  0% {
+    width: 16px;
+    height: 6px;
+  }
+  100% {
+    width: 64px;
+    height: 22px;
+    opacity: 0.2;
+  }
+}
+.warp-in img {
+  animation: warp-in 600ms steps(6);
+}
+@keyframes warp-in {
+  0% {
+    transform: scaleX(0.1) scaleY(2);
+    filter: brightness(3);
+  }
+  60% {
+    transform: scaleX(1.2) scaleY(0.8);
+    filter: brightness(1.6);
+  }
+  100% {
+    transform: none;
+    filter: none;
+  }
+}
+.scene-banner {
+  position: absolute;
+  top: 50px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 7200;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 12px;
+  background: rgba(30, 18, 34, 0.88);
+  border: 2px solid var(--inset-border);
+  border-radius: 4px;
+  font-family: var(--font-title);
+  font-size: 11px;
+  white-space: nowrap;
+}
+.scene-banner .overlay-bar {
+  width: 120px;
+}
+@media (max-width: 760px) {
+  .scene-banner {
+    top: 44px;
+    max-width: 92%;
+    white-space: normal;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+}

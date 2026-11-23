@@ -8,7 +8,7 @@
  */
 import { randomInt, type Rng } from "../../game/rng";
 import type { Facing } from "../../sprites/trainerSprite";
-import { createNav, findPath, freePoint, pushOut, type Nav } from "./navigation";
+import { createNav, findPath, freePoint, outsideTown, pushOut, type Nav } from "./navigation";
 
 export interface Vec {
   x: number;
@@ -56,6 +56,10 @@ export interface WorldModel {
   /** Trainer's planned waypoints toward `pathGoal`. */
   path: Vec[];
   pathGoal: Vec | null;
+  /** True while the team is at the Reboot Center (the trainer was moved to the door). */
+  atCenter: boolean;
+  /** Seconds since the trainer appeared at the center, for the warp effect. */
+  warpS: number;
 }
 
 export interface WorldOptions {
@@ -66,6 +70,10 @@ export interface WorldOptions {
 export interface WorldInput {
   /** Identifies the current enemy (changes when a new one appears); null between fights. */
   encounterKey: string | null;
+  /** Species of the current enemy, so a roaming bug of that species becomes it. */
+  encounterSpecies?: string;
+  /** The team is at the Reboot Center: the trainer stays at the door, nothing fights. */
+  atCenter?: boolean;
   viewport: { width: number; height: number };
 }
 
@@ -92,7 +100,7 @@ function clampToWorld(w: Pick<WorldModel, "width" | "height">, p: Vec): Vec {
 }
 
 function randomPoint(w: Pick<WorldModel, "nav">, rng: Rng): Vec {
-  return freePoint(w.nav, rng, MARGIN);
+  return outsideTown(w.nav, freePoint(w.nav, rng, MARGIN));
 }
 
 /** Inside the map and outside every obstacle. */
@@ -136,6 +144,8 @@ export function createWorld(width: number, height: number, speciesPool: readonly
     nav,
     path: [],
     pathGoal: null,
+    atCenter: false,
+    warpS: 99,
   };
   for (let i = 0; i < WANDERER_COUNT; i++) w.wanderers.push(spawnWanderer(w, rng, start));
   return w;
@@ -148,9 +158,10 @@ export function fightStands(from: Vec, enemy: Vec, facing: Facing): { bug: Vec; 
   return { bug, trainer: sub(bug, scale(dir, TRAINER_BEHIND)) };
 }
 
-function nearestWanderer(w: WorldModel, to: Vec, range = Infinity): Wanderer | undefined {
+function nearestWanderer(w: WorldModel, to: Vec, range = Infinity, speciesId?: string): Wanderer | undefined {
   let best: Wanderer | undefined;
   for (const wanderer of w.wanderers) {
+    if (speciesId && wanderer.speciesId !== speciesId) continue;
     const d = distance(wanderer.pos, to);
     if (d <= range && (!best || d < distance(best.pos, to))) best = wanderer;
   }
@@ -176,7 +187,8 @@ export function stepWorld(w: WorldModel, dtS: number, input: WorldInput, rng: Rn
 
   // 1. keep the drawn encounter in sync with the engine
   if (input.encounterKey && w.encounter?.key !== input.encounterKey) {
-    const near = nearestWanderer(w, trainer.pos, ENCOUNTER_RANGE);
+    const same = input.encounterSpecies ? nearestWanderer(w, trainer.pos, ENCOUNTER_RANGE * 2.5, input.encounterSpecies) : undefined;
+    const near = same ?? nearestWanderer(w, trainer.pos, ENCOUNTER_RANGE);
     let pos: Vec;
     if (near) {
       pos = { ...near.pos };
@@ -189,9 +201,27 @@ export function stepWorld(w: WorldModel, dtS: number, input: WorldInput, rng: Rn
     w.encounter = null;
   }
 
+  // the Reboot Center: the trainer appears at the door (like waking up at a center) and waits there
+  if (input.atCenter && !w.atCenter) {
+    const door = w.nav.town.door;
+    trainer.pos = { ...door };
+    trainer.facing = "up";
+    w.follower.pos = { x: door.x + 30, y: door.y + 12 };
+    w.trail = [{ ...door }];
+    w.path = [];
+    w.pathGoal = null;
+    w.waypoint = { ...door };
+    w.warpS = 0;
+  }
+  w.atCenter = Boolean(input.atCenter);
+  w.warpS += dt;
+
   // 2. where the trainer and the bug want to be
   let bugGoal: Vec | null = null;
-  if (w.encounter) {
+  if (w.atCenter) {
+    w.waypoint = { ...w.nav.town.door };
+    bugGoal = { x: w.nav.town.door.x + 30, y: w.nav.town.door.y + 12 };
+  } else if (w.encounter) {
     const stands = fightStands(trainer.pos, w.encounter.pos, trainer.facing);
     w.waypoint = placeable(w, stands.trainer);
     bugGoal = placeable(w, stands.bug);
@@ -236,9 +266,9 @@ export function stepWorld(w: WorldModel, dtS: number, input: WorldInput, rng: Rn
     }
     if (!moveToward(wanderer.pos, wanderer.target, WANDER_SPEED, dt)) {
       wanderer.pauseS = 1 + rng() * 2.5;
-      wanderer.target = placeable(w, add(wanderer.pos, { x: randomInt(rng, -120, 120), y: randomInt(rng, -120, 120) }));
+      wanderer.target = outsideTown(w.nav, placeable(w, add(wanderer.pos, { x: randomInt(rng, -120, 120), y: randomInt(rng, -120, 120) })));
     }
-    Object.assign(wanderer.pos, pushOut(w.nav, wanderer.pos, 2));
+    Object.assign(wanderer.pos, outsideTown(w.nav, pushOut(w.nav, wanderer.pos, 2)));
   }
   while (w.wanderers.length < WANDERER_COUNT) w.wanderers.push(spawnWanderer(w, rng, trainer.pos));
 

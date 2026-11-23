@@ -1,21 +1,32 @@
 import { ITEM_IDS } from "../../game/data/items";
-import { ITEM_ART, ITEM_COLORS } from "./itemArt";
+import { ICON_ART } from "./iconArt";
+import { ITEM_ART } from "./itemArt";
+import { FLAT, RAMPS, shadeArt } from "./shadedArt";
 
-describe("shop item pixel art", () => {
-  it("every item has a 12x12 drawing using known colors", () => {
-    for (const id of ITEM_IDS) {
-      const art = ITEM_ART[id];
-      expect(art, id).toHaveLength(12);
+const known = (ch: string) => ch === "." || ch in RAMPS || ch in FLAT;
+
+describe("item and icon pixel art", () => {
+  it("every item and icon is a 16x16 drawing with known letters and enough body", () => {
+    const all = [...ITEM_IDS.map((id) => [id, ITEM_ART[id]] as const), ...Object.entries(ICON_ART)];
+    for (const [id, art] of all) {
+      expect(art, id).toHaveLength(16);
       for (const row of art) {
-        expect(row.length, `${id}: "${row}"`).toBe(12);
-        for (const ch of row) if (ch !== ".") expect(ITEM_COLORS[ch], `${id} uses "${ch}"`).toBeDefined();
+        expect(row.length, `${id}: "${row}"`).toBe(16);
+        for (const ch of row) expect(known(ch), `${id} uses "${ch}"`).toBe(true);
       }
-      const filled = art.join("").replace(/\./g, "").length;
-      expect(filled, id).toBeGreaterThan(20);
+      expect(art.join("").replace(/\./g, "").length, id).toBeGreaterThan(40);
     }
   });
 
   it("items look different from each other", () => {
     expect(new Set(ITEM_IDS.map((id) => ITEM_ART[id].join("/"))).size).toBe(ITEM_IDS.length);
+  });
+
+  it("shading adds an outline, a light top-left edge and a dark bottom-right edge", () => {
+    const colors = shadeArt(["....", ".rr.", ".rr.", "...."]);
+    expect(colors[0]![1]).toBe(FLAT.k);
+    expect(colors[1]![1]).toBe(RAMPS.r!.light);
+    expect(colors[2]![2]).toBe(RAMPS.r!.dark);
+    expect(colors[0]![0]).toBeNull();
   });
 });

@@ -13,7 +13,10 @@ describe("map navigation", () => {
       expect(nav.obstacles.length).toBeGreaterThan(20);
       expect(nav.roads.length).toBeGreaterThanOrEqual(4);
       expect(isRoad(nav, START)).toBe(true);
-      for (const o of nav.obstacles) {
+      const center = nav.obstacles.filter((o) => o.center);
+      expect(center).toHaveLength(1);
+      expect(isBlocked(nav, nav.town.door)).toBe(false);
+      for (const o of nav.obstacles.filter((x) => !x.center)) {
         expect(distance(o, START)).toBeGreaterThan(200);
         expect(isRoad(nav, o)).toBe(false);
         for (const other of nav.obstacles) if (other !== o) expect(distance(o, other)).toBeGreaterThan(o.r + other.r);
@@ -56,8 +59,20 @@ describe("map navigation", () => {
       stepWorld(world, 1 / 20, { encounterKey: null, viewport: { width: 800, height: 500 } }, rng);
       expect(isBlocked(world.nav, world.trainer.pos)).toBe(false);
       expect(isBlocked(world.nav, world.follower.pos)).toBe(false);
-      for (const b of world.wanderers) expect(isBlocked(world.nav, b.pos)).toBe(false);
+      for (const b of world.wanderers) {
+        expect(isBlocked(world.nav, b.pos)).toBe(false);
+        expect(distance(b.pos, world.nav.town)).toBeGreaterThanOrEqual(world.nav.town.r - 1);
+      }
     }
     expect(distance(world.trainer.pos, START)).toBeGreaterThan(50);
+  });
+
+  it("at the Reboot Center the trainer appears at the door and stays there", () => {
+    const world = createWorld(W, H, ["typobit"], createSeededRng(9));
+    const rng = createSeededRng(10);
+    for (let t = 0; t < 10; t += 0.05) stepWorld(world, 0.05, { encounterKey: null, viewport: { width: 800, height: 500 } }, rng);
+    for (let t = 0; t < 5; t += 0.05) stepWorld(world, 0.05, { encounterKey: null, atCenter: true, viewport: { width: 800, height: 500 } }, rng);
+    expect(distance(world.trainer.pos, world.nav.town.door)).toBeLessThan(2);
+    expect(world.trainer.moving).toBe(false);
   });
 });

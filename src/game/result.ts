@@ -36,7 +36,9 @@ export type ActionError =
   | "notOwned"
   | "raidRunning"
   | "raidLocked"
-  | "cannotRun";
+  | "cannotRun"
+  | "inCombat"
+  | "notInRoute";
 
 export const OK: ActionResult = { ok: true };
 export const fail = (reason: ActionError): ActionResult => ({ ok: false, reason });

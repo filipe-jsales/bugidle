@@ -94,6 +94,15 @@ Principle: learning is optional, short and rewarded; it never blocks progress.
 - [x] Battle map roads and obstacles: A* that prefers roads, props per region, nobody walks through obstacles
 - [x] Settings window like PokeIdle: Áudio (4 sound switches and the volumes), Interatividade (immersive, scene transparency, time-of-day lighting), HUD (nameplates, hide achievement toasts, night mode, phone layout), Desempenho (optimized, economy, keep screen on, ULTRA economy), Suporte (version, save, reset, report)
 
+## v0.9 - map design, the Reboot Center, catching by hand
+
+- [x] Region map no longer moves or zooms; it fills the window (no dark border). Battle map vignette removed
+- [x] Themed maps for all 5 regions: ground tiles, details, textured roads, decorations, 6 obstacle drawings each; the Cloud is a sky level with holes, golden brick roads, balloons, columns, servers on clouds, storm clouds
+- [x] Reboot Center as a calm square with the nurse; needs 3 s out of combat ("Fique 3 segundos fora de combate"); warp to the door, heal, leave
+- [x] Proximity panel shows the enemy's live HP; click the enemy (map or panel) to throw a trap; click a roaming bug to hunt it next
+- [x] New trap tiers: Logpoint 1.2x, Breakpoint Condicional 2x, Tracepoint 3x, Core Dump 3.6x
+- [x] All items and menu icons redrawn at 16x16 with outline and three-tone shading
+
 ## Next (core polish)
 
 - [ ] More lessons per bug (today one each) so reviews do not repeat
@@ -108,6 +117,29 @@ Principle: learning is optional, short and rewarded; it never blocks progress.
 - [ ] English translation (`src/i18n/en.ts` with the same shape)
 - [ ] Lint and format setup (ESLint + Prettier) in CI
 - [ ] Test on a real phone (only checked in a 375x812 emulated viewport)
+
+## Ideas: mechanics
+
+- [ ] Weather and time events on the map (rain in the server room = more network bugs; night = more rare bugs), tied to "Iluminação pelo horário"
+- [ ] Bug abilities: one passive per species (Heisenbug dodges the first hit, Leaklet drains HP each turn)
+- [ ] Team synergies: 3 bugs of the same type give a small bonus; mixed teams get type coverage hints
+- [ ] Rival hunter NPC who appears on routes for a short fight, with a weekly team
+- [ ] Bug fusion or "merge": two bugs of the same line become one with better IVs
+- [ ] Map events: a golden bug that runs away, a supply drop with traps, a "deploy freeze" that doubles XP for 5 minutes
+- [ ] Trap crafting with stones (stones + coins = a better trap)
+- [ ] Badges case and trainer card to show progress (playtime, shinies, favorite bug)
+- [ ] Expeditions: send a boxed team on a timed trip to a cleared route for loot
+
+## Ideas: learning
+
+- [ ] "Fix the code" mini-challenge: reorder lines (Parsons problems) instead of picking one line
+- [ ] Git lessons in the Mergefly route: branches, merge conflicts as a small visual puzzle
+- [ ] SQL mini-queries in the Bancos de Dados house: pick the query that returns the right rows
+- [ ] Networking lesson in the Redes house: follow a packet through DNS, TCP and HTTP
+- [ ] Security lesson: spot the injection in a form; ties to Injectick and Xssquito
+- [ ] Glossary in the Bugdex: every technical word in the lessons links to a short definition
+- [ ] Terminal levels: unlock `grep`, pipes and scripts as the player progresses
+- [ ] Teacher mode: export a report of what the player studied (boxes, right answers per topic)
 
 ## Later: other mechanics (not started on purpose)
 

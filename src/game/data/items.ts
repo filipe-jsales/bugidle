@@ -51,8 +51,12 @@ export type ItemDef = TrapItem | PotionItem | ReviveItem | VitaminItem | Evoluti
 
 export const ITEM_IDS = [
   "breakpoint",
+  "logpoint",
   "watchpoint",
+  "conditionalBreak",
   "profiler",
+  "tracepoint",
+  "coreDump",
   "rootAccess",
   "coffee",
   "energyDrink",
@@ -80,8 +84,12 @@ export const MAX_VITAMIN_BOOST = 20;
 
 export const ITEMS: Readonly<Record<ItemId, ItemDef>> = {
   breakpoint: { id: "breakpoint", category: "trap", price: 20, captureMultiplier: 1 },
+  logpoint: { id: "logpoint", category: "trap", price: 35, captureMultiplier: 1.2 },
   watchpoint: { id: "watchpoint", category: "trap", price: 60, captureMultiplier: 1.5 },
+  conditionalBreak: { id: "conditionalBreak", category: "trap", price: 100, captureMultiplier: 2 },
   profiler: { id: "profiler", category: "trap", price: 150, captureMultiplier: 2.5 },
+  tracepoint: { id: "tracepoint", category: "trap", price: 240, captureMultiplier: 3 },
+  coreDump: { id: "coreDump", category: "trap", price: 400, captureMultiplier: 3.6 },
   rootAccess: { id: "rootAccess", category: "trap", price: 15000, captureMultiplier: 255 },
   coffee: { id: "coffee", category: "potion", price: 15, heal: 30 },
   energyDrink: { id: "energyDrink", category: "potion", price: 45, heal: 90 },

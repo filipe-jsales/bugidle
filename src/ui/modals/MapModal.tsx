@@ -6,13 +6,13 @@ import { canChallengeBoss, isRegionUnlocked, isRouteUnlocked, unlockProgress } f
 import { BADGE_NAMES, REGION_NAMES, ROUTE_NAMES, UI } from "../../i18n/ptBR";
 import { useApp } from "../appContext";
 import { BugSprite, Button, Icon, Modal, Tag } from "../components/primitives";
-import { terrainUrl } from "../render/terrain";
+import { regionMapUrl } from "../render/mapArt";
 import { store, useGame } from "../store";
 import { useElementSize } from "../useElementSize";
 import { LEARN_UI, REGION_TOPICS } from "../../i18n/learning.ptBR";
-import { usePanZoom } from "../world/usePanZoom";
 
-const MAP_CONTENT = { width: 960, height: 560 };
+/** The boss node sits at the bottom of every region map. */
+const BOSS_POINT = { x: 50, y: 88 };
 
 function lockReason(route: RouteDef): string {
   if (route.unlock.kind === "defeats") return UI.map.unlockHint(route.unlock.count, ROUTE_NAMES[route.unlock.routeId] ?? "");
@@ -27,21 +27,19 @@ export function MapModal() {
   const [regionId, setRegionId] = useState(getRoute(currentRouteId).regionId);
   const [view, setView] = useState<"map" | "list">("map");
   const [viewportRef, viewport] = useElementSize<HTMLDivElement>({ width: 840, height: 420 });
-  const pz = usePanZoom(MAP_CONTENT, false, 0.9);
-  const camera = pz.cameraFor(null, viewport);
   const region = REGIONS.find((r) => r.id === regionId)!;
   const routes = routesOfRegion(regionId);
   const boss = bossOfRegion(regionId);
   const regionOpen = isRegionUnlocked(state, regionId);
 
   const go = (routeId: string) => {
-    if (pz.wasDragged()) return;
     if (report(store.run((s) => selectRoute(s, routeId)))) close();
   };
   const fightBoss = () => {
-    if (pz.wasDragged()) return;
     if (boss && report(store.run((s) => challengeBoss(s, boss.id)))) close();
   };
+  // the road goes through every route in order and ends at the boss
+  const roadPoints = [...routes.map((r) => ({ x: r.mapX, y: r.mapY })), ...(boss ? [BOSS_POINT] : [])];
 
   const routeNode = (route: RouteDef) => {
     const unlocked = isRouteUnlocked(state, route.id);
@@ -80,22 +78,16 @@ export function MapModal() {
       </div>
 
       {view === "map" ? (
-        <div ref={viewportRef} className="map-viewport" {...pz.bind(viewport)}>
+        <div ref={viewportRef} className="map-viewport">
         <div
           className="map-canvas pixel"
           style={{
-            width: MAP_CONTENT.width,
-            height: MAP_CONTENT.height,
-            transform: `translate(${-camera.x * pz.zoom}px, ${-camera.y * pz.zoom}px) scale(${pz.zoom})`,
-            backgroundImage: `url(${terrainUrl(region.terrain, `map-${region.id}`, MAP_CONTENT.width / 2, MAP_CONTENT.height / 2)})`,
-            backgroundSize: `${MAP_CONTENT.width}px ${MAP_CONTENT.height}px`,
+            width: "100%",
+            height: "100%",
+            backgroundImage: `url(${regionMapUrl(region.terrain, `map-${region.id}`, Math.round(viewport.width / 16) * 16, Math.round(viewport.height / 16) * 16, roadPoints)})`,
+            backgroundSize: "100% 100%",
           }}
         >
-          <svg className="map-paths" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden>
-            {routes.slice(1).map((r, i) => (
-              <line key={r.id} x1={routes[i]!.mapX} y1={routes[i]!.mapY} x2={r.mapX} y2={r.mapY} className={isRouteUnlocked(state, r.id) ? "path-open" : "path-locked"} />
-            ))}
-          </svg>
           {routes.map((route) => {
             const node = routeNode(route);
             return (
@@ -120,19 +112,11 @@ export function MapModal() {
             );
           })}
           {boss && (
-            <button type="button" className={`map-node boss-node ${canChallengeBoss(state, boss.id) ? "" : "locked"}`} style={{ left: "50%", top: "88%" }} onClick={fightBoss} disabled={!canChallengeBoss(state, boss.id)}>
+            <button type="button" className={`map-node boss-node ${canChallengeBoss(state, boss.id) ? "" : "locked"}`} style={{ left: `${BOSS_POINT.x}%`, top: `${BOSS_POINT.y}%` }} onClick={fightBoss} disabled={!canChallengeBoss(state, boss.id)}>
               <Icon name="bosses" size={30} />
               <span className="map-node-name">{boss.name}</span>
             </button>
           )}
-        </div>
-        <div className="map-controls" onPointerDown={(e) => e.stopPropagation()}>
-          <Button variant="dark" small aria-label={UI.mapControls.zoomIn} onClick={() => pz.zoomIn(viewport)}>
-            +
-          </Button>
-          <Button variant="dark" small aria-label={UI.mapControls.zoomOut} onClick={() => pz.zoomOut(viewport)}>
-            -
-          </Button>
         </div>
         </div>
       ) : (
@@ -170,7 +154,7 @@ export function MapModal() {
         </div>
       )}
       <p className="muted small map-footer">
-        {routes.filter((r) => isRouteUnlocked(state, r.id)).length} de {routes.length} rotas em {REGION_NAMES[regionId]} · silhueta = ainda não capturado · {UI.mapControls.hint}
+        {routes.filter((r) => isRouteUnlocked(state, r.id)).length} de {routes.length} rotas em {REGION_NAMES[regionId]} · silhueta = ainda não capturado
       </p>
     </Modal>
   );

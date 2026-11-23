@@ -1,302 +1,36 @@
 import type { ItemId } from "../../game/data/items";
-import { ITEM_ART, ITEM_COLORS } from "./itemArt";
+import { ITEM_ART } from "./itemArt";
+import { ICON_ART, type IconName } from "./iconArt";
+import { shadeArt } from "./shadedArt";
+import { createCanvas } from "./pixels";
 import type { BugType } from "../../game/types";
 import { TYPE_PALETTES } from "../../sprites/bugSprite";
 import { pixelArtUrl } from "./pixels";
 
-/** Hand-drawn 12x12 pixel icons. k = dark outline, w = white, other letters = colors below. */
-const COLORS = {
-  k: "#1f1424",
-  w: "#fbf4e4",
-  g: "#9aa0ad",
-  r: "#e2574c",
-  R: "#a8352f",
-  y: "#ffd25a",
-  Y: "#d39a2a",
-  b: "#5aa2ef",
-  B: "#3a6fb8",
-  p: "#c477e8",
-  P: "#8a45b0",
-  O: "#5a3a22",
-  G: "#1f2a24",
-  n: "#5fcf7a",
-  N: "#3a9152",
-  o: "#8a5a3a",
-} as const;
+export type { IconName };
 
-const ART = {
-  medal: [
-    "..kk....kk..",
-    "..kbk..kbk..",
-    "...kbkkbk...",
-    "....kbbk....",
-    "...kkkkkk...",
-    "..kyyyyyyk..",
-    ".kyywyyyyyk.",
-    ".kywyyyyyYk.",
-    ".kyyyyyyyYk.",
-    ".kyyyyyyYYk.",
-    "..kyYYYYYk..",
-    "...kkkkkk...",
-  ],
-  gear: [
-    "....kkkk....",
-    ".kk.kggk.kk.",
-    ".kgkkggkkgk.",
-    "..kggggggk..",
-    "kkggkkkkggkk",
-    "kgggk..kgggk",
-    "kgggk..kgggk",
-    "kkggkkkkggkk",
-    "..kggggggk..",
-    ".kgkkggkkgk.",
-    ".kk.kggk.kk.",
-    "....kkkk....",
-  ],
-  bugdex: [
-    "..kkkkkkkk..",
-    ".krrrrrrrrk.",
-    ".krRRRRRRrk.",
-    ".krwwwwwwrk.",
-    ".krwkwwkwrk.",
-    ".krwwkkwwrk.",
-    ".krwkwwkwrk.",
-    ".krwwwwwwrk.",
-    ".krRRRRRRrk.",
-    ".krrrrrrrrk.",
-    "..kkkkkkkk..",
-    "............",
-  ],
-  map: [
-    "............",
-    ".kkkkkkkkkk.",
-    ".knnbbnnnnk.",
-    ".knbbbnnyyk.",
-    ".kbbnnnnyyk.",
-    ".kbnnrnnnnk.",
-    ".knnrrrnnbk.",
-    ".knnnrnnbbk.",
-    ".knnnnnbbbk.",
-    ".kkkkkkkkkk.",
-    "............",
-    "............",
-  ],
-  box: [
-    "............",
-    ".kkkkkkkkkk.",
-    ".kggggggggk.",
-    ".kgbbbbbbgk.",
-    ".kgbBBBBbgk.",
-    ".kgbbbbbbgk.",
-    ".kggggggggk.",
-    ".kkkkkkkkkk.",
-    "....kggk....",
-    "..kkkkkkkk..",
-    "..kggggggk..",
-    "..kkkkkkkk..",
-  ],
-  shop: [
-    "............",
-    "....kkkk....",
-    "...k....k...",
-    "..kkkkkkkk..",
-    ".kyyyyyyyyk.",
-    ".kyYyyyyYyk.",
-    ".kyyyyyyyyk.",
-    ".kyyykkyyyk.",
-    ".kyyyyyyyyk.",
-    ".kYYYYYYYYk.",
-    "..kkkkkkkk..",
-    "............",
-  ],
-  bag: [
-    "....kkkk....",
-    "...koooook..",
-    "..kkkkkkkk..",
-    ".kppppppppk.",
-    ".kpPPPPPPpk.",
-    ".kppkyykppk.",
-    ".kppkyykppk.",
-    ".kppppppppk.",
-    ".kppppppppk.",
-    ".kPPPPPPPPk.",
-    "..kkkkkkkk..",
-    "............",
-  ],
-  bosses: [
-    "............",
-    ".kkkkkkkkkk.",
-    "kykyyyyyykyk",
-    "kykyyyyyykyk",
-    ".kkyyyyyykk.",
-    "..kyyyyyyk..",
-    "...kyyyyk...",
-    "....kyyk....",
-    "....kYYk....",
-    "...kkkkkk...",
-    "...kYYYYk...",
-    "...kkkkkk...",
-  ],
-  save: [
-    "............",
-    ".kkkkkkkkk..",
-    ".kbkwwwwkbk.",
-    ".kbkwwwwkbk.",
-    ".kbkkkkkkbk.",
-    ".kbbbbbbbbk.",
-    ".kbwwwwwwbk.",
-    ".kbwggggwbk.",
-    ".kbwwwwwwbk.",
-    ".kbwggggwbk.",
-    ".kkkkkkkkkk.",
-    "............",
-  ],
-  coin: [
-    "............",
-    "....kkkk....",
-    "...kyyyyk...",
-    "..kyywwyyk..",
-    ".kyywyyyYyk.",
-    ".kyywyyyYyk.",
-    ".kyywyyyYyk.",
-    ".kyyyyyyYyk.",
-    "..kyyYYYyk..",
-    "...kyyyyk...",
-    "....kkkk....",
-    "............",
-  ],
-  reboot: [
-    "............",
-    "....kkkk....",
-    "....knnk....",
-    "....knnk....",
-    ".kkkknnkkkk.",
-    ".knnnnnnnnk.",
-    ".knnnnnnnnk.",
-    ".kkkknnkkkk.",
-    "....knnk....",
-    "....knnk....",
-    "....kkkk....",
-    "............",
-  ],
-  trap: [
-    "............",
-    "....kkkk....",
-    "..kkrrrrkk..",
-    ".krrrrrrrrk.",
-    ".krrrrrrrrk.",
-    "kkkkkwwkkkkk",
-    "kwwwkwwkwwwk",
-    ".kwwwkkwwwk.",
-    ".kwwwwwwwwk.",
-    "..kkwwwwkk..",
-    "....kkkk....",
-    "............",
-  ],
-  sound: [
-    "............",
-    ".....k......",
-    "....kk...k..",
-    "...kwk....k.",
-    "kkkwwk..k.k.",
-    "kwwwwk...k.k",
-    "kwwwwk...k.k",
-    "kkkwwk..k.k.",
-    "...kwk....k.",
-    "....kk...k..",
-    ".....k......",
-    "............",
-  ],
-  houses: [
-    ".....kk.....",
-    "....krrk....",
-    "...krrrrk...",
-    "..krrrrrrk..",
-    ".krRRRRRRrk.",
-    "kkkkkkkkkkkk",
-    ".kwwwwwwwwk.",
-    ".kwbbwwbbwk.",
-    ".kwbbwwbbwk.",
-    ".kwwwookwwk.",
-    ".kwwwookwwk.",
-    ".kkkkkkkkkk.",
-  ],
-  hatchery: [
-    "....kkkk....",
-    "...kwwwwk...",
-    "..kwwnwwwk..",
-    "..kwnnnwwk..",
-    ".kwwwnwwwwk.",
-    ".kwwwwwwpwk.",
-    ".kwpwwwppwk.",
-    "kkkkkkkkkkkk",
-    "koooooooooOk",
-    "kOooooooooOk",
-    ".kOOOOOOOOk.",
-    "..kkkkkkkk..",
-  ],
-  study: [
-    "............",
-    ".kkkkk.kkkkk",
-    "kwwwwwkwwwwk",
-    "kwggwwkwggwk",
-    "kwwwwwkwwwwk",
-    "kwgggwkwgggk",
-    "kwwwwwkwwwwk",
-    "kwggwwkwggwk",
-    "kwwwwwkwwwwk",
-    "kkkkkkkkkkkk",
-    ".....kk.....",
-    "............",
-  ],
-  guild: [
-    "............",
-    ".kkk....kkk.",
-    ".kyk....kyk.",
-    ".kykkkkkkyk.",
-    ".kyyyyyyyyk.",
-    ".kyYyyyyYyk.",
-    ".kyyykkyyyk.",
-    "..kyykkyyk..",
-    "...kyyyyk...",
-    "....kyyk....",
-    ".....kk.....",
-    "............",
-  ],
-  terminal: [
-    "kkkkkkkkkkkk",
-    "kGGGGGGGGGGk",
-    "kGnGGGGGGGGk",
-    "kGGnGGGGGGGk",
-    "kGnGGGGGGGGk",
-    "kGGGGnnnnGGk",
-    "kGGGGGGGGGGk",
-    "kGGGGGGGGGGk",
-    "kkkkkkkkkkkk",
-    "....kGGk....",
-    "..kkkkkkkk..",
-    "............",
-  ],
-  close: [
-    "kk......kk..",
-    "kwk....kwk..",
-    ".kwk..kwk...",
-    "..kwkkwk....",
-    "...kwwk.....",
-    "..kwkkwk....",
-    ".kwk..kwk...",
-    "kwk....kwk..",
-    "kk......kk..",
-    "............",
-    "............",
-    "............",
-  ],
-} as const;
+const shadedCache = new Map<string, string>();
 
-export type IconName = keyof typeof ART;
+/** Draws flat art with its outline and shading (see shadedArt.ts). */
+function shadedUrl(key: string, rows: readonly string[]): string {
+  const cached = shadedCache.get(key);
+  if (cached) return cached;
+  const colors = shadeArt(rows);
+  const [canvas, ctx] = createCanvas(colors[0]?.length ?? 16, colors.length);
+  colors.forEach((line, y) =>
+    line.forEach((color, x) => {
+      if (!color) return;
+      ctx.fillStyle = color;
+      ctx.fillRect(x, y, 1, 1);
+    }),
+  );
+  const url = canvas.toDataURL();
+  shadedCache.set(key, url);
+  return url;
+}
 
 export function itemIconUrl(id: ItemId): string {
-  return pixelArtUrl(ITEM_ART[id], ITEM_COLORS);
+  return shadedUrl(`item:${id}`, ITEM_ART[id]);
 }
 
 const STONE_ART = [
@@ -321,5 +55,5 @@ export function stoneIconUrl(type: BugType): string {
 }
 
 export function iconUrl(name: IconName): string {
-  return pixelArtUrl(ART[name], COLORS);
+  return shadedUrl(`icon:${name}`, ICON_ART[name]);
 }

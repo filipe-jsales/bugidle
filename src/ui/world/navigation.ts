@@ -20,7 +20,23 @@ export interface Obstacle {
   r: number;
   /** Picks one of the terrain's prop drawings. */
   variant: number;
+  /** The Reboot Center building instead of a regular prop. */
+  center?: boolean;
 }
+
+/** The calm square around the Reboot Center, at the map start. */
+export interface Town {
+  x: number;
+  y: number;
+  /** Wild bugs stay outside this radius. */
+  r: number;
+  /** Where the trainer stands to be healed, in front of the door. */
+  door: Vec;
+  /** Where the nurse stands. */
+  nurse: Vec;
+}
+
+export const TOWN_RADIUS = 230;
 
 export interface Nav {
   width: number;
@@ -32,6 +48,7 @@ export interface Nav {
   obstacles: Obstacle[];
   /** Road center lines, for drawing. */
   roads: Vec[][];
+  town: Town;
 }
 
 export interface NavOptions {
@@ -74,25 +91,29 @@ function makeRoad(width: number, height: number, horizontal: boolean, at: number
 export function createNav(width: number, height: number, rng: Rng, options: NavOptions = {}): Nav {
   const cols = Math.ceil(width / NAV_CELL);
   const rows = Math.ceil(height / NAV_CELL);
-  const nav: Nav = { width, height, cols, rows, blocked: new Uint8Array(cols * rows), road: new Uint8Array(cols * rows), obstacles: [], roads: [] };
+  const start = options.clearAround ?? { x: width / 2, y: height / 2 };
+  const town: Town = { x: start.x, y: start.y, r: TOWN_RADIUS, door: { x: start.x, y: start.y - 30 }, nurse: { x: start.x - 46, y: start.y - 40 } };
+  const nav: Nav = { width, height, cols, rows, blocked: new Uint8Array(cols * rows), road: new Uint8Array(cols * rows), obstacles: [], roads: [], town };
+  // the Reboot Center building, north of the square; its door faces the square
+  nav.obstacles.push({ id: 0, x: start.x, y: start.y - 110, r: 62, variant: 0, center: true });
 
   // roads: a loose grid, one through the start so the trainer begins on a path
-  const start = options.clearAround ?? { x: width / 2, y: height / 2 };
   nav.roads.push(makeRoad(width, height, true, start.y, rng));
-  nav.roads.push(makeRoad(width, height, false, start.x, rng));
+  // the vertical road passes beside the town, not under the Reboot Center
+  nav.roads.push(makeRoad(width, height, false, start.x + 190, rng));
   for (const y of [height * 0.2, height * 0.8]) nav.roads.push(makeRoad(width, height, true, y + randomInt(rng, -60, 60), rng));
   for (const x of [width * 0.18, width * 0.82]) nav.roads.push(makeRoad(width, height, false, x + randomInt(rng, -60, 60), rng));
   for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) if (nearRoad(nav.roads, centerOf(c, r), ROAD_WIDTH / 2 + 6)) nav.road[r * cols + c] = 1;
 
   // obstacles: off the roads, apart from each other and from the start
-  const wanted = options.obstacles ?? Math.round((width * height) / 95_000);
+  const wanted = (options.obstacles ?? Math.round((width * height) / 95_000)) + 1;
   for (let tries = 0; nav.obstacles.length < wanted && tries < wanted * 40; tries++) {
     const r = randomInt(rng, 22, 44);
     const p = { x: randomInt(rng, 60, width - 60), y: randomInt(rng, 60, height - 60) };
-    if (Math.hypot(p.x - start.x, p.y - start.y) < 220) continue;
+    if (Math.hypot(p.x - start.x, p.y - start.y) < TOWN_RADIUS + 40) continue;
     if (nearRoad(nav.roads, p, ROAD_WIDTH / 2 + r + 8)) continue;
     if (nav.obstacles.some((o) => Math.hypot(o.x - p.x, o.y - p.y) < o.r + r + OBSTACLE_GAP * 2)) continue;
-    nav.obstacles.push({ id: nav.obstacles.length, x: p.x, y: p.y, r, variant: randomInt(rng, 0, 3) });
+    nav.obstacles.push({ id: nav.obstacles.length, x: p.x, y: p.y, r, variant: randomInt(rng, 0, 5) });
   }
   for (const o of nav.obstacles) {
     for (let rr = 0; rr < rows; rr++) {
@@ -112,6 +133,15 @@ export function isBlocked(nav: Nav, p: Vec): boolean {
 export function isRoad(nav: Nav, p: Vec): boolean {
   const { c, r } = cellOf(nav, p);
   return nav.road[r * nav.cols + c] === 1;
+}
+
+/** Keeps wild bugs out of the Reboot Center square. */
+export function outsideTown(nav: Nav, p: Vec): Vec {
+  const { town } = nav;
+  const d = Math.hypot(p.x - town.x, p.y - town.y);
+  if (d >= town.r) return p;
+  const k = d < 0.001 ? { x: 1, y: 0 } : { x: (p.x - town.x) / d, y: (p.y - town.y) / d };
+  return { x: town.x + k.x * town.r, y: town.y + k.y * town.r };
 }
 
 /** Moves a point that ended up inside an obstacle to its edge (plus a small margin). */

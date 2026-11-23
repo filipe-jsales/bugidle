@@ -1,4 +1,4 @@
-import { centerOn, clampCamera, clampZoom, coverZoom, followZoom, MAX_ZOOM, MIN_ZOOM, panBy, toScreen, zoomAround } from "./viewport";
+import { centerOn, clampCamera, clampZoom, coverZoom, followZoom, MAX_ZOOM, MIN_ZOOM } from "./viewport";
 
 const VIEW = { width: 600, height: 400 };
 const MAP = { width: 1800, height: 1100 };
@@ -18,22 +18,6 @@ describe("map camera", () => {
 
   it("centres small content instead of clamping it to a corner", () => {
     expect(clampCamera({ x: 50, y: 50 }, 1, VIEW, { width: 400, height: 300 })).toEqual({ x: -100, y: -50 });
-  });
-
-  it("pans opposite to the drag, slower when zoomed in", () => {
-    const start = { x: 600, y: 350 };
-    expect(panBy(start, 100, 0, 1, VIEW, MAP)).toEqual({ x: 500, y: 350 });
-    expect(panBy(start, 100, 0, 2, VIEW, MAP)).toEqual({ x: 550, y: 350 });
-    expect(panBy(start, 10_000, 10_000, 1, VIEW, MAP)).toEqual({ x: 0, y: 0 });
-  });
-
-  it("zooms around the cursor, keeping that point still", () => {
-    const camera = { x: 600, y: 350 };
-    const anchor = { x: 150, y: 100 };
-    const before = { x: camera.x + anchor.x, y: camera.y + anchor.y };
-    const next = zoomAround(camera, 1, 2, anchor, VIEW, MAP);
-    expect(next.zoom).toBe(2);
-    expect(toScreen(before, next.camera, next.zoom)).toEqual(anchor);
   });
 
   it("coverZoom is the smallest zoom that still fills the screen", () => {

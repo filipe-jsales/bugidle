@@ -57,7 +57,7 @@ src/
   ui/
     store.ts            GameStore: clock (100 ms), autosave (10 s), event log
     format.ts           turns engine events into log lines
-    render/             canvas helpers: sprites, icons, item art, region backgrounds, era art, house art, attack effects data
+    render/             canvas helpers: sprites, icons (16x16 shaded), map art per region, era art, house art, attack effects data
     polish.css          loaded last: layout limits, battle overlay, themed scrollbars, hover/press states, spacing
     world/worldModel.ts pure model of the explorable map: trainer walk, follower, roaming bugs, camera
     terminal.ts         the optional shell: parses a line and calls the same commands as the buttons
@@ -73,12 +73,20 @@ src/
 
 The game engine decides *when* an encounter happens and resolves it; `worldModel.ts` decides *where* it is drawn. Every animation frame, `BattleView` steps the world model with the current encounter key: between fights the trainer walks toward the nearest roaming bug and the active bug follows his trail; when the engine starts a fight, the nearest roaming bug becomes the enemy and both line up in front of it. The camera centres on the trainer and is clamped to the map.
 
-Obstacles and roads (`world/navigation.ts`): the map has a few wobbly roads (one through the start) and about 50 obstacles off the roads. The trainer plans with A* on a 40px grid where roads cost less, so he walks around obstacles and along the roads; the follower and the wild bugs are pushed out of obstacles. Obstacles are drawn as props of the region (`render/mapProps.ts`) with depth by their front edge; the terrain is drawn without its big objects on the battle map (`terrainUrl(..., props=false)`).
+Obstacles and roads (`world/navigation.ts`): the map has a few wobbly roads and about 50 obstacles off the roads. The trainer plans with A* on a 40px grid where roads cost less, so he walks around obstacles and along the roads; the follower and the wild bugs are pushed out of obstacles.
+
+Map art (`render/mapArt.ts`): every region is a themed place drawn in layers at half resolution: ground tiles with variations, big details (copper traces, cable runs, cloud mounds), holes (the sky under the Cloud region), textured roads with an edge and a lip, the Reboot Center square, and small decorations that never block. Obstacles are standing sprites with an automatic outline, sorted by depth with the bugs (6 drawings per region; in the Cloud some obstacles are holes in the floor instead). To add a region look, add a `Theme` with `tile`, `road`, `decor`, `props` and `plaza`.
+
+The Reboot Center is a calm square at the map start (`nav.town`): the building is an obstacle, the nurse stands by the door (`sprites/nurseSprite.ts`), wild bugs stay outside the square. Going to the center needs 3 s out of combat (`inCombat`, `CENTER_CALM_MS`); otherwise the player gets "Fique 3 segundos fora de combate". The trainer appears at the door with a warp effect (also after a team wipe, like waking up at a center), the nurse heals for `RECOVERY_MS`, and with "Voltar à caça" on the team leaves by itself.
+
+Capturing by hand: clicking the enemy on the map or its row in the proximity panel throws a trap (`throwTrapNow`, ignores the filter and the 3-throw limit). Clicking a roaming bug (map or panel) marks its species (`huntSpecies`): the next encounter is with it, and a trap is thrown right away. The world draws the enemy where a roaming bug of the same species is.
 
 Battle map rules (keep them):
-- The camera **always follows the trainer**. There is no dragging and no mouse-wheel zoom on the battle map; the only control is the zoom **+ / -** buttons (bottom right). Pan and wheel zoom exist only in the region map (Mapa button, `usePanZoom`).
+- The camera **always follows the trainer**. There is no dragging and no mouse-wheel zoom on the battle map; the only control is the zoom **+ / -** buttons (bottom right).
+- The region map (Mapa button) does not move or zoom at all: its background is generated at the window's size and the routes sit at percentages, so it always fills the window with no dark border.
+- No vignette or dark overlay over the map: dark edges look like a bug.
 - The zoom can never go below `coverZoom` (`world/viewport.ts`): the map always fills the screen, so no dark border shows. The map is 2800x1700 so even a wide screen zoomed out stays inside it.
-- The "Proximidade para captura" panel is an overlay inside the map, bottom right, above the zoom buttons. It folds to its title (starts folded on phones).
+- The "Proximidade para captura" panel is an overlay inside the map, bottom right, above the zoom buttons. It folds to its title (starts folded on phones). It shows the enemy's live HP; its rows are clickable (throw / hunt).
 - Map animations: `spawn-pop` when an enemy appears, `levelup-ring`, `shiny-sparkles`, plus the attack effects. Never start an animation at opacity 0 for something that must stay visible (a paused animation clock would hide it).
 
 ### State and the loop
@@ -134,7 +142,7 @@ Rule: learning is optional, short and rewarded. It never blocks progress, and a 
 
 All art is code. **Every species is hand-drawn**: `sprites/handDrawn.ts` (final forms and legendaries) and `sprites/handDrawnMore.ts` (the rest). Write only the left 12 columns of the 24x24 sprite; the code mirrors them. Codes: `k` outline, `b` body, `s` shade, `l` light, `a` accent, `e` eye, `p` pupil, `w` wing. Draw legs with `s`, not `k`, so they stay visible on the dark map. Stage 1 is small (about 14 rows), stage 3 fills the box; `bugSprite.test.ts` checks that each evolution line grows. The procedural generator in `bugSprite.ts` is only the fallback for a new species with no drawing yet.
 
-The trainer (`sprites/trainerSprite.ts`) is hand-drawn too: one 16x22 grid per view (front, back, side; right is the side mirrored), with leg rows swapped for the steps and the arms slid one pixel opposite to the legs. Item art is `render/itemArt.ts`, house art `render/houseArt.ts` (history keeps one drawing per era in `render/eras.ts`; other categories get a building that grows with the tier and carries the category emblem). Colors always come from the palettes, so shiny and dual types keep working.
+The trainer (`sprites/trainerSprite.ts`) is hand-drawn too: one 16x22 grid per view (front, back, side; right is the side mirrored), with leg rows swapped for the steps and the arms slid one pixel opposite to the legs. Items and menu icons are 16x16 flat drawings (`render/itemArt.ts`, `render/iconArt.ts`): one letter per color, and `render/shadedArt.ts` adds the outline and a three-tone bevel (light top-left, dark bottom-right), so every icon has the same finish. House art `render/houseArt.ts` (history keeps one drawing per era in `render/eras.ts`; other categories get a building that grows with the tier and carries the category emblem). Colors always come from the palettes, so shiny and dual types keep working.
 
 To review sprites, open the game in the browser and import `/src/sprites/bugSprite.ts` from the console to draw a sheet at 4x.
 
@@ -172,7 +180,9 @@ To go further:
 | RF10 | Autosave in the browser, JSON export/import | `save.ts`, `store.ts` | `save.test.ts`, `store.test.ts` |
 | - | Achievements | `achievements.ts`, `AchievementsModal.tsx` | `achievements.test.ts` |
 | - | Held items | `held.ts`, `HeldItemSection.tsx` | `held.test.ts` |
-| - | Map obstacles and roads | `world/navigation.ts`, `render/mapProps.ts` | `navigation.test.ts` |
+| - | Map obstacles, roads, themed map art, Reboot Center square | `world/navigation.ts`, `render/mapArt.ts`, `sprites/nurseSprite.ts` | `navigation.test.ts`, `mapArt.test.ts` |
+| - | Reboot Center calm time, throw by hand, hunt a species | `engine.ts` (`visitRebootCenter`, `throwTrapNow`, `huntSpecies`) | `center.test.ts` |
+| - | Item and icon art (16x16 shaded) | `render/itemArt.ts`, `render/iconArt.ts`, `render/shadedArt.ts` | `itemArt.test.ts` |
 | - | Settings window (5 tabs) | `preferences.ts`, `SettingsModal.tsx`, `usePreferenceEffects.ts` | `preferences.test.ts` |
 | - | Houses by category with milestone timelines | `housing.ts`, `HousesModal.tsx`, `i18n/houses.ptBR.ts`, `render/houseArt.ts` | `housing.test.ts` |
 | - | Balance / pacing | `simulation.ts` | `simulation.test.ts` |
@@ -186,7 +196,7 @@ To go further:
 | - | Daily challenge, Leitner boxes, boss review | `learning.ts`, `StudyModals.tsx` | `learning.test.ts` |
 | - | Guild of Algorithms | `guild.ts`, `GuildModal.tsx` | `guild.test.ts` |
 | - | Terminal | `ui/terminal.ts`, `TerminalModal.tsx` | `terminal.test.ts` |
-| - | Region map pan and zoom; battle map follow + zoom buttons | `world/viewport.ts`, `world/usePanZoom.ts`, `BattleView.tsx` | `viewport.test.ts` |
+| - | Battle map follow + zoom buttons; region map fills the window | `world/viewport.ts`, `BattleView.tsx`, `MapModal.tsx` | `viewport.test.ts` |
 | - | Automations (throw until caught, auto revive, return to hunt) | `engine.ts` | `automation.test.ts` |
 | - | Hand-drawn sprites (all species, trainer) and idle frames | `sprites/handDrawn.ts`, `sprites/handDrawnMore.ts`, `sprites/trainerSprite.ts` | `bugSprite.test.ts`, `trainerSprite.test.ts` |
 | - | Bug screen, compare, proximity panel | `BugDetailModal.tsx`, `CompareModal.tsx`, `ProximityPanel.tsx` | manual check in the browser |

@@ -114,6 +114,12 @@ export interface RuntimeState {
   captureBonus: number;
   /** Play time when each species last offered a debug challenge. */
   debugOfferedAt: Record<string, number>;
+  /** Play time (ms) when the last fight ended; the Reboot Center needs a few calm seconds. */
+  combatEndedAt: number;
+  /** The player clicked "throw": one trap goes on the next step, outside the automatic filter. */
+  manualThrow: boolean;
+  /** Species the player clicked on the map: the next encounter is with it, and a trap is thrown. */
+  huntTarget: string | null;
 }
 
 export interface GameState extends PersistentState {
@@ -123,7 +129,20 @@ export interface GameState extends PersistentState {
 export const STARTER_IDS = ["typobit", "leaklet", "pixelmite"] as const;
 
 export function createRuntime(): RuntimeState {
-  return { battle: null, spawnTimerMs: 0, recoveryMs: 0, potionCooldownMs: 0, captureAttemptsThisBattle: 0, atCenter: false, debug: null, captureBonus: 0, debugOfferedAt: {} };
+  return {
+    battle: null,
+    spawnTimerMs: 0,
+    recoveryMs: 0,
+    potionCooldownMs: 0,
+    captureAttemptsThisBattle: 0,
+    atCenter: false,
+    debug: null,
+    captureBonus: 0,
+    debugOfferedAt: {},
+    combatEndedAt: -Infinity,
+    manualThrow: false,
+    huntTarget: null,
+  };
 }
 
 export function defaultSettings(): Settings {

@@ -87,6 +87,10 @@ export const BADGE_NAMES: Record<string, string> = {
 
 export const ITEM_TEXT: Record<ItemId, { name: string; description: string }> = {
   breakpoint: { name: "Breakpoint", description: "Armadilha básica. Pausa o bug para a captura." },
+  logpoint: { name: "Logpoint", description: "Registra sem parar o programa. Um pouco melhor que o Breakpoint (1,2x)." },
+  conditionalBreak: { name: "Breakpoint Condicional", description: "Só para quando a condição é verdadeira. Chance 2x." },
+  tracepoint: { name: "Tracepoint", description: "Segue cada passo do bug até a origem. Chance 3x." },
+  coreDump: { name: "Core Dump", description: "Fotografa a memória inteira no momento da falha. Chance 3,6x." },
   watchpoint: { name: "Watchpoint", description: "Vigia a memória do bug. Captura 1,5x melhor." },
   profiler: { name: "Profiler", description: "Rastreia cada passo do bug. Captura 2,5x melhor." },
   rootAccess: { name: "Acesso Root", description: "Captura garantida. Só é usado se for a armadilha preferida." },
@@ -206,6 +210,8 @@ export const ERROR_TEXT: Record<ActionError, string> = {
   raidRunning: "Já há uma missão em andamento.",
   raidLocked: "Complete a missão anterior primeiro.",
   cannotRun: "Este algoritmo não consegue fazer esta missão.",
+  inCombat: "Fique 3 segundos fora de combate para ir ao Centro de Reboot.",
+  notInRoute: "Este bug não aparece nesta rota.",
 };
 
 export const UI = {
@@ -238,11 +244,11 @@ export const UI = {
   autoRevive: "Usar Reviver ao cair",
   returnToHunt: "Voltar à caça após o reboot",
   returnToHuntHint: "desligado, a equipe espera no Centro de Reboot",
-  atCenter: "Sua equipe está no Centro de Reboot.",
+  atCenter: "Sua equipe descansa no Centro de Reboot.",
   backToHunt: "Voltar à caça",
   rebootCenter: "Ir para o Centro de Reboot",
   forfeit: "Desistir do Chefe",
-  rebooting: "Reiniciando a equipe...",
+  rebooting: "A enfermeira está reiniciando sua equipe...",
   searching: "Procurando bugs...",
   power: "PODER",
   quality: "QUALIDADE",
@@ -429,12 +435,17 @@ export const UI = {
     chance: (pct: string) => `${pct}% por armadilha`,
     newTag: "NOVO",
     empty: "Nenhum bug por perto.",
+    hp: (hp: number, max: number) => `HP ${hp}/${max}`,
+    throwHint: "Clique para lançar uma armadilha",
+    huntHint: "Clique para caçar este bug: ele vira o próximo encontro e recebe uma armadilha",
+    targetTag: "ALVO",
+    hunting: (name: string) => `Mirando em ${name}: ele será o próximo encontro.`,
+    thrown: "Armadilha lançada!",
   },
   bagStones: "PEDRAS",
   mapControls: {
     zoomIn: "Aproximar",
     zoomOut: "Afastar",
-    hint: "arraste para mover, roda do mouse para zoom",
   },
   compare: {
     title: "COMPARAR BUGS",

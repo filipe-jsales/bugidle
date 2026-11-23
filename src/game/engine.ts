@@ -33,6 +33,8 @@ import type { BugType } from "./types";
 /** Time between encounters: the trainer walks the map looking for the next bug. */
 export const SPAWN_DELAY_MS = 2200;
 export const RECOVERY_MS = 3000;
+/** Calm time after a fight before the Reboot Center can be used. */
+export const CENTER_CALM_MS = 3000;
 export const POTION_COOLDOWN_MS = 1200;
 export const STARTER_LEVEL = 5;
 /** How long a "debug to capture" challenge waits for the player. */
@@ -134,12 +136,43 @@ export function forfeitBoss(state: GameState): ActionResult {
   return OK;
 }
 
-/** Full heal for the team. The current encounter is abandoned and there is a short reboot. */
+/** True while fighting, and for a few seconds after a fight ends. */
+export function inCombat(state: GameState): boolean {
+  const rt = state.runtime;
+  if (rt.battle && !rt.battle.outcome) return true;
+  return state.totals.playTimeMs - rt.combatEndedAt < CENTER_CALM_MS;
+}
+
+/**
+ * Goes to the Reboot Center, a calm place with no encounters, where the nurse
+ * heals the team. Needs a few seconds out of combat. With "return to hunt" on,
+ * the team leaves by itself after the heal; otherwise it waits there.
+ */
 export function visitRebootCenter(state: GameState): ActionResult {
   if (state.activity.kind === "boss") return fail("busy");
+  if (state.runtime.atCenter || state.runtime.recoveryMs > 0) return OK;
+  if (inCombat(state)) return fail("inCombat");
   endBattle(state);
   state.runtime.recoveryMs = RECOVERY_MS;
-  state.runtime.atCenter = !state.settings.returnToHunt;
+  state.runtime.atCenter = true;
+  return OK;
+}
+
+/** The player throws a trap at the current wild bug, whatever the automatic filter says. */
+export function throwTrapNow(state: GameState): ActionResult {
+  const battle = state.runtime.battle;
+  if (!battle || battle.kind !== "wild" || battle.outcome) return fail("busy");
+  if (!pickTrap(state.inventory, state.settings.preferredTrap)) return fail("noItem");
+  state.runtime.manualThrow = true;
+  return OK;
+}
+
+/** The player picked a roaming bug on the map: hunt it next and throw a trap at it. */
+export function huntSpecies(state: GameState, speciesId: string): ActionResult {
+  if (state.activity.kind !== "route") return fail("notInRoute");
+  if (!getRoute(state.activity.routeId).encounters.some((e) => e.speciesId === speciesId)) return fail("notInRoute");
+  if (!pickTrap(state.inventory, state.settings.preferredTrap)) return fail("noItem");
+  state.runtime.huntTarget = speciesId;
   return OK;
 }
 
@@ -185,7 +218,9 @@ export function answerDebug(state: GameState, line: number | null, today = dayNu
 }
 
 function endBattle(state: GameState): void {
+  if (state.runtime.battle) state.runtime.combatEndedAt = state.totals.playTimeMs;
   state.runtime.battle = null;
+  state.runtime.manualThrow = false;
   state.runtime.debug = null;
   state.runtime.captureBonus = 0;
   state.runtime.spawnTimerMs = SPAWN_DELAY_MS;
@@ -222,6 +257,7 @@ function stepOnce(state: GameState, dtMs: number, rng: Rng, events: GameEvent[])
       rt.recoveryMs = 0;
       team.forEach(healFully);
       events.push({ type: "recovered" });
+      if (state.settings.returnToHunt) rt.atCenter = false;
     }
     return;
   }
@@ -244,6 +280,14 @@ function stepOnce(state: GameState, dtMs: number, rng: Rng, events: GameEvent[])
 
   rt.potionCooldownMs = Math.max(0, rt.potionCooldownMs - dtMs);
   maybeUsePotion(state, team, events);
+  if (rt.manualThrow) {
+    rt.manualThrow = false;
+    tryCapture(state, rng, events, true);
+    if (!rt.battle || rt.battle.outcome) {
+      if (rt.battle?.outcome) finishBattle(state, rt.battle.outcome, events);
+      return;
+    }
+  }
 
   const battle = rt.battle;
   const battleEvents = stepBattle(battle, team, dtMs, { levelCap: levelCap(state), rng });
@@ -275,7 +319,9 @@ function startBattle(state: GameState, rng: Rng, events: GameEvent[]): void {
     return;
   }
   const route = getRoute(state.activity.routeId);
-  const wild = spawnWild(route, rng);
+  const wild = spawnWild(route, rng, rt.huntTarget);
+  const hunted = rt.huntTarget !== null && wild.speciesId === rt.huntTarget;
+  rt.huntTarget = null;
   registerSeen(state, wild.speciesId);
   rt.battle = createBattle("wild", [wild]);
   events.push({ type: "encounter", speciesId: wild.speciesId, level: wild.level, shiny: wild.shiny });
@@ -285,12 +331,16 @@ function startBattle(state: GameState, rng: Rng, events: GameEvent[]): void {
     events.push({ type: "debugOffered", speciesId: wild.speciesId });
     return;
   }
+  // A bug the player picked on the map gets a trap right away.
+  if (hunted) rt.manualThrow = true;
   // Throw before the first hit too, so strong teams can still catch.
-  tryCapture(state, rng, events);
+  else tryCapture(state, rng, events);
 }
 
-export function spawnWild(route: RouteDef, rng: Rng): BugInstance {
-  const encounter = pickWeighted(rng, route.encounters);
+/** A wild bug of the route; `speciesId` forces the species when the route has it. */
+export function spawnWild(route: RouteDef, rng: Rng, speciesId: string | null = null): BugInstance {
+  const forced = speciesId ? route.encounters.find((e) => e.speciesId === speciesId) : undefined;
+  const encounter = forced ?? pickWeighted(rng, route.encounters);
   const level = randomInt(rng, route.minLevel, route.maxLevel);
   return createBug({ uid: `wild-${Math.floor(rng() * 1e9)}`, speciesId: encounter.speciesId, level, rng, origin: route.id });
 }
@@ -311,16 +361,18 @@ function offersDebug(state: GameState, wild: BugInstance): boolean {
   return special && (last === undefined || state.totals.playTimeMs - last >= DEBUG_COOLDOWN_MS);
 }
 
-/** RF05: automatic, filter-driven trap throws. */
-function tryCapture(state: GameState, rng: Rng, events: GameEvent[]): void {
+/** RF05: automatic, filter-driven trap throws. `manual` is the player's click: no filter, no limit. */
+function tryCapture(state: GameState, rng: Rng, events: GameEvent[], manual = false): void {
   const battle = state.runtime.battle;
   if (!battle || battle.kind !== "wild" || battle.outcome) return;
   const wild = activeEnemy(battle);
   if (!wild || isFainted(wild)) return;
-  const limit = state.settings.throwUntilCaught ? Infinity : MAX_THROWS_PER_ENCOUNTER;
+  const limit = state.settings.throwUntilCaught || manual ? Infinity : MAX_THROWS_PER_ENCOUNTER;
   if (state.runtime.captureAttemptsThisBattle >= limit) return;
   let trap: TrapItem | null;
-  if (state.settings.useRules) {
+  if (manual) {
+    trap = pickTrap(state.inventory, state.settings.preferredTrap);
+  } else if (state.settings.useRules) {
     const rule = firstMatch(state.rules, "capture", { state, wild, active: activePlayerBug(teamBugs(state)) });
     if (!rule || rule.then.kind !== "throw") return;
     trap = ITEMS[rule.then.trap] as TrapItem;
@@ -429,8 +481,9 @@ function finishBattle(state: GameState, outcome: BattleOutcome, events: GameEven
   endBattle(state);
   if (outcome === "lost") {
     events.push({ type: "teamWiped" });
+    // like blacking out: the team wakes up at the Reboot Center
     state.runtime.recoveryMs = RECOVERY_MS;
-    state.runtime.atCenter = !state.settings.returnToHunt;
+    state.runtime.atCenter = true;
   }
 }
 

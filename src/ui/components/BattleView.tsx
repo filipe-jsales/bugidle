@@ -3,7 +3,7 @@ import { activeEnemy, activePlayerBug } from "../../game/battle";
 import { maxHp, type BugInstance } from "../../game/bug";
 import { getSpecies } from "../../game/data/species";
 import { getBoss, getRegion, getRoute } from "../../game/data/world";
-import { forfeitBoss, RECOVERY_MS, returnToHunt, visitRebootCenter } from "../../game/engine";
+import { forfeitBoss, huntSpecies, RECOVERY_MS, returnToHunt, throwTrapNow, visitRebootCenter } from "../../game/engine";
 import { defaultRng } from "../../game/rng";
 import { teamBugs, type GameState } from "../../game/state";
 import { walkFrame } from "../../sprites/trainerSprite";
@@ -12,8 +12,9 @@ import { useApp } from "../appContext";
 import { formatClock, formatNumber } from "../format";
 import { buildAttackFx } from "../render/attackFx";
 import { trainerSpriteUrl } from "../render/pixels";
-import { terrainUrl } from "../render/terrain";
-import { propSprite, roadsUrl } from "../render/mapProps";
+import { battleGroundUrl, centerSprite, isHole, propSprite } from "../render/mapArt";
+import { pixelArtUrl } from "../render/pixels";
+import { NURSE_FRAMES, NURSE_HEIGHT, NURSE_PALETTE, NURSE_WIDTH } from "../../sprites/nurseSprite";
 import { store, useGame, type TimedEvent } from "../store";
 import { createWorld, stepWorld, type Vec, type WorldModel } from "../world/worldModel";
 import { worldFor } from "../world/worldRegistry";
@@ -99,7 +100,7 @@ interface FloatText {
 
 export function BattleView() {
   const state = useGame();
-  const { report, open } = useApp();
+  const { report, open, toast } = useApp();
   const viewportRef = useRef<HTMLDivElement>(null);
   const [viewport, setViewport] = useState({ width: 640, height: 360 });
   const [, setFrame] = useState(0);
@@ -132,7 +133,10 @@ export function BattleView() {
       // performance modes draw fewer frames; the world still advances by the real time passed
       const fps = mapFps(getPreferences());
       if (now - last < 1000 / fps - 2) return;
-      stepWorld(world, (now - last) / 1000, { encounterKey: encounterKeyOf(store.state), viewport: viewportSize.current }, defaultRng);
+      const s = store.state;
+      const fighting = s.runtime.battle && !s.runtime.battle.outcome ? activeEnemy(s.runtime.battle) : undefined;
+      const atCenter = s.activity.kind === "route" && (s.runtime.atCenter || s.runtime.recoveryMs > 0);
+      stepWorld(world, (now - last) / 1000, { encounterKey: encounterKeyOf(s), encounterSpecies: fighting?.speciesId, atCenter, viewport: viewportSize.current }, defaultRng);
       last = now;
       setFrame((f) => (f + 1) % 1_000_000);
     };
@@ -141,6 +145,7 @@ export function BattleView() {
   }, [world]);
 
   const prefs = usePreferences();
+  const healing = state.runtime.recoveryMs > 0;
   const lighting = prefs.timeLighting ? lightingFor(new Date().getHours()) : null;
   const now = performance.now();
   const rt = state.runtime;
@@ -206,12 +211,13 @@ export function BattleView() {
             width: MAP_W,
             height: MAP_H,
             transform: `translate(${-Math.round(camera.x * zoom)}px, ${-Math.round(camera.y * zoom)}px) scale(${zoom})`,
-            backgroundImage: `url(${roadsUrl(world.nav, region.terrain, scene.key)}), url(${terrainUrl(region.terrain, scene.key, MAP_W / 2, MAP_H / 2, false)})`,
-            backgroundSize: `${MAP_W}px ${MAP_H}px, ${MAP_W}px ${MAP_H}px`,
+            backgroundImage: `url(${battleGroundUrl(region.terrain, scene.key, world.nav)})`,
+            backgroundSize: `${MAP_W}px ${MAP_H}px`,
           }}
         >
           {world.nav.obstacles.map((o) => {
-            const prop = propSprite(region.terrain, o);
+            if (isHole(region.terrain, o)) return null;
+            const prop = o.center ? centerSprite() : propSprite(region.terrain, o);
             // the footprint circle sits at the bottom of the drawing; depth by the footprint's front edge
             return (
               <img
@@ -227,15 +233,41 @@ export function BattleView() {
             );
           })}
 
+          <img
+            className="entity-img nurse pixel"
+            src={pixelArtUrl(NURSE_FRAMES[healing && Math.floor(now / 300) % 2 === 0 ? 1 : 0]!, NURSE_PALETTE)}
+            width={NURSE_WIDTH * TRAINER_SCALE}
+            height={NURSE_HEIGHT * TRAINER_SCALE}
+            alt=""
+            draggable={false}
+            style={{ left: world.nav.town.nurse.x - (NURSE_WIDTH * TRAINER_SCALE) / 2, top: world.nav.town.nurse.y - NURSE_HEIGHT * TRAINER_SCALE, zIndex: Math.round(world.nav.town.nurse.y) }}
+          />
+
           {world.wanderers.map((w) => (
-            <div key={w.id} className="entity wild" style={at(w.pos)}>
+            <button
+              key={w.id}
+              type="button"
+              className={`entity wild clickable-bug ${rt.huntTarget === w.speciesId ? "targeted" : ""}`}
+              style={at(w.pos)}
+              title={UI.proximity.huntHint}
+              onClick={() => {
+                if (report(store.run((s) => huntSpecies(s, w.speciesId)))) toast(UI.proximity.hunting(getSpecies(w.speciesId).name));
+              }}
+            >
               <div className="shadow" />
               <BugSprite speciesId={w.speciesId} size={WILD_PX} animate phase={w.id * 0.37} />
-            </div>
+            </button>
           ))}
 
           {enemy && world.encounter && (
-            <div className="entity" style={at(world.encounter.pos)}>
+            <div
+              className="entity clickable-bug"
+              style={at(world.encounter.pos)}
+              title={UI.proximity.throwHint}
+              onClick={() => {
+                if (report(store.run(throwTrapNow))) toast(UI.proximity.thrown);
+              }}
+            >
               {prefs.nameplates && <Nameplate bug={enemy} showHp={false} />}
               <div className="shadow" />
               <div key={lastEnemyHit?.id ?? 0} className="lunge" style={{ "--lx": `${Math.sign(playerPos.x - enemyPos.x) * 14}px`, "--ly": `${Math.sign(playerPos.y - enemyPos.y) * 8}px` } as CSSProperties}>
@@ -260,8 +292,9 @@ export function BattleView() {
             </div>
           )}
 
-          <div className="entity trainer" style={at(trainerPos)}>
+          <div className={`entity trainer ${world.warpS < 0.6 ? "warp-in" : ""}`} style={at(trainerPos)}>
             <div className="shadow" />
+            {healing && world.atCenter && <div className="heal-ring" />}
             <img
               className={`pixel ${trainerFacing === "right" ? "mirror" : ""}`}
               src={trainerSpriteUrl(trainerFacing, walkFrame(world.trainer.moving, world.trainer.walkS))}
@@ -350,16 +383,16 @@ export function BattleView() {
         <DebugPanel />
 
         {rt.atCenter && rt.recoveryMs <= 0 && (
-          <div className="scene-overlay" onPointerDown={(e) => e.stopPropagation()}>
+          <div className="scene-banner">
             <span>{UI.atCenter}</span>
-            <Button variant="gold" onClick={() => report(store.run(returnToHunt))}>
+            <Button variant="gold" small onClick={() => report(store.run(returnToHunt))}>
               {UI.backToHunt}
             </Button>
           </div>
         )}
 
         {rt.recoveryMs > 0 && (
-          <div className="scene-overlay">
+          <div className="scene-banner">
             <span>{UI.rebooting}</span>
             <div className="overlay-bar">
               <Bar kind="time" value={RECOVERY_MS - rt.recoveryMs} max={RECOVERY_MS} />
