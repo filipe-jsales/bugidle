@@ -1,5 +1,6 @@
 import { isUnlocked, markSeen, newFeatures, type FeatureId } from "../../game/unlocks";
 import { UI, UNLOCK_UI } from "../../i18n/ptBR";
+import { TRAINER_UI } from "../../i18n/trainer.ptBR";
 import { ACHIEVEMENTS_UI } from "../../i18n/achievements.ptBR";
 import { MINIGAMES_UI } from "../../i18n/minigames.ptBR";
 import { SETTINGS_UI } from "../../i18n/settings.ptBR";
@@ -31,6 +32,7 @@ const ENTRIES: Entry[] = [
 
 /** Small square buttons in the left rail, next to the player card. */
 const RAIL: Entry[] = [
+  { modal: { kind: "trainer" }, icon: "card", label: TRAINER_UI.nav, key: "t" },
   { modal: { kind: "settings" }, icon: "gear", label: SETTINGS_UI.nav, key: "," },
   { modal: { kind: "bag" }, icon: "bag", label: UI.nav.bag, key: "i" },
   { modal: { kind: "achievements" }, icon: "medal", label: ACHIEVEMENTS_UI.nav, key: "k" },

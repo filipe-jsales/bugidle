@@ -1,4 +1,5 @@
-import { TRAINER_HEIGHT, TRAINER_PALETTE, TRAINER_WIDTH, trainerPixels, Tp, walkFrame, type Facing, type WalkFrame } from "./trainerSprite";
+import { LOOK_COLORS, TRAINER_HEIGHT, TRAINER_PALETTE, TRAINER_WIDTH, trainerPalette, trainerPixels, Tp, walkFrame, type Facing, type WalkFrame } from "./trainerSprite";
+import { defaultLook, LOOK_OPTIONS } from "../game/trainerLook";
 
 const FACINGS: Facing[] = ["down", "up", "left", "right"];
 const FRAMES: WalkFrame[] = [0, 1, 2];
@@ -41,5 +42,39 @@ describe("trainer sprite", () => {
     expect(walkFrame(false, 3.3)).toBe(0);
     const frames = new Set([0, 0.13, 0.26, 0.39].map((t) => walkFrame(true, t)));
     expect(frames).toEqual(new Set([0, 1, 2]));
+  });
+});
+
+describe("trainer look", () => {
+  it("every headwear keeps the sprite size and changes only the top of the head", () => {
+    for (const facing of FACINGS) {
+      for (const frame of FRAMES) {
+        const cap = trainerPixels(facing, frame, "cap");
+        for (const hw of ["beanie", "none"] as const) {
+          const other = trainerPixels(facing, frame, hw);
+          expect(other.length).toBe(cap.length);
+          // rows 5 and below are the same drawing
+          expect(same(other.slice(5 * TRAINER_WIDTH), cap.slice(5 * TRAINER_WIDTH))).toBe(true);
+          expect(same(other, cap)).toBe(false);
+        }
+      }
+    }
+  });
+
+  it("without a hat the hair shows and there is no cap logo", () => {
+    const none = trainerPixels("down", 0, "none");
+    expect(none.slice(0, 5 * TRAINER_WIDTH).includes(Tp.Hair)).toBe(true);
+    expect(none.includes(Tp.Logo)).toBe(false);
+    expect(none.includes(Tp.Cap)).toBe(false);
+  });
+
+  it("every color option has a color, and the default look keeps the classic colors", () => {
+    for (const part of ["headColor", "hair", "skin", "jacket", "pants", "backpack"] as const) {
+      for (const option of LOOK_OPTIONS[part]) expect(LOOK_COLORS[part]?.[option], `${part}:${option}`).toBeDefined();
+    }
+    const classic = trainerPalette(defaultLook());
+    expect(classic[Tp.Cap]).toBe(TRAINER_PALETTE[Tp.Cap]);
+    expect(classic[Tp.Jacket]).toBe(TRAINER_PALETTE[Tp.Jacket]);
+    expect(trainerPalette({ ...defaultLook(), jacket: "gold" })[Tp.Jacket]).toBe(LOOK_COLORS.jacket!.gold![0]);
   });
 });

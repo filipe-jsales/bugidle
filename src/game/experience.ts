@@ -1,3 +1,4 @@
+import type { TrainerLook } from "./trainerLook";
 import { computeStats, MAX_LEVEL, type BugInstance } from "./bug";
 import { getSpecies } from "./data/species";
 
@@ -79,6 +80,10 @@ export interface Trainer {
   name: string;
   level: number;
   xp: number;
+  /** Headwear and colors chosen in the trainer card. */
+  look: TrainerLook;
+  /** Bug shown on the trainer card; null = the highest level bug. */
+  favoriteUid: string | null;
 }
 
 /** Returns how many trainer levels were gained. */

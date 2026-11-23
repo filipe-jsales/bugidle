@@ -212,6 +212,7 @@ export const ERROR_TEXT: Record<ActionError, string> = {
   raidLocked: "Complete a missão anterior primeiro.",
   cannotRun: "Este algoritmo não consegue fazer esta missão.",
   notInRoute: "Este bug não aparece nesta rota.",
+  lookLocked: "Esta opção ainda não foi conquistada.",
 };
 
 /** Names of features that open as the player progresses (unlocks.ts). */

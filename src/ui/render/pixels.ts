@@ -1,6 +1,6 @@
 import { getSpecies } from "../../game/data/species";
 import { colorFor, generateBugSprite, shinyPalette, SPRITE_SIZE, TYPE_PALETTES, type AnimFrame } from "../../sprites/bugSprite";
-import { TRAINER_HEIGHT, TRAINER_PALETTE, TRAINER_WIDTH, trainerPixels, Tp, type Facing, type WalkFrame } from "../../sprites/trainerSprite";
+import { TRAINER_HEIGHT, TRAINER_PALETTE, TRAINER_WIDTH, trainerPalette, trainerPixels, Tp, type Facing, type Headwear, type WalkFrame } from "../../sprites/trainerSprite";
 
 const urlCache = new Map<string, string>();
 
@@ -58,18 +58,20 @@ export function pixelArtUrl(rows: readonly string[], colors: Readonly<Record<str
   return url;
 }
 
-/** Trainer frame as a data URL. "right" is the left sprite: mirror it with CSS. */
-export function trainerSpriteUrl(facing: Facing, frame: WalkFrame): string {
+/** Trainer frame as a data URL, in the player's look. "right" is the left sprite: mirror it with CSS. */
+export function trainerSpriteUrl(facing: Facing, frame: WalkFrame, look?: Readonly<Record<string, string>>): string {
   const view = facing === "right" ? "left" : facing;
-  const key = `trainer|${view}|${frame}`;
+  const lookKey = look ? Object.values(look).join(",") : "default";
+  const key = `trainer|${view}|${frame}|${lookKey}`;
   const cached = urlCache.get(key);
   if (cached) return cached;
-  const pixels = trainerPixels(view, frame);
+  const palette = look ? trainerPalette(look) : TRAINER_PALETTE;
+  const pixels = trainerPixels(view, frame, (look?.headwear as Headwear | undefined) ?? "cap");
   const [canvas, ctx] = createCanvas(TRAINER_WIDTH, TRAINER_HEIGHT);
   for (let i = 0; i < pixels.length; i++) {
     const p = pixels[i]!;
     if (p === Tp.Empty) continue;
-    ctx.fillStyle = TRAINER_PALETTE[p as Exclude<Tp, Tp.Empty>];
+    ctx.fillStyle = palette[p as Exclude<Tp, Tp.Empty>];
     ctx.fillRect(i % TRAINER_WIDTH, Math.floor(i / TRAINER_WIDTH), 1, 1);
   }
   const url = canvas.toDataURL();

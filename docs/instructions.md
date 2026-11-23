@@ -148,9 +148,13 @@ To add a concept: data in `game/data/concepts.ts`, text in `i18n/concepts.ptBR.t
 
 `game/unlocks.ts` lists the features that open as the player progresses (`FEATURES`, each with a test on the state: defeats, captures, badges, team size). Top-bar windows (Mini Games, Chefes, Casas, Ovos, Guilda) are hidden until open and then show a NOVO tag until visited (`newFeatures`, `markSeen`, saved in `seenFeatures`); automation switches just appear. The store writes a "Liberado: X" log line when something opens (`announceUnlocks`). Saves made before this feature mark everything already open as seen. Hidden switches keep working with their saved value. To add a feature: an entry in `FEATURES`, its name in `FEATURE_TEXT` (`i18n/ptBR.ts`), and a `feature` on its button (`TopNav.tsx`) or an `unlocked(...)` check (`RightColumn.tsx`). `unlocks.test.ts` checks that every feature opens by the end of the game.
 
+## Trainer card and look
+
+`game/trainerLook.ts` holds the look rules: `LOOK_PARTS` (headwear and one color per part), `LOOK_OPTIONS` (option ids), `LOOK_REQUIREMENTS` (specials earned with a shiny, the first boss or all bosses), `setLook` (refuses locked options with `lookLocked`), `sanitizeLook` for saves, and the favorite bug (`favoriteBug`, `setFavorite`). The look lives in `trainer.look`, the favorite in `trainer.favoriteUid`. Colors are art and live in `sprites/trainerSprite.ts` (`LOOK_COLORS`, `trainerPalette`); headwear swaps rows 0-4 of the drawing (`HEAD_ROWS`). `trainerSpriteUrl(facing, frame, look)` caches one image per look. The window is `ui/modals/TrainerModal.tsx`, texts in `i18n/trainer.ptBR.ts`. To add an option: its id in `LOOK_OPTIONS`, its colors in `LOOK_COLORS`, its name in `LOOK_OPTION_NAMES`; `trainerSprite.test.ts` fails if a color is missing.
+
 ## Keyboard shortcuts
 
-Each main window has a letter (`key` on the entries in `TopNav.tsx`, also shown in the tooltips): B Bugdex, E Estudo, M Mapa, Q Equipe, L Loja, C Chefes, H Casas, G Guilda, O Ovos, J Mini Games, I Mochila, K Conquistas, S Save, comma Config. F2 opens the terminal. Shortcuts work only with no window open and outside text fields (mini games use the keyboard), and only for unlocked windows.
+Each main window has a letter (`key` on the entries in `TopNav.tsx`, also shown in the tooltips): B Bugdex, E Estudo, M Mapa, Q Equipe, L Loja, C Chefes, H Casas, G Guilda, O Ovos, J Mini Games, I Mochila, K Conquistas, S Save, T Treinador, comma Config. F2 opens the terminal. Shortcuts work only with no window open and outside text fields (mini games use the keyboard), and only for unlocked windows.
 
 ## HUD layout
 

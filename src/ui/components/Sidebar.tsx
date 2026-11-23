@@ -12,6 +12,7 @@ import { formatNumber } from "../format";
 import { store, useGame } from "../store";
 import { BugSummary } from "./BugSummary";
 import { trainerSpriteUrl } from "../render/pixels";
+import { TRAINER_UI } from "../../i18n/trainer.ptBR";
 import { Bar, Button, Icon, Panel } from "./primitives";
 
 export function PlayerCard() {
@@ -21,9 +22,9 @@ export function PlayerCard() {
   return (
     <Panel className="player-card">
       <div className="player-head">
-        <div className="avatar trainer-avatar">
-          <img className="pixel idle-bob" src={trainerSpriteUrl("down", 0)} alt="" draggable={false} />
-        </div>
+        <button type="button" className="avatar trainer-avatar" onClick={() => open({ kind: "trainer" })} title={TRAINER_UI.title} aria-label={TRAINER_UI.title}>
+          <img className="pixel idle-bob" src={trainerSpriteUrl("down", 0, state.trainer.look)} alt="" draggable={false} />
+        </button>
         <div className="player-info">
           <div className="player-name-row">
             <strong>{state.trainer.name}</strong>

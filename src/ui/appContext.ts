@@ -24,7 +24,8 @@ export type ModalState =
   | { kind: "guild" }
   | { kind: "terminal" }
   | { kind: "review"; bossId: string }
-  | { kind: "compare"; a: string; b: string };
+  | { kind: "compare"; a: string; b: string }
+  | { kind: "trainer"; tab?: "card" | "look" };
 
 export interface AppActions {
   open: (modal: ModalState) => void;

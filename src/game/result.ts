@@ -37,7 +37,8 @@ export type ActionError =
   | "raidRunning"
   | "raidLocked"
   | "cannotRun"
-  | "notInRoute";
+  | "notInRoute"
+  | "lookLocked";
 
 export const OK: ActionResult = { ok: true };
 export const fail = (reason: ActionError): ActionResult => ({ ok: false, reason });

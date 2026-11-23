@@ -10,6 +10,7 @@ import { labQuestion } from "./data/labs";
 import { getConcept } from "./data/concepts";
 import { isGameId } from "./minigames";
 import { isFeatureId, unlockedFeatures } from "./unlocks";
+import { sanitizeLook } from "./trainerLook";
 import { BOSSES, ROUTES } from "./data/world";
 import { createInitialState, createRuntime, defaultSettings, SAVE_VERSION, type CaptureMode, type GameState, type PersistentState } from "./state";
 
@@ -188,6 +189,8 @@ export function importSave(text: string): GameState {
       name: typeof trainerRaw.name === "string" ? trainerRaw.name.slice(0, 20) : base.trainer.name,
       level: isNumber(trainerRaw.level) ? Math.max(1, Math.floor(trainerRaw.level)) : 1,
       xp: isNumber(trainerRaw.xp) ? Math.max(0, trainerRaw.xp) : 0,
+      look: sanitizeLook(trainerRaw.look),
+      favoriteUid: typeof trainerRaw.favoriteUid === "string" && trainerRaw.favoriteUid in bugs ? trainerRaw.favoriteUid : null,
     },
     coins: isNumber(raw.coins) ? Math.max(0, Math.floor(raw.coins)) : base.coins,
     bugs,

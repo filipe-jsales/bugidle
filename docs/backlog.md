@@ -162,11 +162,17 @@ Principle: learning is optional, short and rewarded; it never blocks progress.
 - [x] Keyboard shortcuts for the main windows (B, E, M, Q, L, C, H, G, O, J, I, K, S, comma), shown in the button tooltips
 - [x] Game of the day: one mini game per day pays double coins, shown first in the hub, with a dot on the Mini Games button while it still pays
 
+## v0.16 - trainer card and look
+
+- [x] Trainer window (click the profile picture, the Cartão rail button or T), with a big breathing trainer that turns, and the name
+- [x] CARTÃO tab: play time, defeats, captures, shinies, evolutions, eggs, Bugdex, achievements, best study streak, mini game plays, the 5 badges and a favorite bug (the highest level one until the player picks)
+- [x] VISUAL tab: cap, beanie or no hat, and colors for hat, hair, skin, jacket, pants and backpack; special options earned in play (shiny hat after a shiny, legendary backpack after the first boss, gold jacket after all bosses); random and default buttons
+- [x] The chosen look is drawn on the map, the profile picture and the card
+
 ## Next (core polish)
 
 
 
-- [ ] Trainer customization (avatar colors, outfits)
 
 - [ ] Rematch bosses at higher levels (daily)
 - [ ] English translation (`src/i18n/en.ts` with the same shape)
@@ -181,7 +187,6 @@ Principle: learning is optional, short and rewarded; it never blocks progress.
 - [ ] Bug fusion or "merge": two bugs of the same line become one with better IVs
 - [ ] Map events: a golden bug that runs away, a supply drop with traps, a "deploy freeze" that doubles XP for 5 minutes
 - [ ] Trap crafting with stones (stones + coins = a better trap)
-- [ ] Badges case and trainer card to show progress (playtime, shinies, favorite bug)
 - [ ] Expeditions: send a boxed team on a timed trip to a cleared route for loot
 - [ ] Weather forecast: a small panel with the next 3 weather slots per region, to plan where to hunt
 - [ ] Weather-only bugs: a rare species that only appears in storms or at night

@@ -11,6 +11,7 @@ import type { StoneWallet } from "./stones";
 import { defaultRules, type Rule } from "./rules";
 import type { KnowledgeCard } from "./learning";
 import { createGuild, type GuildState } from "./guild";
+import { defaultLook } from "./trainerLook";
 
 export const SAVE_VERSION = 1;
 export const MAX_TEAM_SIZE = 6;
@@ -179,7 +180,7 @@ export function defaultSettings(): Settings {
 export function createInitialState(trainerName = "Hunter"): GameState {
   return {
     version: SAVE_VERSION,
-    trainer: { name: trainerName, level: 1, xp: 0 },
+    trainer: { name: trainerName, level: 1, xp: 0, look: defaultLook(), favoriteUid: null },
     coins: 150,
     bugs: {},
     team: [],

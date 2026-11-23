@@ -1,6 +1,7 @@
 import { computeStats, createBug, healFully, ivGrade, ivTotal, powerRating } from "./bug";
 import { EARLY_LEVELS, earlyXpFloor, gainTrainerXp, gainXp, xpReward, xpToNextLevel } from "./experience";
 import { createSeededRng } from "./rng";
+import { defaultLook } from "./trainerLook";
 
 const ivs = { hp: 31, atk: 31, def: 31, spd: 31 };
 const make = (level = 5) =>
@@ -85,7 +86,7 @@ describe("experience", () => {
   });
 
   it("levels up the trainer", () => {
-    const trainer = { name: "t", level: 1, xp: 0 };
+    const trainer = { name: "t", level: 1, xp: 0, look: defaultLook(), favoriteUid: null };
     expect(gainTrainerXp(trainer, 60)).toBe(1);
     expect(trainer.level).toBe(2);
   });

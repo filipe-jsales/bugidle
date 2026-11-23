@@ -312,7 +312,7 @@ export function BattleView() {
             {healing && world.atCenter && <div className="heal-ring" />}
             <img
               className={`pixel ${trainerFacing === "right" ? "mirror" : ""}`}
-              src={trainerSpriteUrl(trainerFacing, walkFrame(world.trainer.moving, world.trainer.walkS))}
+              src={trainerSpriteUrl(trainerFacing, walkFrame(world.trainer.moving, world.trainer.walkS), state.trainer.look)}
               width={16 * TRAINER_SCALE}
               height={22 * TRAINER_SCALE}
               alt=""

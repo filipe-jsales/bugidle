@@ -28,6 +28,7 @@ import { formatNumber } from "./format";
 import { BossReviewModal, StudyModal } from "./modals/StudyModals";
 import { HousesModal } from "./modals/HousesModal";
 import { MapModal } from "./modals/MapModal";
+import { TrainerModal } from "./modals/TrainerModal";
 import { BossesModal, SaveModal, StarterModal } from "./modals/MiscModals";
 import { BagModal, ShopModal } from "./modals/ShopBagModals";
 import { store, useGame } from "./store";
@@ -40,6 +41,8 @@ function ModalHost({ modal }: { modal: ModalState | null }) {
   switch (modal.kind) {
     case "bug":
       return <BugDetailModal uid={modal.uid} />;
+    case "trainer":
+      return <TrainerModal initialTab={modal.tab} />;
     case "map":
       return <MapModal />;
     case "bugdex":

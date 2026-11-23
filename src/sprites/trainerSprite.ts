@@ -227,16 +227,113 @@ function viewRows(view: "down" | "up" | "left", step: number): string[] {
   return rows;
 }
 
+export type Headwear = "cap" | "beanie" | "none";
+
+/** Rows 0-4 (the top of the head) for each headwear and view. "cap" is the drawing above. */
+// prettier-ignore
+const HEAD_ROWS: Readonly<Record<Exclude<Headwear, "cap">, Record<"down" | "up" | "left", readonly string[]>>> = {
+  beanie: {
+    down: [".....kkkkkk.....", "...kkcccccckk...", "..kcccccccccck..", "..kcccccccccck..", "..kCCCCCCCCCCk.."],
+    up: [".....kkkkkk.....", "...kkcccccckk...", "..kcccccccccck..", "..kcccccccccck..", "..kCCCCCCCCCCk.."],
+    left: [".....kkkkkk.....", "....kcccccck....", "...kcccccccck...", "...kcccccccck...", "..kCCCCCCCCCk..."],
+  },
+  none: {
+    down: ["................", "....kkkkkkkk....", "...khhhhhhhhk...", "..khhhhhhhhhhk..", "..khhhhhhhhhhk.."],
+    up: ["................", "....kkkkkkkk....", "...khhhhhhhhk...", "..khhhhhhhhhhk..", "..khhhhhhhhhhk.."],
+    left: ["................", ".....kkkkkk.....", "....khhhhhhk....", "...khhhhhhhhk...", "..khhhhhhhhhk..."],
+  },
+};
+
+/** Colors of each look option: [main, shade]. Ids match game/trainerLook.ts. */
+export const LOOK_COLORS: Readonly<Record<string, Readonly<Record<string, readonly [string, string]>>>> = {
+  headColor: {
+    red: ["#d9473b", "#8f2a24"],
+    blue: ["#3b6fd6", "#26489a"],
+    green: ["#3f9a4f", "#26663a"],
+    black: ["#3a3346", "#1f1a28"],
+    purple: ["#9a4fd6", "#62309a"],
+    orange: ["#e8892e", "#a85a1a"],
+    white: ["#eee6d8", "#b8ad9c"],
+    shiny: ["#f06bd0", "#a3358c"],
+  },
+  hair: {
+    brown: ["#4a2c1c", "#4a2c1c"],
+    black: ["#1f1a24", "#1f1a24"],
+    blond: ["#e8c25a", "#e8c25a"],
+    red: ["#b4462a", "#b4462a"],
+    blue: ["#4a6ad6", "#4a6ad6"],
+    white: ["#e6e2ea", "#e6e2ea"],
+  },
+  skin: {
+    tone1: ["#f8d8b8", "#d8a888"],
+    tone2: ["#f0c08e", "#c98f62"],
+    tone3: ["#d49a6a", "#a86e44"],
+    tone4: ["#a8704a", "#7a4c30"],
+    tone5: ["#6e4630", "#4a2c1e"],
+  },
+  jacket: {
+    blue: ["#3b6fd6", "#26489a"],
+    red: ["#d9473b", "#8f2a24"],
+    green: ["#3f9a4f", "#26663a"],
+    black: ["#3a3346", "#1f1a28"],
+    purple: ["#9a4fd6", "#62309a"],
+    orange: ["#e8892e", "#a85a1a"],
+    teal: ["#2fa8a0", "#1d6e69"],
+    gold: ["#f2c14e", "#b4822a"],
+  },
+  pants: {
+    navy: ["#2c3048", "#2c3048"],
+    black: ["#1f1a24", "#1f1a24"],
+    brown: ["#5a3a2a", "#5a3a2a"],
+    gray: ["#6a6a78", "#6a6a78"],
+    green: ["#3a5a3a", "#3a5a3a"],
+  },
+  backpack: {
+    leather: ["#a8703e", "#6b4423"],
+    red: ["#c0453a", "#7a2620"],
+    black: ["#3a3346", "#1f1a28"],
+    green: ["#4f8a3f", "#2f5a26"],
+    legend: ["#7b4fd6", "#f2c14e"],
+  },
+};
+
+const pick = (part: string, id: string, fallback: readonly [string, string]) => LOOK_COLORS[part]?.[id] ?? fallback;
+
+/** The palette for a look (any missing option uses the default trainer colors). */
+export function trainerPalette(look: Readonly<Record<string, string>>): Record<Exclude<Tp, Tp.Empty>, string> {
+  const base = { ...TRAINER_PALETTE };
+  const [cap, capDark] = pick("headColor", look.headColor ?? "", [base[Tp.Cap], base[Tp.CapDark]]);
+  const [skin, skinShade] = pick("skin", look.skin ?? "", [base[Tp.Skin], base[Tp.SkinShade]]);
+  const [jacket, jacketDark] = pick("jacket", look.jacket ?? "", [base[Tp.Jacket], base[Tp.JacketDark]]);
+  const [backpack, backpackDark] = pick("backpack", look.backpack ?? "", [base[Tp.Backpack], base[Tp.BackpackDark]]);
+  return {
+    ...base,
+    [Tp.Cap]: cap,
+    [Tp.CapDark]: capDark,
+    [Tp.Logo]: look.headColor === "white" ? "#d9473b" : base[Tp.Logo],
+    [Tp.Hair]: pick("hair", look.hair ?? "", [base[Tp.Hair], base[Tp.Hair]])[0],
+    [Tp.Skin]: skin,
+    [Tp.SkinShade]: skinShade,
+    [Tp.Jacket]: jacket,
+    [Tp.JacketDark]: jacketDark,
+    [Tp.Pants]: pick("pants", look.pants ?? "", [base[Tp.Pants], base[Tp.Pants]])[0],
+    [Tp.Backpack]: backpack,
+    [Tp.BackpackDark]: backpackDark,
+  };
+}
+
 const STEP_OF_FRAME: Readonly<Record<WalkFrame, number>> = { 0: 0, 1: 1, 2: -1 };
 const cache = new Map<string, Uint8Array>();
 
 /** Pixels for a facing and frame. "right" returns the left sprite; mirror it when drawing. */
-export function trainerPixels(facing: Facing, frame: WalkFrame): Uint8Array {
+export function trainerPixels(facing: Facing, frame: WalkFrame, headwear: Headwear = "cap"): Uint8Array {
   const view = facing === "right" ? "left" : facing;
-  const key = `${view}:${frame}`;
+  const key = `${view}:${frame}:${headwear}`;
   const cached = cache.get(key);
   if (cached) return cached;
-  const pixels = toPixels(viewRows(view, STEP_OF_FRAME[frame]));
+  const rows = viewRows(view, STEP_OF_FRAME[frame]);
+  if (headwear !== "cap") rows.splice(0, 5, ...HEAD_ROWS[headwear][view]);
+  const pixels = toPixels(rows);
   cache.set(key, pixels);
   return pixels;
 }
