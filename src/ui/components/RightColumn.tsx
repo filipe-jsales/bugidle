@@ -87,6 +87,7 @@ export function AutomationPanel() {
       <Toggle checked={settings.autoRevive} onChange={(v) => set({ autoRevive: v })} label={`${UI.autoRevive} (${itemCount(state, "revive")})`} />
       <Toggle checked={settings.debugChallenges} onChange={(v) => set({ debugChallenges: v })} label={LEARN_UI.debug.setting} hint={LEARN_UI.debug.settingHint} />
       <Toggle checked={settings.returnToHunt} onChange={(v) => set({ returnToHunt: v })} label={UI.returnToHunt} hint={UI.returnToHuntHint} />
+      <Toggle checked={settings.trainWeakest} onChange={(v) => set({ trainWeakest: v })} label={UI.trainWeakest} hint={UI.trainWeakestHint} />
     </Panel>
   );
 }

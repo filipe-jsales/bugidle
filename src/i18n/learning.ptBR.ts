@@ -116,6 +116,8 @@ export const LEARN_UI = {
     dailyNeedsBugs: "Encontre alguns bugs nas rotas para liberar o desafio do dia.",
     dailyResult: (correct: number, total: number, coins: string, egg: boolean) => `Você acertou ${correct} de ${total} e ganhou ${coins} moedas${egg ? " e um Ovo Misterioso" : ""}.`,
     orderBonus: "Bônus de ordenar o código incluído.",
+    streak: (days: number, pct: number) => (days > 0 ? `sequência: ${days} dia${days === 1 ? "" : "s"} · +${pct}% hoje` : `sem sequência · +${pct}% hoje`),
+    streakHint: "Faça o desafio todo dia: cada dia seguido soma +10% de moedas, até o dobro. Pulou um dia, a sequência zera.",
     boxesTitle: "SUAS CAIXAS DE REVISÃO",
     boxesIntro: "Cada bug estudado fica numa caixa. Acertou, ele sobe de caixa e volta depois de mais dias; errou, volta para a caixa 1. Assim você revisa mais o que ainda não sabe (repetição espaçada).",
     box: (n: number) => `Caixa ${n}`,

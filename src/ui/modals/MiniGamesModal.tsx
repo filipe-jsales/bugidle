@@ -12,6 +12,8 @@ import { BinaryGame, LanguageGame, OutputGame, TrueFalseGame, TypingGame } from 
 import { GatesGame, PipesGame, PixelGame, RobotGame } from "../minigames/MachineGames";
 import { AnagramGame, CrosswordGame, HangmanGame, MemoryGame, WordSearchGame } from "../minigames/WordGames";
 import type { GameProps } from "../minigames/shared";
+import { StructuresGame } from "../minigames/StructuresGame";
+import { CodeRainGame } from "../minigames/CodeRainGame";
 import { useGame } from "../store";
 
 type Art = { item: ItemId } | { concept: string } | { icon: "minigames" };
@@ -32,6 +34,8 @@ const GAMES: Record<GameId, { art: Art; component: ComponentType<GameProps> }> =
   trueFalse: { art: { item: "conditionalBreak" }, component: TrueFalseGame },
   typing: { art: { item: "linter" }, component: TypingGame },
   pipes: { art: { concept: "api" }, component: PipesGame },
+  structures: { art: { concept: "array" }, component: StructuresGame },
+  codeRain: { art: { concept: "javascript" }, component: CodeRainGame },
 };
 
 function GameArt({ art, size }: { art: Art; size: number }) {

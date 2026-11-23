@@ -315,3 +315,25 @@ code,
   font-variant-ligatures: none;
   font-feature-settings: "liga" 0, "calt" 0;
 }
+
+/* ---------------------------------------------------------------- study streak */
+
+.streak-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.streak-pill {
+  padding: 3px 10px;
+  border: 2px solid var(--inset-border);
+  border-radius: 14px;
+  background: var(--inset);
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.streak-pill.on {
+  border-color: var(--gold);
+  color: var(--gold);
+}

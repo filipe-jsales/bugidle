@@ -45,6 +45,23 @@ export const DEBUG_CAPTURE_BONUS = 1;
 export const DEBUG_COOLDOWN_MS = 5 * 60_000;
 /** Share of a defeat's XP that benched (non-fighting, healthy) team members receive. */
 export const BENCH_XP_SHARE = 0.15;
+/** Catch-up: each level a benched bug is behind the strongest team member adds this share of the victor's XP. */
+export const CATCH_UP_PER_LEVEL = 0.04;
+export const MAX_BENCH_SHARE = 0.9;
+
+/** Share of the victor's XP a benched bug gets: more the further behind the strongest bug it is. */
+export function benchShare(level: number, topLevel: number): number {
+  return Math.min(MAX_BENCH_SHARE, BENCH_XP_SHARE + Math.max(0, topLevel - level) * CATCH_UP_PER_LEVEL);
+}
+
+/** "Train the weakest": the healthy bug with the lowest level (below the cap) goes first. */
+export function weakestFirst(state: GameState): void {
+  const cap = levelCap(state);
+  const candidates = teamBugs(state).filter((b) => !isFainted(b) && b.level < cap);
+  if (candidates.length === 0) return;
+  const weakest = candidates.reduce((a, b) => (b.level < a.level ? b : a));
+  state.team = [weakest.uid, ...state.team.filter((uid) => uid !== weakest.uid)];
+}
 /** Largest simulated chunk; longer ticks are split so nothing is skipped. */
 const MAX_STEP_MS = 100;
 const DROP_TABLE: readonly { itemId: ItemId; chance: number; minLevel: number }[] = [
@@ -351,6 +368,7 @@ function startBattle(state: GameState, rng: Rng, events: GameEvent[]): void {
     events.push({ type: "bossStart", bossId: boss.id });
     return;
   }
+  if (state.settings.trainWeakest) weakestFirst(state);
   const route = getRoute(state.activity.routeId);
   const wild = spawnWild(route, rng, null, rt.conditions);
   registerSeen(state, wild.speciesId);
@@ -460,8 +478,9 @@ function onEnemyDefeated(state: GameState, speciesId: string, level: number, vic
   events.push({ type: "rewards", speciesId, coins, xp, victorUid, benchXp, trainerXp });
 
   const cap = levelCap(state);
+  const topLevel = Math.max(...teamBugs(state).map((b) => b.level));
   for (const bug of teamBugs(state)) {
-    const share = bug.uid === victorUid ? xp : isFainted(bug) ? 0 : Math.floor(benchXp * heldXpMult(bug));
+    const share = bug.uid === victorUid ? xp : isFainted(bug) ? 0 : Math.floor(xp * benchShare(bug.level, topLevel) * heldXpMult(bug));
     const { levelsGained } = gainXp(bug, share, cap);
     if (levelsGained > 0) {
       events.push({ type: "levelUp", uid: bug.uid, level: bug.level });

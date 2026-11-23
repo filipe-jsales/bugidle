@@ -132,17 +132,25 @@ The simulated player uses every system: it arranges the team (moving strong bugs
 
 ## Mini games
 
-The Mini Games window (top bar) is a hub of 15 small games about computing, plus a Ranking tab. Shared rules in `game/minigames.ts`: every game ends with 0-100 points (`finishGame`); the first 3 plays of each game per day pay coins (`PAID_PLAYS_PER_DAY`, `GAME_COINS_PER_POINT` x badges + 1), and every play goes to a local top 5 per game (`ranking`, saved in the game save).
+The Mini Games window (top bar) is a hub of 17 small games about computing, plus a Ranking tab. Shared rules in `game/minigames.ts`: every game ends with 0-100 points (`finishGame`); the first 3 plays of each game per day pay coins (`PAID_PLAYS_PER_DAY`, `GAME_COINS_PER_POINT` x badges + 1), and every play goes to a local top 5 per game (`ranking`, saved in the game save).
 
 Where things are:
-- Screens: `ui/minigames/WordGames.tsx` (caça-palavras, cruzadas, forca, desembaralhe, memória), `CodeGames.tsx` (qual é a linguagem, adivinhe a saída, binário relâmpago, verdadeiro ou falso, corrida de digitação), `MachineGames.tsx` (pixel por código, robô do algoritmo, portas lógicas, encanamento), `DetectiveGame.tsx`; shared pieces (result, countdown, stopwatch) in `ui/minigames/shared.tsx`; the hub and the card art in `MiniGamesModal.tsx`.
-- Pure rules, seeded and tested: `game/minigames/puzzles.ts` (word search, crossword builder, hangman, anagram, memory deck, binary questions, pixel score, typing score) and `game/minigames/machines.ts` (robot runner and shortest program by Dijkstra, logic gates, pipe boards with a guaranteed route).
+- Screens: `ui/minigames/WordGames.tsx` (caça-palavras, cruzadas, forca, desembaralhe, memória), `CodeGames.tsx` (qual é a linguagem, adivinhe a saída, binário relâmpago, verdadeiro ou falso, corrida de digitação), `MachineGames.tsx` (pixel por código, robô do algoritmo, portas lógicas, encanamento), `StructuresGame.tsx` (sorting with `guildViz.vizFrames` on 8 bugs, stack, queue, hash table), `CodeRainGame.tsx` (typing shooter, requestAnimationFrame loop), `DetectiveGame.tsx`; shared pieces (result, countdown, stopwatch) in `ui/minigames/shared.tsx`; the hub and the card art in `MiniGamesModal.tsx`.
+- Pure rules, seeded and tested: `game/minigames/puzzles.ts` (word search, crossword builder, hangman, anagram, memory deck, binary questions, pixel score, typing score) and `game/minigames/machines.ts` (robot runner and shortest program by Dijkstra, logic gates, pipe boards with a guaranteed route), `game/minigames/structures.ts` (stack puzzle that refuses a wrong pop, queue questions, `hashBucket`) and `game/minigames/typeRain.ts` (falling words, first letter locks the target, `rainScore` by words and accuracy). Rain words and their explanations: `i18n/rainWords.ptBR.ts`.
 - Content: code in `game/data/gameData.ts` (snippets, outputs, typing lines, pixel pictures, robot mazes, gate circuits); words, clues, memory pairs and true/false statements in `i18n/gameContent.ptBR.ts`; names and help in `i18n/games.ptBR.ts` and `i18n/gamesUi.ptBR.ts`.
 - `game/minigames/minigames.test.ts` checks every board can be solved (robot mazes, gate circuits, pipe boards), the crossword letters agree where words cross, and it runs every "adivinhe a saída" snippet to confirm the expected output. Add content there and the tests guard it.
 
 Detetive de Conceitos: guess a computing concept from clues that open one by one. A wrong guess or the 30 s clock opens the next clue: 1) category and era, 2) four trait bars, 3) where it is used and seals (open source, language, hardware), 4) a riddle, 5) the name's letters. A right answer is worth 10, 8, 6, 4 or 2 points (`CLUE_POINTS`), paid as coins (`COINS_PER_POINT` x badges + 1); each concept pays once per day (`solveConcept`). After the round the concept's 2D picture appears with what it is, what it is for and where it is used. Answers ignore case, accents and spaces (`normalizeAnswer`).
 
 To add a concept: data in `game/data/concepts.ts`, text in `i18n/concepts.ptBR.ts` (name, accepted answers, riddle without the name, explanation) and a 16x16 drawing in `render/conceptArt.ts`. `minigames.test.ts` checks the text, that the riddle does not say the name and that no two concepts accept the same answer.
+
+## HUD layout
+
+`App.tsx`: left dock (`SideRail` + player card, EM CAMPO, EQUIPE), center (`TopNav` + battle), right (automations + log). The top bar only has the places the player visits most; small tools (Config., Mochila, Conquistas, Terminal, Som, Save) are the `RAIL` list in `TopNav.tsx`. Under 1100 px the rail becomes a row. The profile picture is the trainer sprite; `.idle-bob` gives the trainer and the team a stepped breathing animation (`BugSummary idle`), turned off by reduced effects and `prefers-reduced-motion`.
+
+## XP for the bench and study streak
+
+Benched bugs get `benchShare(level, topLevel)` of the fight's XP (`engine.ts`): 15% plus 4% for each level below the strongest team bug, up to 90%, so the team evens out before the final boss. `settings.trainWeakest` moves the weakest healthy bug below the cap to the front before each fight (`weakestFirst`). The daily challenge keeps `studyStreak` (`learning.ts`): each day in a row adds 10% coins, up to double.
 
 ## Settings and preferences
 

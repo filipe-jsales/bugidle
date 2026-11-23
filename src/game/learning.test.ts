@@ -162,3 +162,23 @@ describe("second lessons and code ordering", () => {
     expect(coinsA).toBeGreaterThan(coinsB);
   });
 });
+
+describe("study streak", () => {
+  it("grows with days in a row, resets after a missed day, and raises the coins", async () => {
+    const { currentStreak, streakMultiplier, STREAK_MAX_BONUS } = await import("./learning");
+    const state = stateWith(["leaklet", 5]);
+    const first = finishDaily(state, {}, TODAY, true).coins;
+    expect(state.studyStreak.days).toBe(1);
+    const second = finishDaily(state, {}, TODAY + 1, true).coins;
+    expect(state.studyStreak.days).toBe(2);
+    expect(second).toBeGreaterThan(first);
+    expect(currentStreak(state, TODAY + 2)).toBe(2);
+    expect(currentStreak(state, TODAY + 3)).toBe(0);
+    finishDaily(state, {}, TODAY + 5, true);
+    expect(state.studyStreak).toMatchObject({ days: 1, best: 2 });
+    expect(streakMultiplier(1)).toBe(1);
+    expect(streakMultiplier(100)).toBe(1 + STREAK_MAX_BONUS);
+    expect(importSave(exportSave(state)).studyStreak).toEqual(state.studyStreak);
+  });
+});
+

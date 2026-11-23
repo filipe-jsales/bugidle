@@ -313,6 +313,7 @@ body:not(.solid-scene) .proximity-overlay {
 
 /* Reduced effects (optimized and economy modes): no idle motion, no sparkles or rings */
 body.reduced-effects .bob,
+body.reduced-effects .idle-bob,
 body.reduced-effects .hop,
 body.reduced-effects .shiny-sparkles,
 body.reduced-effects .levelup-ring,
@@ -349,7 +350,7 @@ body.night-mode {
 .layout.immersive {
   grid-template-columns: minmax(0, 1fr);
 }
-.layout.immersive .left-column,
+.layout.immersive .left-dock,
 .layout.immersive .right-column {
   display: none;
 }

@@ -11,17 +11,19 @@ import { useApp } from "../appContext";
 import { formatNumber } from "../format";
 import { store, useGame } from "../store";
 import { BugSummary } from "./BugSummary";
-import { Bar, BugSprite, Button, Icon, Panel } from "./primitives";
+import { trainerSpriteUrl } from "../render/pixels";
+import { Bar, Button, Icon, Panel } from "./primitives";
 
 export function PlayerCard() {
   const state = useGame();
   const { open } = useApp();
   const dex = dexProgress(state);
-  const lead = teamBugs(state)[0];
   return (
     <Panel className="player-card">
       <div className="player-head">
-        <div className="avatar">{lead && <BugSprite speciesId={lead.speciesId} shiny={lead.shiny} size={44} />}</div>
+        <div className="avatar trainer-avatar">
+          <img className="pixel idle-bob" src={trainerSpriteUrl("down", 0)} alt="" draggable={false} />
+        </div>
         <div className="player-info">
           <div className="player-name-row">
             <strong>{state.trainer.name}</strong>
@@ -65,8 +67,8 @@ export function ActiveBugCard() {
   return (
     <Panel title={UI.inField}>
       {active ? (
-        <div className="inset clickable" onClick={() => open({ kind: "bug", uid: active.uid })}>
-          <BugSummary bug={active} />
+        <div className="inset clickable in-field" onClick={() => open({ kind: "bug", uid: active.uid })}>
+          <BugSummary bug={active} idle />
         </div>
       ) : (
         <div className="inset muted">-</div>
@@ -89,7 +91,7 @@ export function TeamPanel() {
       title={`${UI.team} ${team.length}/${MAX_TEAM_SIZE}`}
       actions={
         <Button small variant="dark" onClick={() => open({ kind: "box" })}>
-          {UI.nav.box}
+          {UI.seeAll}
         </Button>
       }
       className="team-panel"
@@ -97,7 +99,7 @@ export function TeamPanel() {
       <div className="team-list">
         {team.map((bug, index) => (
           <button key={bug.uid} type="button" className={`team-row ${index === 0 ? "lead" : ""}`} onClick={() => open({ kind: "bug", uid: bug.uid })}>
-            <BugSummary bug={bug} compact showXp={false} />
+            <BugSummary bug={bug} compact showXp={false} idle idlePhase={index} />
           </button>
         ))}
       </div>

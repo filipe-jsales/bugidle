@@ -42,6 +42,8 @@ export const GAME_IDS = [
   "trueFalse",
   "typing",
   "pipes",
+  "structures",
+  "codeRain",
 ] as const;
 export type GameId = (typeof GAME_IDS)[number];
 

@@ -1,3 +1,4 @@
+import type { StudyStreak } from "./learning";
 import { createMiniGames, type MiniGamesState } from "./minigames";
 import type { LabResult } from "./labs";
 import { CLEAR_DAY, type Conditions } from "./weather";
@@ -42,6 +43,8 @@ export interface Settings {
   autoRevive: boolean;
   /** After a team wipe or a reboot, go straight back to hunting. */
   returnToHunt: boolean;
+  /** Before each wild fight, the weakest healthy bug goes first to catch up. */
+  trainWeakest: boolean;
   /** Use the player's IF/THEN rules instead of the simple switches above. */
   useRules: boolean;
   /** Offer "debug to capture" challenges on special encounters. */
@@ -99,6 +102,8 @@ export interface PersistentState {
   guild: GuildState;
   /** Lab challenge results by question id. */
   labs: Record<string, LabResult>;
+  /** Days in a row with the daily challenge. */
+  studyStreak: StudyStreak;
   /** Mini game records (Detetive de Conceitos). */
   minigames: MiniGamesState;
   nextUid: number;
@@ -163,6 +168,7 @@ export function defaultSettings(): Settings {
     throwUntilCaught: false,
     autoRevive: true,
     returnToHunt: true,
+    trainWeakest: false,
     useRules: false,
     debugChallenges: true,
   };
@@ -194,6 +200,7 @@ export function createInitialState(trainerName = "Hunter"): GameState {
     guild: createGuild(),
     labs: {},
     minigames: createMiniGames(),
+    studyStreak: { days: 0, lastDay: null, best: 0 },
     nextUid: 1,
     runtime: createRuntime(),
   };

@@ -27,6 +27,29 @@ export interface KnowledgeCard {
   wrong?: number;
 }
 
+/** Study streak: each day in a row adds this much to the daily coins, up to STREAK_MAX_BONUS. */
+export const STREAK_BONUS_PER_DAY = 0.1;
+export const STREAK_MAX_BONUS = 1;
+
+export interface StudyStreak {
+  /** Days in a row with the daily challenge done. */
+  days: number;
+  /** Day number of the last challenge done, or null. */
+  lastDay: number | null;
+  best: number;
+}
+
+/** Current streak as seen today: it is lost after a day without studying. */
+export function currentStreak(state: PersistentState, today: number): number {
+  const s = state.studyStreak;
+  return s.lastDay !== null && today - s.lastDay <= 1 ? s.days : 0;
+}
+
+/** Coin multiplier for a streak of `days` (1 day = no bonus). */
+export function streakMultiplier(days: number): number {
+  return 1 + Math.min(STREAK_MAX_BONUS, Math.max(0, days - 1) * STREAK_BONUS_PER_DAY);
+}
+
 /** Points for ordering the fixed code in the daily challenge. */
 export const DAILY_ORDER_COINS = 60;
 
@@ -103,7 +126,11 @@ export function finishDaily(state: PersistentState, answers: Record<string, numb
     if (right) correct += 1;
     recordAnswer(state, lesson.speciesId, right, today);
   }
-  const coins = (correct * DAILY_COINS_PER_CORRECT + (orderRight ? DAILY_ORDER_COINS : 0)) * (state.badges.length + 1);
+  const streak = state.studyStreak;
+  streak.days = streak.lastDay === today - 1 ? streak.days + 1 : 1;
+  streak.lastDay = today;
+  streak.best = Math.max(streak.best, streak.days);
+  const coins = Math.round((correct * DAILY_COINS_PER_CORRECT + (orderRight ? DAILY_ORDER_COINS : 0)) * (state.badges.length + 1) * streakMultiplier(streak.days));
   const egg = lessons.length > 0 && correct === lessons.length;
   state.coins += coins;
   if (egg) addItem(state, "mysteryEgg");

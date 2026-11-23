@@ -133,13 +133,20 @@ Principle: learning is optional, short and rewarded; it never blocks progress.
 - [x] Pixel por código (paint by hex colours), Robô do Algoritmo (6 mazes, repeat command, score by program length), Portas Lógicas (AND/OR/XOR/NOT circuits)
 - [x] Verdadeiro ou falso (60 s), Corrida de digitação (accuracy and speed, ghost of your record), Encanamento de dados (rotate pipes, always solvable)
 
+## v0.13 - catch-up XP, study streak, last two mini games, new HUD
+
+- [x] Final-boss wall: benched bugs get more XP the further they are below the strongest (`benchShare`, 15% + 4% per level behind, up to 90%), plus the "Treinar o mais fraco" switch (weakest healthy bug fights first)
+- [x] Study streak: days in a row with the daily challenge add +10% coins each day, up to +100%; a missed day resets it
+- [x] Estruturas e Ordenação: watch 5 sorting algorithms order bugs by level, then a stack puzzle, a queue question and a hash table (level % 5) with chained buckets
+- [x] Chuva de Código: a typing shooter with computing words; the end screen explains every word destroyed
+- [x] HUD: wider left side with an icon rail (Config., Mochila, Conquistas, Terminal, Som, Save), fewer top buttons with no side scroll, "Box" renamed "Equipe", the trainer as the profile picture, idle animation on the trainer, "em campo" and the team list
+
 ## Next (core polish)
 
 
 
 - [ ] Trainer customization (avatar colors, outfits)
 
-- [ ] Final-boss wall: benched bugs fall far behind the lead late in the game (lead 100, others about 80). Consider XP share based on level gap or a "train the weakest" automation
 - [ ] Rematch bosses at higher levels (daily)
 - [ ] English translation (`src/i18n/en.ts` with the same shape)
 - [ ] Lint and format setup (ESLint + Prettier) in CI
@@ -168,22 +175,20 @@ Principle: learning is optional, short and rewarded; it never blocks progress.
 - [ ] Type the fix: instead of picking the line, write the corrected line (checked against a few accepted answers)
 - [ ] Code tracing: "what does this print?" questions where the player follows the variables step by step
 - [ ] Big-O lab in the Guild: guess which champion finishes first before sending them, and see the real step count
-- [ ] Data structures lab: stack, queue and hash map as small visual puzzles (push/pop, enqueue/dequeue)
 - [ ] Regex lab with Regexorpion: write a pattern that matches the green lines and not the red ones
 - [ ] Logic gates lab in the Histórica house: build AND, OR and NOT from transistors
 - [ ] Binary and hex: convert numbers to open the Y2Kbeetle chest
 - [ ] Debugger mini-game: step through code with breakpoints and watch the variables change
-- [ ] Study streak: days in a row with the daily challenge give a growing bonus
 - [ ] Class code: a teacher shares a code and the report groups the students (needs online, later)
 
-## Ideas: mini games (next)
+## Ideas: mini games (paused: the owner said enough mini games for now)
 
 - [ ] Daily challenge across games: one featured mini game per day with double coins
 - [ ] More content per game: more crossword terms, snippets for every language, more pixel pictures and robot mazes
 - [ ] Robot loops with conditions ("se parede, vire") as a later level set
 - [ ] Gates with a truth table to fill in, and building a half adder
 - [ ] Word search themed by the region you are in
-- [ ] Achievements for the mini games (play all 15, top score in 5 games)
+- [ ] Achievements for the mini games (play all 17, top score in 5 games)
 
 ## Later: other mechanics (not started on purpose)
 

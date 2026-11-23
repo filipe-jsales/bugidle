@@ -12,7 +12,9 @@ import { fixedLines } from "../../game/data/lessons";
 import { OrderPuzzle } from "../components/OrderPuzzle";
 import {
   bossReviewLessons,
+  currentStreak,
   dailyOrderLesson,
+  streakMultiplier,
   isRightOrder,
   dailyAvailable,
   dailyLessons,
@@ -50,7 +52,12 @@ export function StudyModal() {
   return (
     <Modal title={S.title} onClose={close} wide>
       <section className="subpanel">
-        <h4>{S.dailyTitle}</h4>
+        <div className="streak-head">
+          <h4>{S.dailyTitle}</h4>
+          <span className={`streak-pill ${currentStreak(state, today) > 0 ? "on" : ""}`} title={S.streakHint}>
+            {S.streak(currentStreak(state, today), Math.round((streakMultiplier(currentStreak(state, today) + (state.dailyDay === today ? 0 : 1)) - 1) * 100))}
+          </span>
+        </div>
         {result ? (
           <>
             <p className="ok-text">{S.dailyResult(result.correct, lessons.length, formatNumber(result.coins), result.egg)}</p>

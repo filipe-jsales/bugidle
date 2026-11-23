@@ -86,6 +86,18 @@ export const GAME_TEXT: Record<GameId, { name: string; short: string; help: stri
     help: "Copie a linha igualzinha, com símbolos e espaços. Conta velocidade e precisão; o fantasma é o seu recorde.",
     learn: "Os símbolos do código: { } ( ) ; = e companhia.",
   },
+  structures: {
+    name: "Estruturas e Ordenação",
+    short: "Ordene bugs, empilhe, enfileire e guarde em hash",
+    help: "Quatro fases: veja algoritmos ordenando bugs, resolva uma pilha, siga uma fila e coloque bugs numa tabela hash.",
+    learn: "Algoritmos de ordenação, pilha (LIFO), fila (FIFO) e tabela hash.",
+  },
+  codeRain: {
+    name: "Chuva de Código",
+    short: "Digite as palavras antes que caiam",
+    help: "Digite as palavras que caem. A primeira letra escolhe o alvo. Três palavras no chão e acabou.",
+    learn: "Vocabulário de computação, explicado no fim da partida.",
+  },
   pipes: {
     name: "Encanamento de dados",
     short: "Gire os canos para o dado chegar ao usuário",

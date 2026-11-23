@@ -21,7 +21,7 @@ export function BoxModal() {
   const patch = (p: Partial<BoxFilter>) => setFilter((f) => ({ ...f, ...p }));
 
   return (
-    <Modal title={`BOX · ${all.length}`} onClose={close} wide>
+    <Modal title={`EQUIPE · ${all.length}`} onClose={close} wide>
       <div className="filter-bar">
         <input className="input" placeholder={UI.box.search} value={filter.text} onChange={(e) => patch({ text: e.target.value })} />
         <select className="input" value={filter.type} onChange={(e) => patch({ type: e.target.value as BugType | "any" })}>

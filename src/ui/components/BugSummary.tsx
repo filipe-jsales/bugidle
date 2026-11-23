@@ -6,12 +6,16 @@ import { formatNumber } from "../format";
 import { Bar, BugSprite, Tag, TypeTag } from "./primitives";
 
 /** Name, tags and bars of a bug. Used by the team list, the active card and the box. */
-export function BugSummary({ bug, compact = false, showXp = true }: { bug: BugInstance; compact?: boolean; showXp?: boolean }) {
+/** `idle` makes the sprite breathe and blink between its two frames (team list, "em campo"). */
+export function BugSummary({ bug, compact = false, showXp = true, idle = false, idlePhase = 0 }: { bug: BugInstance; compact?: boolean; showXp?: boolean; idle?: boolean; idlePhase?: number }) {
+  const awake = idle && bug.currentHp > 0;
   const species = getSpecies(bug.speciesId);
   const max = computeStats(bug).hp;
   return (
     <div className={`bug-summary ${compact ? "compact" : ""}`}>
-      <BugSprite speciesId={bug.speciesId} shiny={bug.shiny} size={compact ? 36 : 56} className={bug.currentHp <= 0 ? "fainted" : ""} />
+      <span className={awake ? "idle-bob" : undefined} style={awake ? { animationDelay: `${-idlePhase * 0.37}s` } : undefined}>
+        <BugSprite speciesId={bug.speciesId} shiny={bug.shiny} size={compact ? 36 : 56} className={bug.currentHp <= 0 ? "fainted" : ""} animate={awake} phase={idlePhase} />
+      </span>
       <div className="bug-summary-info">
         <div className="bug-summary-name">
           <strong className={bug.shiny ? "shiny-text" : ""}>{species.name}</strong>

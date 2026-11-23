@@ -120,6 +120,7 @@ export function importSave(text: string): GameState {
     throwUntilCaught: typeof settingsRaw.throwUntilCaught === "boolean" ? settingsRaw.throwUntilCaught : defaults.throwUntilCaught,
     autoRevive: typeof settingsRaw.autoRevive === "boolean" ? settingsRaw.autoRevive : defaults.autoRevive,
     returnToHunt: typeof settingsRaw.returnToHunt === "boolean" ? settingsRaw.returnToHunt : defaults.returnToHunt,
+    trainWeakest: typeof settingsRaw.trainWeakest === "boolean" ? settingsRaw.trainWeakest : defaults.trainWeakest,
     useRules: typeof settingsRaw.useRules === "boolean" ? settingsRaw.useRules : defaults.useRules,
     debugChallenges: typeof settingsRaw.debugChallenges === "boolean" ? settingsRaw.debugChallenges : defaults.debugChallenges,
   };
@@ -208,6 +209,14 @@ export function importSave(text: string): GameState {
           return [id, { solved: x.solved === true, tries: count(x.tries), wrong: count(x.wrong) }];
         }),
     ),
+    studyStreak: (() => {
+      const st = isObject(raw.studyStreak) ? raw.studyStreak : {};
+      return {
+        days: isNumber(st.days) ? Math.max(0, Math.floor(st.days)) : 0,
+        lastDay: isNumber(st.lastDay) ? st.lastDay : null,
+        best: isNumber(st.best) ? Math.max(0, Math.floor(st.best)) : 0,
+      };
+    })(),
     minigames: (() => {
       const mg = isObject(raw.minigames) ? raw.minigames : {};
       const d = isObject(mg.detective) ? mg.detective : {};

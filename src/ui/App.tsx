@@ -9,7 +9,7 @@ import { AppContext, type AppActions, type ModalState } from "./appContext";
 import { BattleView } from "./components/BattleView";
 import { AutomationPanel, LogPanel } from "./components/RightColumn";
 import { ActiveBugCard, PlayerCard, TeamPanel } from "./components/Sidebar";
-import { TopNav } from "./components/TopNav";
+import { SideRail, TopNav } from "./components/TopNav";
 import { BoxModal } from "./modals/BoxModal";
 import { BugDetailModal } from "./modals/BugDetailModal";
 import { BugdexModal } from "./modals/BugdexModal";
@@ -152,10 +152,13 @@ export function App() {
   return (
     <AppContext.Provider value={actions}>
       <div className={`layout ${prefs.immersive ? "immersive" : ""}`}>
-        <aside className="column left-column">
-          <PlayerCard />
-          <ActiveBugCard />
-          <TeamPanel />
+        <aside className="left-dock">
+          <SideRail />
+          <div className="column left-column">
+            <PlayerCard />
+            <ActiveBugCard />
+            <TeamPanel />
+          </div>
         </aside>
         <main className="column center-column">
           <TopNav />
