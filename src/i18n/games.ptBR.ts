@@ -1,0 +1,119 @@
+/** Names, help and common texts of the mini games hub. */
+import type { GameId } from "../game/minigames";
+
+export const GAME_TEXT: Record<GameId, { name: string; short: string; help: string; learn: string }> = {
+  detective: {
+    name: "Detetive de Conceitos",
+    short: "Descubra o conceito pelas pistas",
+    help: "Cada palpite errado abre uma pista. Menos pistas, mais pontos.",
+    learn: "Conceitos de computação e onde são usados.",
+  },
+  wordSearch: {
+    name: "Caça-palavras",
+    short: "Ache as palavras de computação",
+    help: "Clique na primeira e na última letra de uma palavra da lista. Elas podem estar na horizontal, vertical ou diagonal.",
+    learn: "Vocabulário da região escolhida.",
+  },
+  crossword: {
+    name: "Palavras cruzadas",
+    short: "Complete com os termos do glossário",
+    help: "Clique numa palavra, leia a dica e digite. Letras certas que se cruzam ajudam nas outras.",
+    learn: "Definições do glossário.",
+  },
+  hangman: {
+    name: "Forca do Programador",
+    short: "Adivinhe o termo antes do servidor cair",
+    help: "Escolha letras. Cada erro derruba uma parte do servidor; com 6 erros ele cai.",
+    learn: "Termos técnicos e suas definições.",
+  },
+  anagram: {
+    name: "Desembaralhe",
+    short: "Arrume as letras contra o relógio",
+    help: "Digite a palavra certa. Você tem 60 segundos para acertar o máximo possível.",
+    learn: "Nomes de tecnologias e conceitos.",
+  },
+  memory: {
+    name: "Memória",
+    short: "Junte cada comando com o que ele faz",
+    help: "Vire duas cartas: um comando e o que ele faz formam um par. Menos jogadas, mais pontos.",
+    learn: "Comandos do terminal e do Git.",
+  },
+  language: {
+    name: "Qual é a linguagem?",
+    short: "Reconheça a linguagem pelo código",
+    help: "Leia o trecho e escolha a linguagem. São 10 trechos.",
+    learn: "Como cada linguagem se parece.",
+  },
+  output: {
+    name: "Adivinhe a saída",
+    short: "Leia o código e diga o que ele imprime",
+    help: "Siga o código linha por linha e digite exatamente o que aparece na tela. São 5 trechos.",
+    learn: "Ler código e acompanhar as variáveis.",
+  },
+  binary: {
+    name: "Binário relâmpago",
+    short: "Converta números em 60 segundos",
+    help: "Converta entre decimal, binário e hexadecimal. Acerto vale 10, erro tira 5.",
+    learn: "Bases numéricas: 2, 10 e 16.",
+  },
+  pixel: {
+    name: "Pixel por código",
+    short: "Pinte a imagem lendo as cores em hexadecimal",
+    help: "Cada casa mostra uma cor em hexadecimal. Escolha a cor certa na paleta e pinte. #F00 é vermelho, #0F0 verde, #00F azul.",
+    learn: "Cores em hexadecimal (RGB).",
+  },
+  robot: {
+    name: "Robô do Algoritmo",
+    short: "Programe o robô até o bug",
+    help: "Monte a lista de comandos e aperte Rodar. O robô segue os passos em ordem. Repetir 3x repete o comando seguinte.",
+    learn: "Sequência, repetição e pensar como o computador.",
+  },
+  gates: {
+    name: "Portas Lógicas",
+    short: "Acenda a lâmpada escolhendo as portas",
+    help: "Escolha AND, OR, XOR ou NOT em cada porta para que a saída seja 1 e a lâmpada acenda.",
+    learn: "Lógica booleana, a base dos circuitos.",
+  },
+  trueFalse: {
+    name: "Verdadeiro ou falso",
+    short: "60 segundos de afirmações rápidas",
+    help: "Responda o máximo que puder. Acerto vale 10, erro tira 5.",
+    learn: "Fatos e mitos de computação.",
+  },
+  typing: {
+    name: "Corrida de digitação",
+    short: "Digite a linha de código exatamente",
+    help: "Copie a linha igualzinha, com símbolos e espaços. Conta velocidade e precisão; o fantasma é o seu recorde.",
+    learn: "Os símbolos do código: { } ( ) ; = e companhia.",
+  },
+  pipes: {
+    name: "Encanamento de dados",
+    short: "Gire os canos para o dado chegar ao usuário",
+    help: "Clique num cano para girar. Ligue o servidor ao usuário; quanto mais rápido, mais pontos.",
+    learn: "Como os dados percorrem um caminho pela rede.",
+  },
+};
+
+export const GAMES_UI = {
+  tabs: { games: "JOGOS", ranking: "RANKING" },
+  back: "Voltar aos jogos",
+  play: "Jogar",
+  best: (n: number | null) => (n === null ? "sem recorde" : `recorde ${n}`),
+  paidLeft: (n: number) => (n > 0 ? `${n} partida${n === 1 ? "" : "s"} com moedas hoje` : "só ranking hoje"),
+  result: "FIM DE JOGO",
+  points: (n: number) => `${n} pontos`,
+  coins: (coins: string) => `+${coins} moedas`,
+  noCoins: "As partidas com moedas de hoje acabaram; esta conta para o ranking.",
+  newBest: "NOVO RECORDE!",
+  place: (n: number) => (n > 0 ? `${n}º lugar no seu ranking` : "fora do top 5"),
+  again: "Jogar de novo",
+  learned: "O QUE VOCÊ TREINOU",
+  rankingIntro: "Suas 5 melhores partidas em cada jogo, neste navegador.",
+  rankingEmpty: "ainda sem partidas",
+  rankDay: (daysAgo: number) => (daysAgo <= 0 ? "hoje" : daysAgo === 1 ? "ontem" : `há ${daysAgo} dias`),
+  time: (s: number) => `0:${String(Math.max(0, s)).padStart(2, "0")}`,
+  check: "Conferir",
+  next: "Próximo",
+  finish: "Terminar",
+  score: (n: number) => `${n} pts`,
+};

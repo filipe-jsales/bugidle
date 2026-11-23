@@ -124,6 +124,15 @@ Principle: learning is optional, short and rewarded; it never blocks progress.
 - [x] 5 clues that open on a wrong guess or after 30 s; 10/8/6/4/2 points paid as coins; each concept pays once a day; today's points shown
 - [x] 2D pixel picture of each concept and an explanation after the round (what it is, what it is for, where it is used)
 
+## v0.12 - 14 new mini games and a local ranking
+
+- [x] Mini Games hub with 15 games and a Ranking tab (top 5 per game, saved)
+- [x] Shared scoring: 0-100 points, the first 3 plays of each game per day pay coins
+- [x] Caça-palavras, Palavras cruzadas (built from glossary terms), Forca do Programador (a server rack falls), Desembaralhe (60 s), Memória (commands and what they do)
+- [x] Qual é a linguagem? (7 languages), Adivinhe a saída (checked by running the code in tests), Binário relâmpago (dec/bin/hex, 60 s)
+- [x] Pixel por código (paint by hex colours), Robô do Algoritmo (6 mazes, repeat command, score by program length), Portas Lógicas (AND/OR/XOR/NOT circuits)
+- [x] Verdadeiro ou falso (60 s), Corrida de digitação (accuracy and speed, ghost of your record), Encanamento de dados (rotate pipes, always solvable)
+
 ## Next (core polish)
 
 
@@ -167,23 +176,14 @@ Principle: learning is optional, short and rewarded; it never blocks progress.
 - [ ] Study streak: days in a row with the daily challenge give a growing bonus
 - [ ] Class code: a teacher shares a code and the report groups the students (needs online, later)
 
-## Ideas: mini games (not started)
+## Ideas: mini games (next)
 
-- [ ] Caça-palavras: find computing words in a letter grid, themed by region (Git words in Staging, SQL words in Production)
-- [ ] Palavras cruzadas: small crosswords whose clues are the glossary definitions
-- [ ] Forca do programador: hangman with computing terms; each wrong letter "breaks" a bit of a server
-- [ ] Desembaralhe: anagram of a term (LUNXI -> LINUX) against the clock
-- [ ] Memória: flip cards to match a concept with its definition or a command with what it does
-- [ ] Qual é a linguagem?: a short snippet appears, pick the language (Python, JavaScript, SQL, C, CSS)
-- [ ] Adivinhe a saída: read a few lines and type what they print
-- [ ] Binário relâmpago: convert numbers between decimal, binary and hex as fast as possible
-- [ ] Pixel por código: paint a small pixel image by reading hex colors
-- [ ] Robô do algoritmo: give a robot a list of commands (andar, virar, repetir) to reach the bug, like a tiny Lightbot
-- [ ] Portas lógicas: light the lamp by choosing AND, OR and NOT gates
-- [ ] Verdadeiro ou falso relâmpago: 60 seconds of quick true/false statements about computing
-- [ ] Corrida de digitação: type a line of code exactly, timed, with a ghost of your best run
-- [ ] Encanamento de dados: rotate pipes so the data flows from the server to the user, like a packet route
-- [ ] Ranking local of the best scores per mini game (online ranking only later)
+- [ ] Daily challenge across games: one featured mini game per day with double coins
+- [ ] More content per game: more crossword terms, snippets for every language, more pixel pictures and robot mazes
+- [ ] Robot loops with conditions ("se parede, vire") as a later level set
+- [ ] Gates with a truth table to fill in, and building a half adder
+- [ ] Word search themed by the region you are in
+- [ ] Achievements for the mini games (play all 15, top score in 5 games)
 
 ## Later: other mechanics (not started on purpose)
 

@@ -1,261 +1,133 @@
-import { useEffect, useRef, useState, type FormEvent, type ReactNode } from "react";
-import { getConcept, type Concept, type ConceptSeals, type ConceptTraits } from "../../game/data/concepts";
+import { useState, type ComponentType } from "react";
 import { dayNumber } from "../../game/learning";
-import { CLUE_COUNT, CLUE_POINTS, CLUE_SECONDS, detectivePointsToday, isRightAnswer, pickConcept, solveConcept } from "../../game/minigames";
-import { CATEGORY_TEXT, CONCEPT_TEXT, USE_TEXT } from "../../i18n/concepts.ptBR";
+import { bestScore, GAME_IDS, paidPlaysLeft, type GameId } from "../../game/minigames";
+import type { ItemId } from "../../game/data/items";
+import { GAME_TEXT, GAMES_UI } from "../../i18n/games.ptBR";
 import { MINIGAMES_UI } from "../../i18n/minigames.ptBR";
 import { useApp } from "../appContext";
-import { GlossaryText } from "../components/GlossaryText";
-import { Button, Icon, ItemIcon, Modal } from "../components/primitives";
-import { formatNumber } from "../format";
+import { Button, Icon, ItemIcon, Modal, Tag } from "../components/primitives";
 import { conceptIconUrl } from "../render/icons";
-import { store, useGame } from "../store";
+import { DetectiveGame } from "../minigames/DetectiveGame";
+import { BinaryGame, LanguageGame, OutputGame, TrueFalseGame, TypingGame } from "../minigames/CodeGames";
+import { GatesGame, PipesGame, PixelGame, RobotGame } from "../minigames/MachineGames";
+import { AnagramGame, CrosswordGame, HangmanGame, MemoryGame, WordSearchGame } from "../minigames/WordGames";
+import type { GameProps } from "../minigames/shared";
+import { useGame } from "../store";
 
-const D = MINIGAMES_UI.detective;
-/** Colour of each clue tile, from the most valuable to the last one. */
-const TILE_TONES = ["gold", "purple", "blue", "green", "pink"] as const;
-const TRAITS: (keyof ConceptTraits)[] = ["popularity", "difficulty", "abstraction", "everyday"];
-const SEALS: (keyof ConceptSeals)[] = ["openSource", "language", "hardware"];
+type Art = { item: ItemId } | { concept: string } | { icon: "minigames" };
 
-interface Ending {
-  solved: boolean;
-  points: number;
-  coins: number;
+const GAMES: Record<GameId, { art: Art; component: ComponentType<GameProps> }> = {
+  detective: { art: { icon: "minigames" }, component: DetectiveGame },
+  wordSearch: { art: { item: "codeReview" }, component: WordSearchGame },
+  crossword: { art: { item: "docs" }, component: CrosswordGame },
+  hangman: { art: { concept: "bug" }, component: HangmanGame },
+  anagram: { art: { item: "logpoint" }, component: AnagramGame },
+  memory: { art: { item: "cacheCard" }, component: MemoryGame },
+  language: { art: { concept: "python" }, component: LanguageGame },
+  output: { art: { concept: "terminal" }, component: OutputGame },
+  binary: { art: { concept: "binary" }, component: BinaryGame },
+  pixel: { art: { concept: "css" }, component: PixelGame },
+  robot: { art: { concept: "algorithm" }, component: RobotGame },
+  gates: { art: { concept: "cpu" }, component: GatesGame },
+  trueFalse: { art: { item: "conditionalBreak" }, component: TrueFalseGame },
+  typing: { art: { item: "linter" }, component: TypingGame },
+  pipes: { art: { concept: "api" }, component: PipesGame },
+};
+
+function GameArt({ art, size }: { art: Art; size: number }) {
+  if ("item" in art) return <ItemIcon id={art.item} size={size} />;
+  if ("concept" in art) return <img className="pixel" src={conceptIconUrl(art.concept)} width={size} height={size} alt="" />;
+  return <Icon name={art.icon} size={size} />;
 }
 
-/** A clue box: shows its content once `open`, a lock before. */
-function ClueBox({ title, open, children, className = "" }: { title: string; open: boolean; children: ReactNode; className?: string }) {
-  return (
-    <section className={`clue-box ${open ? "open" : "locked"} ${className}`}>
-      <h5>{title}</h5>
-      {open ? children : <ItemIcon id="mutex" size={18} />}
-    </section>
-  );
-}
-
-function nameMask(name: string): string {
-  return [...name].map((ch, i) => (ch === " " ? " " : i === 0 ? ch.toUpperCase() : "_")).join(" ");
-}
-
-function ConceptCard({ concept, clue, tone }: { concept: Concept; clue: number; tone: string }) {
-  const text = CONCEPT_TEXT[concept.id]!;
-  return (
-    <div className={`detective-card tone-${tone}`}>
-      <div className="clue-row">
-        <ClueBox title={D.category} open={clue >= 0} className="grow">
-          <div className="chip-row">
-            {concept.categories.map((c) => (
-              <span key={c} className={`concept-chip cat-${c}`}>
-                {CATEGORY_TEXT[c]}
-              </span>
-            ))}
-          </div>
-        </ClueBox>
-        <ClueBox title={D.era} open={clue >= 0}>
-          <span className="concept-chip era">{D.year(concept.year)}</span>
-        </ClueBox>
-      </div>
-
-      <ClueBox title={D.traits} open={clue >= 1}>
-        <div className="trait-grid">
-          {TRAITS.map((t) => (
-            <div key={t} className="trait">
-              <span>{D.traitNames[t]}</span>
-              <div className="trait-bar">
-                <div className={`trait-fill trait-${t}`} style={{ width: `${concept.traits[t]}%` }} />
-              </div>
-              <strong>{concept.traits[t]}</strong>
-            </div>
-          ))}
-        </div>
-      </ClueBox>
-
-      <div className="clue-row">
-        <ClueBox title={D.uses} open={clue >= 2} className="grow">
-          <div className="chip-row">
-            {concept.uses.map((u) => (
-              <span key={u} className="concept-chip use">
-                {USE_TEXT[u]}
-              </span>
-            ))}
-          </div>
-        </ClueBox>
-        <ClueBox title={D.seals} open={clue >= 2} className="grow">
-          <div className="seal-list">
-            {SEALS.map((s) => (
-              <span key={s} className={`seal ${concept.seals[s] ? "yes" : "no"}`}>
-                <b>{concept.seals[s] ? "+" : "x"}</b> {D.sealText[s][concept.seals[s] ? 0 : 1]}
-              </span>
-            ))}
-          </div>
-        </ClueBox>
-      </div>
-
-      <ClueBox title={D.riddle} open={clue >= 3}>
-        <p className="riddle">{text.riddle}</p>
-      </ClueBox>
-
-      <ClueBox title={D.nameClue} open={clue >= 4}>
-        <p className="name-mask">
-          {nameMask(text.name)} <small className="muted">({D.letters(text.name.replace(/\s/g, "").length)})</small>
-        </p>
-      </ClueBox>
-    </div>
-  );
-}
-
-function Reveal({ concept, ending, onNext }: { concept: Concept; ending: Ending; onNext: () => void }) {
-  const text = CONCEPT_TEXT[concept.id]!;
-  return (
-    <div className="detective-reveal">
-      <div className="reveal-hero">
-        <div className="reveal-spot" />
-        <img className="pixel reveal-icon" src={conceptIconUrl(concept.id)} width={112} height={112} alt="" />
-        <span className="reveal-label">{ending.solved ? D.solved : D.revealed}</span>
-        <strong className="reveal-name">{text.name}</strong>
-        <span className={`reveal-reward ${ending.coins > 0 ? "" : "muted"}`}>
-          {ending.coins > 0 ? D.reward(ending.points, formatNumber(ending.coins)) : ending.solved ? D.alreadyPaid : D.gaveUp}
-        </span>
-      </div>
-      <section className="explain-box">
-        <h5>{D.whatIs}</h5>
-        <GlossaryText text={text.what} />
-      </section>
-      <section className="explain-box">
-        <h5>{D.whyUse}</h5>
-        <GlossaryText text={text.why} />
-      </section>
-      <section className="explain-box">
-        <h5>{D.whereUsed}</h5>
-        <GlossaryText text={text.where} />
-      </section>
-      <Button variant="gold" onClick={onNext}>
-        {D.next}
-      </Button>
-    </div>
-  );
-}
-
-function DetectiveGame() {
+function Ranking() {
   const state = useGame();
   const today = dayNumber(new Date());
-  const [round, setRound] = useState(1);
-  const [conceptId, setConceptId] = useState(() => pickConcept(store.state, today, Date.now() % 100_000));
-  const [clue, setClue] = useState(0);
-  const [guesses, setGuesses] = useState<string[]>([]);
-  const [input, setInput] = useState("");
-  const [ending, setEnding] = useState<Ending | null>(null);
-  const [left, setLeft] = useState(CLUE_SECONDS);
-  const [help, setHelp] = useState(false);
-  const field = useRef<HTMLInputElement>(null);
-  const concept = getConcept(conceptId)!;
-  const last = clue >= CLUE_COUNT - 1;
-  const tone = TILE_TONES[Math.min(clue, TILE_TONES.length - 1)]!;
-
-  // the clock opens the next clue by itself; the last clue waits for the player
-  useEffect(() => {
-    if (ending || last) return;
-    setLeft(CLUE_SECONDS);
-    const id = window.setInterval(() => setLeft((s) => s - 1), 1000);
-    return () => window.clearInterval(id);
-  }, [clue, ending, last, round]);
-  useEffect(() => {
-    if (left <= 0 && !ending && !last) setClue((c) => c + 1);
-  }, [left, ending, last]);
-  useEffect(() => field.current?.focus(), [round, clue]);
-
-  const submit = (e: FormEvent) => {
-    e.preventDefault();
-    const guess = input.trim();
-    if (!guess || ending) return;
-    setInput("");
-    const text = CONCEPT_TEXT[concept.id]!;
-    if (isRightAnswer(guess, [text.name, ...text.aliases])) {
-      store.update((s) => setEnding({ solved: true, ...solveConcept(s, concept.id, clue, today) }));
-      return;
-    }
-    setGuesses((g) => [guess, ...g]);
-    if (!last) setClue((c) => c + 1);
-  };
-
-  const next = () => {
-    setConceptId(pickConcept(store.state, today, round + Date.now() % 1000, conceptId));
-    setRound((r) => r + 1);
-    setClue(0);
-    setGuesses([]);
-    setEnding(null);
-    setInput("");
-  };
-
   return (
-    <div className="detective">
-      <div className="detective-head">
-        <span className="game-badge">
-          <Icon name="minigames" size={22} />
-        </span>
-        <h4>{D.name}</h4>
-        <span className="today-pill">
-          {D.today} <strong>{D.pts(detectivePointsToday(state, today))}</strong>
-        </span>
-        <button type="button" className="help-dot big" aria-expanded={help} onClick={() => setHelp((h) => !h)}>
-          ?
-        </button>
-      </div>
-      {help && (
-        <ul className="detective-help">
-          {D.help.map((line) => (
-            <li key={line}>{line}</li>
-          ))}
-        </ul>
-      )}
-
-      <div className="clue-tiles">
-        {CLUE_POINTS.map((points, i) => (
-          <span key={i} className={`clue-tile tone-${TILE_TONES[i]} ${i < clue ? "used" : i === clue && !ending ? "current" : ""}`}>
-            {i === CLUE_COUNT - 1 ? "+" : points}
-          </span>
-        ))}
-        <span className="clue-timer">{ending ? "" : last ? "--" : `0:${String(Math.max(0, left)).padStart(2, "0")}`}</span>
-      </div>
-
-      {ending ? <Reveal concept={concept} ending={ending} onNext={next} /> : <ConceptCard concept={concept} clue={clue} tone={tone} />}
-
-      {!ending && (
-        <>
-          <div className="guess-log">
-            {guesses.length === 0 ? (
-              <p className="muted">{D.guessesEmpty}</p>
+    <div className="ranking">
+      <p className="muted small">{GAMES_UI.rankingIntro}</p>
+      {GAME_IDS.map((id) => {
+        const ranking = state.minigames.games[id]?.ranking ?? [];
+        return (
+          <section key={id} className="ranking-game">
+            <h5>
+              <GameArt art={GAMES[id].art} size={18} /> {GAME_TEXT[id].name}
+            </h5>
+            {ranking.length === 0 ? (
+              <small className="muted">{GAMES_UI.rankingEmpty}</small>
             ) : (
-              guesses.map((g, i) => (
-                <p key={`${g}-${i}`} className="bad-text">
-                  {D.wrong(g)}
-                </p>
-              ))
+              <ol>
+                {ranking.map((entry, i) => (
+                  <li key={i} className={i === 0 ? "first" : ""}>
+                    <strong>{entry.score}</strong>
+                    <small className="muted">{GAMES_UI.rankDay(today - entry.day)}</small>
+                  </li>
+                ))}
+              </ol>
             )}
-            {last && <p className="small">{D.lastClue}</p>}
-          </div>
-          <form className="guess-form" onSubmit={submit}>
-            <span className={`guess-dot tone-${tone}`} />
-            <input ref={field} className="guess-input" value={input} onChange={(e) => setInput(e.target.value)} placeholder={D.placeholder} aria-label={D.placeholder} autoComplete="off" spellCheck={false} />
-            <Button variant="purple" type="submit">
-              {D.send}
-            </Button>
-          </form>
-          <Button variant="dark" small onClick={() => setEnding({ solved: false, points: 0, coins: 0 })}>
-            {D.giveUp}
-          </Button>
-        </>
-      )}
-      <p className="muted small detective-total">{D.solvedTotal(state.minigames.detective.solved)}</p>
+          </section>
+        );
+      })}
     </div>
   );
 }
 
 export function MiniGamesModal() {
+  const state = useGame();
   const { close } = useApp();
+  const [game, setGame] = useState<GameId | null>(null);
+  const [tab, setTab] = useState<"games" | "ranking">("games");
+  const [round, setRound] = useState(0);
+  const today = dayNumber(new Date());
+  const Game = game ? GAMES[game].component : null;
+
   return (
-    <Modal title={MINIGAMES_UI.title} onClose={close}>
-      <DetectiveGame />
+    <Modal title={MINIGAMES_UI.title} onClose={close} wide>
+      {Game && game ? (
+        <>
+          <Button variant="dark" small className="games-back" onClick={() => setGame(null)}>
+            {GAMES_UI.back}
+          </Button>
+          <Game key={`${game}-${round}`} onExit={() => setGame(null)} />
+        </>
+      ) : (
+        <>
+          <div className="segmented small games-tabs">
+            {(["games", "ranking"] as const).map((t) => (
+              <button key={t} type="button" className={tab === t ? "active" : ""} onClick={() => setTab(t)}>
+                {GAMES_UI.tabs[t]}
+              </button>
+            ))}
+          </div>
+          {tab === "ranking" ? (
+            <Ranking />
+          ) : (
+            <div className="games-grid">
+              {GAME_IDS.map((id) => (
+                <button
+                  key={id}
+                  type="button"
+                  className="game-card"
+                  onClick={() => {
+                    setGame(id);
+                    setRound((r) => r + 1);
+                  }}
+                >
+                  <span className="game-card-art">
+                    <GameArt art={GAMES[id].art} size={36} />
+                  </span>
+                  <strong>{GAME_TEXT[id].name}</strong>
+                  <small className="muted">{GAME_TEXT[id].short}</small>
+                  <span className="tag-row">
+                    <Tag tone="gold">{GAMES_UI.best(bestScore(state, id))}</Tag>
+                    {id !== "detective" && <Tag tone={paidPlaysLeft(state, id, today) > 0 ? "green" : "dark"}>{GAMES_UI.paidLeft(paidPlaysLeft(state, id, today))}</Tag>}
+                  </span>
+                </button>
+              ))}
+            </div>
+          )}
+        </>
+      )}
     </Modal>
   );
 }

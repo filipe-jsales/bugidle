@@ -1,8 +1,8 @@
 /**
- * Mini games. The first one is "Detetive de Conceitos": guess a computing
- * concept from clues that unlock one by one (a wrong guess or the clue timer
- * opens the next one). Fewer clues = more points = more coins. Each concept
- * pays once per day, so the game rewards learning, not farming.
+ * Mini games. Every game ends with 0-100 points (`finishGame`): the first plays
+ * of the day pay coins and every play goes to the local ranking (top 5 per game).
+ * The Detetive de Conceitos also has its own rules below: guess a concept from
+ * clues that unlock one by one; each concept pays once per day.
  */
 import { CONCEPTS } from "./data/concepts";
 import { createSeededRng } from "./rng";
@@ -26,12 +26,91 @@ export interface DetectiveRecord {
   solved: number;
 }
 
+export const GAME_IDS = [
+  "detective",
+  "wordSearch",
+  "crossword",
+  "hangman",
+  "anagram",
+  "memory",
+  "language",
+  "output",
+  "binary",
+  "pixel",
+  "robot",
+  "gates",
+  "trueFalse",
+  "typing",
+  "pipes",
+] as const;
+export type GameId = (typeof GAME_IDS)[number];
+
+/** Plays per game and day that pay coins; later plays only count for the ranking. */
+export const PAID_PLAYS_PER_DAY = 3;
+/** Coins per point of a finished game (times badges + 1). */
+export const GAME_COINS_PER_POINT = 3;
+export const RANKING_SIZE = 5;
+
+export interface RankEntry {
+  score: number;
+  /** Day number of the play. */
+  day: number;
+}
+
+export interface GameRecord {
+  /** Best plays, highest first. */
+  ranking: RankEntry[];
+  /** Day number of `playsToday`. */
+  day: number;
+  playsToday: number;
+  plays: number;
+}
+
 export interface MiniGamesState {
   detective: DetectiveRecord;
+  games: Partial<Record<GameId, GameRecord>>;
 }
 
 export function createMiniGames(): MiniGamesState {
-  return { detective: { day: -1, points: 0, paid: {}, solved: 0 } };
+  return { detective: { day: -1, points: 0, paid: {}, solved: 0 }, games: {} };
+}
+
+export function isGameId(value: unknown): value is GameId {
+  return typeof value === "string" && (GAME_IDS as readonly string[]).includes(value);
+}
+
+export function bestScore(state: PersistentState, game: GameId): number | null {
+  return state.minigames.games[game]?.ranking[0]?.score ?? null;
+}
+
+/** Paid plays left today for a game. */
+export function paidPlaysLeft(state: PersistentState, game: GameId, today: number): number {
+  const record = state.minigames.games[game];
+  return record && record.day === today ? Math.max(0, PAID_PLAYS_PER_DAY - record.playsToday) : PAID_PLAYS_PER_DAY;
+}
+
+/**
+ * Ends a play with 0-100 points: pays coins while the day still has paid plays,
+ * and puts the score in the game's local ranking. Returns the coins, whether it
+ * is a new best and its place in the ranking (1-based, 0 when it did not enter).
+ */
+export function finishGame(state: PersistentState, game: GameId, points: number, today: number, pay = true): { coins: number; best: boolean; place: number } {
+  const score = Math.max(0, Math.min(100, Math.round(points)));
+  const record = state.minigames.games[game] ?? { ranking: [], day: today, playsToday: 0, plays: 0 };
+  if (record.day !== today) {
+    record.day = today;
+    record.playsToday = 0;
+  }
+  const paid = pay && record.playsToday < PAID_PLAYS_PER_DAY;
+  record.playsToday += 1;
+  record.plays += 1;
+  const previousBest = record.ranking[0]?.score ?? -1;
+  const entry = { score, day: today };
+  record.ranking = [...record.ranking, entry].sort((a, b) => b.score - a.score || b.day - a.day).slice(0, RANKING_SIZE);
+  state.minigames.games[game] = record;
+  const coins = paid ? score * GAME_COINS_PER_POINT * (state.badges.length + 1) : 0;
+  state.coins += coins;
+  return { coins, best: score > previousBest, place: record.ranking.indexOf(entry) + 1 };
 }
 
 /** Lowercase, no accents, letters and digits only: "Variável!" -> "variavel". */

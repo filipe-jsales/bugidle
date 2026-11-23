@@ -8,6 +8,7 @@ import { CHAMPIONS, createGuild, RAIDS } from "./guild";
 import { hasSpecies } from "./data/species";
 import { labQuestion } from "./data/labs";
 import { getConcept } from "./data/concepts";
+import { isGameId } from "./minigames";
 import { BOSSES, ROUTES } from "./data/world";
 import { createInitialState, createRuntime, defaultSettings, SAVE_VERSION, type CaptureMode, type GameState, type PersistentState } from "./state";
 
@@ -211,7 +212,16 @@ export function importSave(text: string): GameState {
       const mg = isObject(raw.minigames) ? raw.minigames : {};
       const d = isObject(mg.detective) ? mg.detective : {};
       const paid = isObject(d.paid) ? Object.fromEntries(Object.entries(d.paid).filter(([id, day]) => getConcept(id) && isNumber(day))) : {};
+      const games: Record<string, unknown> = {};
+      for (const [id, r] of Object.entries(isObject(mg.games) ? mg.games : {})) {
+        if (!isGameId(id) || !isObject(r)) continue;
+        const ranking = Array.isArray(r.ranking)
+          ? r.ranking.filter((e): e is Json => isObject(e) && isNumber(e.score) && isNumber(e.day)).map((e) => ({ score: Math.max(0, Math.min(100, e.score as number)), day: e.day as number })).slice(0, 5)
+          : [];
+        games[id] = { ranking, day: isNumber(r.day) ? r.day : -1, playsToday: isNumber(r.playsToday) ? r.playsToday : 0, plays: isNumber(r.plays) ? r.plays : 0 };
+      }
       return {
+        games,
         detective: {
           day: isNumber(d.day) ? d.day : -1,
           points: isNumber(d.points) ? Math.max(0, d.points) : 0,
